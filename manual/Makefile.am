@@ -39,7 +39,6 @@ input/beamsect.eps \
 input/discctrl.eps \
 input/elicottero.eps \
 input/MatR2vec.eps \
-input/rod_bezier.eps \
 input/shellPic.eps \
  \
 input/cardano.eps \
