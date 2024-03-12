@@ -64,7 +64,6 @@
 #include "point_contact.h"
 #include "prismj.h"    /* Vincolo prismatico */
 #include "rodj.h"      /* Aste elastiche */
-#include "rodbezj.h"
 #ifdef MBDYN_DEVEL
 #include "screwjoint.h"
 #endif // MBDYN_DEVEL
