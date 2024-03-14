@@ -2873,7 +2873,7 @@ if test $ol_with_trilinos != no ; then
                                 combo->addStatusTest(maxiters);
 
                                 Teuchos::RCP<NOX::Solver::Generic> nonlinSolver =  NOX::Solver::buildSolver(grpPtr, combo, noxParam);
-                                NOX::StatusTest::StatusType solvStatus = nonlinSolver->solve();
+                                nonlinSolver->solve();
                        ]])],[have_trilinos="yes"],[])
 
                        LIBS="$save_LIBS"
