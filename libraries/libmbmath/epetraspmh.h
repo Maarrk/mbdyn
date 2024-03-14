@@ -271,6 +271,7 @@ public:
      Epetra_CrsMatrix* pGetEpetraCrsMatrix() {
           return &oEPM;
      }
+     using MatrixHandler::operator=;
 protected:
      virtual VectorHandler&
      MatVecMul_base(void (VectorHandler::*op)(integer iRow,
