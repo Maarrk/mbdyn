@@ -655,7 +655,7 @@ void RotorDisc::computeLambdaNewman(int itMax, doublereal tollMax){
     
     doublereal ct2 = 0.5*Ct;
     // initial guess is lambda just found out
-    isnan(lambda) ? lambdaItPrev = 0.0 : lambdaItPrev=lambda;
+    lambdaItPrev = isnan(lambda) ? 0.0 : lambda;
     // lambdaItPrev = lambda;
     //lambdaIt     = lambda;
     vsx = mu*cos(alphaTPP);
@@ -667,7 +667,7 @@ void RotorDisc::computeLambdaNewman(int itMax, doublereal tollMax){
 
     doublereal tollLn = 10.0;
     int it=0;
-    while ((it<=itMax) and (tollLn>=tollMax)){
+    do {
         vsz = mu*sin(alphaTPP)+lambdaItPrev;
         f = lambdaItPrev-ct2*pow((pow(vsx,2.0)+pow(vsz,2.0)),-0.5);
         dfdl = 1+ct2*vsz*pow((pow(vsx,2.0)+pow(vsz,2.0)),-1.5);
@@ -675,7 +675,7 @@ void RotorDisc::computeLambdaNewman(int itMax, doublereal tollMax){
         tollLn = abs(lambdaIt-lambdaItPrev);
         lambdaItPrev = lambdaIt;
         it++;
-    }
+    } while ((it<=itMax) && (tollLn>=tollMax));
 
     lambdaNewman = lambdaIt;
 

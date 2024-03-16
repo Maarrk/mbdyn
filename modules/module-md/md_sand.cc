@@ -576,9 +576,9 @@ MDSand::InteractVirtualBall(int j,
     {
         RealVec dv, vn, vs, Fn, Fs, vs_direction, normal_direction;
         double scl_vn, abs_vs, abs_Fn, abs_Fs;
-        double mr, abs_dr, overlap;
+        double abs_dr, overlap;
 
-        mr = 1 / (1 / shapeMass + 1 / sand_array_[j].m);
+        // mr = 1 / (1 / shapeMass + 1 / sand_array_[j].m);
         abs_dr = sqrt(rsquare(dr));
         overlap = shapeRadius + sand_array_[j].r - abs_dr;
         normal_direction = (sand_array_[j].pos - shapePos) / abs_dr;
@@ -620,10 +620,10 @@ MDSand::Interact(int i, int j)
     bool if_overlap = false, if_found = false, if_voc = false;
     int ref_voc;
     RealVec dr_ji, dv_ji, vn, vs, Fn, Fs, vs_direction, normal_direction;
-    double abs_vn, abs_vs, abs_Fn, abs_Fs, abs_Fss, mr, abs_dr, overlap;
+    double abs_vn, abs_vs, abs_Fn, abs_Fs, abs_Fss, abs_dr, overlap;
 
     dr_ji = sand_array_[j].pos - sand_array_[i].pos;
-    mr = 1 / (1 / sand_array_[i].m + 1 / sand_array_[j].m);
+    // mr = 1 / (1 / sand_array_[i].m + 1 / sand_array_[j].m);
     if_overlap =
         bool (rsquare(dr_ji) <
         (sand_array_[i].r + sand_array_[j].r) * (sand_array_[i].r + sand_array_[j].r));

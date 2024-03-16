@@ -526,8 +526,10 @@ bool MDArch::GetSurfGeo (const RealVec & sand_pos, double sand_radius, RealVec &
     {
         if (dry > 0)
             theta = abs (atan (drz / dry));
-        if (dry < 0)
+        else if (dry < 0)
             theta = PI - abs (atan (drz / dry));
+        else
+             theta = 0.; // FIXME: Avoid compilation error with "-Wmaybe-uninitialized -Werror"
     }
     RealVec
         surf_drv;

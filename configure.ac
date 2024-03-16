@@ -364,13 +364,13 @@ AC_RUN_IFELSE(
         ],
         [AC_MSG_RESULT([yes])],
         [
-                save_CXXFlAGS="$CXXFLAGS"
+                save_CXXFLAGS="$CXXFLAGS"
                 CXXFLAGS="$CXXFLAGS -std=c++17"
 
                 AC_RUN_IFELSE(
                         [AC_LANG_PROGRAM([],
                                 [
-                                        if (__cplusplus == 202101L || __cplusplus == 202002L|| __cplusplus == 201703L) {
+                                        if (__cplusplus >= 201703L) {
                                                 return 0;
                                         }
                                         return 1;
