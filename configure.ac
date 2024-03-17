@@ -3636,6 +3636,7 @@ if test "$ol_enable_Werror" != no ; then
         AX_CHECK_COMPILE_FLAG([-Wformat-truncation],[CFLAGS="$CFLAGS -Wno-error=format-truncation"], , [-Werror])
         AC_LANG([C++])
         AX_CHECK_COMPILE_FLAG([-Wformat-truncation],CXXFLAGS="$CXXFLAGS -Wno-error=format-truncation", , [-Werror])
+        AX_CHECK_COMPILE_FLAG([-Woverloaded-virtual],CXXFLAGS="$CXXFLAGS -Wno-error=overloaded-virtual", , [-Werror])        
         AC_LANG([C])
         FFLAGS="$FFLAGS"
 fi

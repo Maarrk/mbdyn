@@ -482,6 +482,7 @@ DriveHandler::dGetDiscreteFilter(integer iNumber, doublereal uk) const
  * Ogni oggetto contiene i parametri che gli occorrono per la chiamata. */
 
 class DriveCaller : public WithLabel, public ToBeOutput, public Traceable {
+        using ToBeOutput::Output;
 protected:
 	mutable DriveHandler* pDrvHdl;
 
@@ -524,8 +525,8 @@ public:
 	/* allows to set the drive handler */
 	virtual void SetDrvHdl(const DriveHandler* pDH);
 	virtual const DriveHandler *pGetDrvHdl(void) const;
-	virtual void Output(OutputHandler& OH) const;
-	virtual void Trace(OutputHandler& OH) const;
+	virtual void Output(OutputHandler& OH) const override;
+	virtual void Trace(OutputHandler& OH) const override;
 };
 
 inline doublereal

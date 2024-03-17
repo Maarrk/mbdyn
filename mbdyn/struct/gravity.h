@@ -64,13 +64,15 @@
 /* Gravity - begin */
 
 class Gravity : virtual public Elem {
+       using Elem::AssRes;
+       using Elem::AssJac;
 public:
 	Gravity(flag fOut);
 
 	virtual ~Gravity(void);
 
 	/* Tipo dell'elemento (usato solo per debug ecc.) */
-	virtual Elem::Type GetElemType(void) const {
+	virtual Elem::Type GetElemType(void) const override {
 		return Elem::GRAVITY;
 	};
 
@@ -94,7 +96,7 @@ public:
 	/* funzioni proprie */
 
 	/* Dimensioni del workspace */
-	virtual void WorkSpaceDim(integer* piNumRows, integer* piNumCols) const {
+	virtual void WorkSpaceDim(integer* piNumRows, integer* piNumCols) const override {
 		*piNumRows = 0;
 		*piNumCols = 0;
 	};
@@ -104,19 +106,19 @@ public:
 	AssJac(VariableSubMatrixHandler& WorkMat,
 		doublereal dCoef,
 		const VectorHandler& XCurr,
-		const VectorHandler& XPrimeCurr);
+		const VectorHandler& XPrimeCurr) override;
 
 	/* assemblaggio residuo */
 	virtual SubVectorHandler& AssRes(SubVectorHandler& WorkVec,
 		doublereal dCoef,
 		const VectorHandler& XCurr,
-		const VectorHandler& XPrimeCurr);
+		const VectorHandler& XPrimeCurr) override;
 
 	virtual Vec3 GetAcceleration(const Vec3& /* X */ ) const = 0;
 
-	virtual inline int GetNumConnectedNodes(void) const {
+	virtual inline int GetNumConnectedNodes(void) const override {
 		return 0;
-	};
+	}
 };
 
 /* Gravity - end */
@@ -125,6 +127,9 @@ public:
 /* UniformGravity - begin */
 
 class UniformGravity : virtual public Elem, public Gravity, public TplDriveOwner<Vec3> {
+        using Elem::AssRes;
+        using Elem::AssJac;
+        using Elem::Output;
 protected:
 	Vec3 Acc;
 
@@ -134,7 +139,7 @@ public:
 	virtual ~UniformGravity(void);
 
 	/* Scrive il contributo dell'elemento al file di restart */
-	virtual std::ostream& Restart(std::ostream& out) const;
+	virtual std::ostream& Restart(std::ostream& out) const override;
 
 	/* funzioni di servizio */
 
@@ -159,9 +164,9 @@ public:
 	virtual SubVectorHandler& AssRes(SubVectorHandler& WorkVec,
 		doublereal dCoef,
 		const VectorHandler& XCurr,
-		const VectorHandler& XPrimeCurr);
+		const VectorHandler& XPrimeCurr) override;
 
-	virtual void Output(OutputHandler& OH) const;
+	virtual void Output(OutputHandler& OH) const override;
 
 	virtual Vec3 GetAcceleration(const Vec3& /* X */ ) const {
 		return Acc;

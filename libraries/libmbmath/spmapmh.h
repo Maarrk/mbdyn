@@ -75,6 +75,8 @@
 /* Sparse Matrix in columns form */
 class SpMapMatrixHandler : public SparseMatrixHandler {
 private:
+        using SparseMatrixHandler::MakeCompressedRowForm;
+        using SparseMatrixHandler::MakeIndexForm;
         integer NZ;
 	typedef std::map<integer, doublereal> row_cont_type;
 	mutable std::vector<row_cont_type> col_indices;

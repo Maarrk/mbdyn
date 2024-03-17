@@ -294,6 +294,7 @@ public:
 
 	/* Restituisce un puntatore all'array di reali della matrice */
         virtual const doublereal* pdGetMat(void) const override;
+        virtual doublereal* pdGetMat(void) override;
 
      	virtual void Reset(void) override;
 
