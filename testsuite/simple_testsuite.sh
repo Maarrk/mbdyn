@@ -5,8 +5,8 @@
 #
 # Copyright (C) 1996-2023
 #
-# Pierangelo Masarati	<pierangelo.masarati@polimi.it>
-# Paolo Mantegazza	<paolo.mantegazza@polimi.it>
+# Pierangelo Masarati   <pierangelo.masarati@polimi.it>
+# Paolo Mantegazza      <paolo.mantegazza@polimi.it>
 #
 # Dipartimento di Ingegneria Aerospaziale - Politecnico di Milano
 # via La Masa, 34 - 20156 Milano, Italy
@@ -49,7 +49,7 @@ mbdyn_verbose_output="no"
 mbdyn_keep_output="unexpected"
 mbdyn_print_res="no"
 mbdyn_patch_input="no"
-mbdyn_args_add="-C"
+mbdyn_args_add="-CG"
 mbdyn_exec_gen="yes"
 mbdyn_exec_solver="yes"
 declare -i mbdyn_exclude_inverse_dynamics=0
@@ -58,7 +58,8 @@ mbdyn_suppressed_errors=""
 
 declare -i mbd_exit_status_mask=0 ## Define the errors codes which should not cause the pipeline to fail
 OCTAVE_EXEC="${OCTAVE_EXEC:-octave}"
-
+TESTSUITE_TIME_CMD="${TESTSUITE_TIME_CMD:-/usr/bin/time --verbose}"
+JUNIT_XML_KEEP_ALL_OUTPUT="${JUNIT_XML_KEEP_ALL_OUTPUT:-none}"
 program_dir=$(realpath $(dirname "${program_name}"))
 
 if ! test -f "${program_dir}/mbdyn_input_file_format.awk"; then
@@ -121,6 +122,10 @@ while ! test -z "$1"; do
             ;;
         --keep-output)
             mbdyn_keep_output="$2"
+            shift
+            ;;
+        --keep-output-junit-xml)
+            JUNIT_XML_KEEP_ALL_OUTPUT="$2"
             shift
             ;;
         --patch-input)
@@ -243,6 +248,7 @@ function simple_testsuite_run_test()
     mbd_exec_gen_script="yes"
     mbd_exec_run_script="yes"
     mbd_exec_solver="yes"
+    declare -i idx_test=-1
 
     case "${mbdyn_patch_input}" in
         yes)
@@ -258,6 +264,10 @@ function simple_testsuite_run_test()
                 ;;
             --input)
                 mbd_filename="$2"
+                shift
+                ;;
+            --index)
+                idx_test="$2"
                 shift
                 ;;
             --exec-gen)
@@ -281,12 +291,17 @@ function simple_testsuite_run_test()
     done
 
     if test -z "${mbd_status_file}"; then
-        echo "Invalid argument"
+        echo "Invalid argument --status"
         return 0x80
     fi
 
     if test -z "${mbd_filename}"; then
-        echo "Invalid argument"
+        echo "Invalid argument --input"
+        return 0x80
+    fi
+
+    if test "${idx_test}" -le 0; then
+        echo "Invalid argument --index"
         return 0x80
     fi
 
@@ -303,8 +318,9 @@ function simple_testsuite_run_test()
         mbd_basename=`basename -s ".mbdyn" "${mbd_filename}"`
         mbd_basename=`basename -s ".mbd" "${mbd_basename}"`
 
-        mbd_time_file="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_output_time_$$.log"
-        mbd_output_file="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_output_$$"
+        mbd_time_file="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_output_time_$((idx_test)).log"
+        mbd_output_file="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_output_$((idx_test))"
+        junit_xml_report_file="${mbdyn_testsuite_prefix_output}/junit_xml_report_${mbd_basename}_$((idx_test)).xml"
         mbd_log_file="${mbd_output_file}.stdout"
 
         mbd_script_name=`basename ${mbd_filename}`
@@ -320,8 +336,8 @@ function simple_testsuite_run_test()
             ## FIXME: actually ${mbd_filename_patched} should be created inside the output directory.
             ## FIXME: However, MBDyn is not able to located additional input files, if ${mbd_filename_patched}
             ## FIXME: would be created inside a different directory than the original input file.
-            mbd_filename_patched=$(mktemp -p "${mbd_dir_name}" "${mbd_basename}_XXXXXXXXXX_simple_testsuite_patched_input.mbd")
-            mbd_filename_patched_copy="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_input_file_patched.mbd"
+            mbd_filename_patched=$(mktemp -p "${mbd_dir_name}" "${mbd_basename}_XXXXXXXXXX_simple_testsuite_patched_input_$((idx_test)).mbd")
+            mbd_filename_patched_copy="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_input_file_patched_$((idx_test)).mbd"
 
             if ! sed -E -f "${mbdyn_sed_prefix}mbdyn_testsuite_patch.sed" "${mbd_filename}" | tee "${mbd_filename_patched}" > "${mbd_filename_patched_copy}"; then
                 rm -f "${mbd_filename_patched}"
@@ -382,12 +398,12 @@ function simple_testsuite_run_test()
 
         if test -z "${mbd_command}"; then
             echo "No custom test script was found for input file ${mbd_filename}; The default command will be used to run the model"
-            mbd_command="mbdyn ${mbdyn_args_add} -f ${mbd_filename_patched} -o ${mbd_output_file}"
+            mbd_command="mbdyn ${mbdyn_args_add} -f ${mbd_filename_patched} -o ${mbd_output_file} --gtest_output=xml:${junit_xml_report_file}"
         fi
 
         case "${mbdyn_print_res}" in
             all|*time*)
-                mbd_command="/usr/bin/time --verbose --output ${mbd_time_file} ${mbd_command}"
+                mbd_command="${TESTSUITE_TIME_CMD} --output ${mbd_time_file} ${mbd_command}"
                 ;;
         esac
 
@@ -544,6 +560,40 @@ function simple_testsuite_run_test()
             rm -f "${mbd_log_file}"
             rm -f "${mbd_time_file}"
 
+            ## FIXME: Actually we should keep all those files.
+            ## FIXME: But due to the huge number of tests GitLab-CI is not able to display all of them.
+            ## FIXME: So, by default, only failed test reports will be kept.
+            junit_xml_keep_output="yes"
+
+            case "${JUNIT_XML_KEEP_ALL_OUTPUT}" in
+                always)
+                    ;;
+                not-passed)
+                    case "${status}" in
+                        passed*|timeout*)
+                            junit_xml_keep_output="no"
+                        ;;
+                    esac
+                    ;;
+                failed)
+                    case "${status}" in
+                        failed*|unexpected*)
+                            ;;
+                        *)
+                            junit_xml_keep_output="no"
+                            ;;
+                    esac
+                    ;;
+                none)
+                    junit_xml_keep_output="no"
+                    ;;
+            esac
+
+            if test "${junit_xml_keep_output}" != "yes"; then
+                echo "File ${junit_xml_report_file} will be removed (status=${status}, JUNIT_XML_KEEP_ALL_OUTPUT=${JUNIT_XML_KEEP_ALL_OUTPUT})"
+                rm -f "${junit_xml_report_file}"
+            fi
+
             if test "${mbdyn_patch_input}" != "no"; then
                 if ! test -f ${mbd_filename_patched_copy}; then
                     echo "File not found: \"${mbd_filename_patched_copy}\""
@@ -612,7 +662,7 @@ if test $((idx_test)) -le 1 || test "${MBD_NUM_TASKS}" -le 1; then
         ((++idx_test))
         mbd_status_file=`printf "${mbd_status_file_format}" $((idx_test))`
 
-        simple_testsuite_args="--status ${mbd_status_file} --input ${mbd_filename}"
+        simple_testsuite_args="--status ${mbd_status_file} --input ${mbd_filename} --index ${idx_test}"
 
         if test "${mbdyn_verbose_output}" = "disabled"; then
             simple_testsuite_run_test ${simple_testsuite_args} >& /dev/null
@@ -633,6 +683,7 @@ else
     export mbdyn_suppressed_errors
     export MBD_NUM_THREADS
     export OCTAVE_EXEC
+    export JUNIT_XML_KEEP_ALL_OUTPUT
     export -f simple_testsuite_run_test
 
     if test "${mbdyn_exec_gen}" != "no"; then
@@ -641,14 +692,14 @@ else
         for mbd_filename in ${MBD_INPUT_FILES_FOUND}; do
             ((++idx_test))
             mbd_status_file=`printf "${mbd_status_file_format}" $((idx_test))`
-            simple_testsuite_run_test --status "${mbd_status_file}" --input "${mbd_filename}" --exec-solver no
+            simple_testsuite_run_test --status "${mbd_status_file}" --input "${mbd_filename}" --index "${idx_test}" --exec-solver no
         done
     fi
 
     if test "${mbdyn_exec_solver}" != "no"; then
         ## Parallel execution of the solver
         mbd_status_file=`printf "${mbd_status_file_format}" '{#}'`
-        mbd_parallel_args="-j${MBD_NUM_TASKS} -n1 simple_testsuite_run_test --status ${mbd_status_file} --input '{}' --exec-gen no"
+        mbd_parallel_args="-j${MBD_NUM_TASKS} -n1 simple_testsuite_run_test --status ${mbd_status_file} --input '{}' --index '{#}' --exec-gen no"
         printf '%s\n' ${MBD_INPUT_FILES_FOUND} | parallel ${mbd_parallel_args}
     fi
 fi
@@ -709,6 +760,8 @@ function print_files()
     done
 }
 
+printf "@BEGIN_SIMPLE_TESTSUITE_REPORT@\n"
+
 if test -z "${passed_tests}"; then
     echo "No tests passed"
     ((exit_status|=0x1))
@@ -765,5 +818,7 @@ fi
 ((exit_status&=~mbd_exit_status_mask))
 
 printf "${program_name} exit status 0x%X\n" $((exit_status))
+
+printf "@END_SIMPLE_TESTSUITE_REPORT@\n"
 
 exit $((exit_status))

@@ -83,6 +83,9 @@ variables:
   ## Local installation directory for nlopt
   NL_INSTALL_PREFIX: $TESTSUITE_PREFIX_CACHE/nlopt
 
+  ## Local installation directory for GoogleTest
+  GTEST_INSTALL_PREFIX: $TESTSUITE_PREFIX_CACHE/gtest
+
   ## Local build directories
   ## They must be relative to $CI_PROJECT_DIR, so we can use them with "cache:"
 
@@ -97,6 +100,8 @@ variables:
   NC_CXX4_BUILD_DIR: $TESTSUITE_PREFIX_BUILD/netcdf-cxx4
 
   NL_BUILD_DIR: $TESTSUITE_PREFIX_BUILD/nlopt
+
+  GTEST_BUILD_DIR: $TESTSUITE_PREFIX_BUILD/gtest
 
   GMSH_BUILD_DIR: $TESTSUITE_PREFIX_BUILD/gmsh
 
@@ -133,6 +138,15 @@ variables:
 
   ## NOTE: We should compile without any optimization in order to get accurate profile information
   MBD_COMPILER_FLAGS_GCOV: "-Og -Wall -march=native -mtune=native -Wno-unused-variable"
+
+  JUNIT_XML_KEEP_ALL_OUTPUT:
+    value: "none"
+    options:
+      - "always"
+      - "not-passed"
+      - "failed"
+      - "none"
+    description: "Keep all JUnit XML files to be displayed in the test report"
 
   OCT_PKG_LIST_NURBS_REBUILD:
     value: "yes"
@@ -341,6 +355,7 @@ variables:
   ## This makes it easier to clean up temporary files and ther is no need to use /tmp which may reside in memory on some systems.
   ## Paths must be relative to CI_PROJECT_PATH
   TESTSUITE_PREFIX_TESTS: $TESTSUITE_PREFIX_TMP/tests
+  MBD_TEST_PROGS_OUTPUT_DIR: $TESTSUITE_PREFIX_TESTS/mbdyn-test-progs
   OCT_PKG_TEST_OUTPUT_DIR: $TESTSUITE_PREFIX_TESTS/octave-pkg-testjob
   OCT_PKG_TEST_OUTPUT_DIR_GCOV: $TESTSUITE_PREFIX_TESTS/octave-pkg-testjob-gcov
   MBD_MODULE_TESTS_OUTPUT_DIR: $TESTSUITE_PREFIX_TESTS/mbdyn-modules-testjob
@@ -373,6 +388,10 @@ variables:
   ## See simple_testsuite.sh --help
   ## In order to enable verbose output for MBDyn use: MBD_SIMPLE_TESTSUITE_FLAGS: "--verbose yes"
   MBD_SIMPLE_TESTSUITE_FLAGS: "--keep-output ${MBD_SIMPLE_TESTSUITE_FLAGS_OUTPUT} --verbose ${MBD_SIMPLE_TESTSUITE_FLAGS_VERBOSE}"
+
+  TESTSUITE_TIME_CMD:
+    value: "/usr/bin/time --verbose"
+    description: "Command used to profile all the tests"
 stages:          # List of stages for jobs, and their order of execution
   - .pre
   - build
@@ -386,6 +405,7 @@ include:
     - local: '/testsuite/mkl-build-job.yml'
     - local: '/testsuite/netcdf-build-job.yml'
     - local: '/testsuite/nlopt-build-job.yml'
+    - local: '/testsuite/gtest-build-job.yml'
     - local: '/testsuite/mbdyn-build-job.yml'
     - local: '/testsuite/octave-pkg-build-job.yml'
     - local: '/testsuite/gmsh-build-job.yml'

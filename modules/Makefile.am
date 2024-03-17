@@ -30,6 +30,7 @@ export LTCXXCOMPILE = @LIBTOOL@ --tag=CXX --mode=compile @CXX@ @DEFS@ \
 	-I../$(top_srcdir)/mbdyn/aero \
 	-I../$(top_srcdir)/mbdyn/elec \
 	-I../$(top_srcdir)/mbdyn/hydr \
+	@GTEST_INCLUDE@ \
 	-prefer-pic \
 	$(AM_CPPFLAGS) @CPPFLAGS@ $(AM_CXXFLAGS) @CXXFLAGS@
 CXXLD = @CXX@

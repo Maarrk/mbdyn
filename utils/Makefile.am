@@ -154,7 +154,8 @@ MYLIBS += \
 @SUITESPARSEQR_LIBS@ \
 @BLAS_LIBS@ \
 @FCLIBS@ \
-@LIBS@
+@LIBS@ \
+@GTEST_LIBS@
 
 ann_in_SOURCES = ann_in.c
 ann_sf_SOURCES = ann_sf.c
@@ -239,8 +240,8 @@ ncprint_SOURCES = ncprint.cc
 
 mbdyn_util_oct_oct_SOURCES = mbdyn_util_oct.cc
 if USE_OCTAVE_UTILS
-OCTAVE_XINCLUDE = -I$(top_srcdir)/include -I$(top_srcdir)/libraries/libmbutil -I$(top_srcdir)/libraries/libmbmath -I$(top_srcdir)/mbdyn -I../include
-OCTAVE_XLIBS = -L../libraries/libmbmath/.libs -L../libraries/libmbutil/.libs -lmbmath -lmbutil
+OCTAVE_XINCLUDE = -I$(top_srcdir)/include -I$(top_srcdir)/libraries/libmbutil -I$(top_srcdir)/libraries/libmbmath -I$(top_srcdir)/mbdyn -I../include @GTEST_INCLUDE@
+OCTAVE_XLIBS = -L../libraries/libmbmath/.libs -L../libraries/libmbutil/.libs -lmbmath -lmbutil @GTEST_LIBS@
 OCTAVE_XFUNCS = \
 rotation_matrix_to_rotation_vector.oct \
 rotation_vector_to_rotation_matrix.oct \
@@ -331,7 +332,8 @@ AM_CPPFLAGS = \
 -I$(srcdir)/../libraries/libann \
 -I$(srcdir)/../mbdyn \
 -I$(srcdir)/../mbdyn/aero \
--I$(srcdir)/../mbdyn/base
+-I$(srcdir)/../mbdyn/base \
+@GTEST_INCLUDE@
 
 # Rule to compile modules; run "make <module-name>.so"
 # NOTE: this is a GNU make extension

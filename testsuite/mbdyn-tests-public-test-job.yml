@@ -48,7 +48,6 @@ variables:
 mbdyn-tests-public-test-job:   # This job runs in the test stage.
   variables:
     MBD_TESTS_PUBLIC_LOG_FILE: "mbdyn-tests-public-test-job.log"
-    MBD_TESTS_PUBLIC_STATUS_FILE: "mbdyn-tests-public-test-job.status"
   stage: test    # It only starts when the job in the build stage completes successfully.
   needs:
     - job: netcdf-c-build-job
@@ -56,6 +55,8 @@ mbdyn-tests-public-test-job:   # This job runs in the test stage.
     - job: netcdf-cxx4-build-job
       artifacts: true
     - job: mkl-build-job
+      artifacts: true
+    - job: gtest-build-job
       artifacts: true
     - job: mbdyn-build-job
       artifacts: true
@@ -68,6 +69,8 @@ mbdyn-tests-public-test-job:   # This job runs in the test stage.
       - echo "mbdyn-tests-public test job"
       - export PATH=${MBD_INSTALL_PREFIX}/bin:${GMSH_INSTALL_PREFIX}/bin:${OCT_PKG_INSTALL_PREFIX}/bin:${PATH}
       - export AWKPATH=${MBD_INSTALL_PREFIX}/share/awk:${AWKPATH}
+      - export TESTSUITE_TIME_CMD
+      - export JUNIT_XML_KEEP_ALL_OUTPUT
       - |
         if ! test -d ${MBD_TESTS_PUBLIC_INPUT_DIR}; then
           if ! git clone -b ${MBD_TESTS_PUBLIC_GITLAB_BRANCH} ${MBD_TESTS_PUBLIC_GITLAB} ${MBD_TESTS_PUBLIC_INPUT_DIR}; then
@@ -79,32 +82,28 @@ mbdyn-tests-public-test-job:   # This job runs in the test stage.
       - cd ${MBD_TESTS_PUBLIC_INPUT_DIR}
       - git pull --force
       - cd ${CI_PROJECT_DIR}
+      - sp_gradient_test --gtest_output=xml:${MBD_TESTS_PUBLIC_OUTPUT_DIR}/junit_xml_report_sp_gradient_test.xml
       - chmod +x testsuite/simple_testsuite.sh
       - mkdir -p ${MBD_TESTS_PUBLIC_OUTPUT_DIR} ## needed for realpath
       - log_file="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/${MBD_TESTS_PUBLIC_LOG_FILE}"
-      - status_file="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/${MBD_TESTS_PUBLIC_STATUS_FILE}"
-      - echo "unexpected" > "${status_file}"
       - echo "-------------- ORIGINAL TESTS --------------------" | tee -a "${log_file}"
-      - test_status="failed"
-      - (/usr/bin/time --verbose testsuite/simple_testsuite.sh --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}") && test_status="passed"
-      - echo "${test_status}" > "${status_file}"
+      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
       - echo "-------------- PATCHED TESTS --------------------" | tee -a "${log_file}"
-      - test_status="failed"
-      - (/usr/bin/time --verbose testsuite/simple_testsuite_patched.sh --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}") && test_status="passed"
-      - echo "${test_status}" >> "${status_file}"
+      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite_patched.sh --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}"
   artifacts:
-    name: mbdyn-tests-public-test-job
+    name: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
     expire_in: 24h
     paths:
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR/$MBD_TESTS_PUBLIC_LOG_FILE
-      - $MBD_TESTS_PUBLIC_OUTPUT_DIR/$MBD_TESTS_PUBLIC_STATUS_FILE
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR/**/*.stdout
+      - $MBD_TESTS_PUBLIC_OUTPUT_DIR/**/junit_xml_report_*.xml
     when: always
+    reports:
+      junit: $MBD_TESTS_PUBLIC_OUTPUT_DIR/**/junit_xml_report_*.xml
 
 mbdyn-tests-public-test-job-gcov:   # This job runs in the test stage.
   variables:
     MBD_TESTS_PUBLIC_LOG_FILE: "mbdyn-tests-public-test-job.log"
-    MBD_TESTS_PUBLIC_STATUS_FILE: "mbdyn-tests-public-test-job.status"
   stage: test    # It only starts when the job in the build stage completes successfully.
   needs:
     - job: netcdf-c-build-job
@@ -112,6 +111,8 @@ mbdyn-tests-public-test-job-gcov:   # This job runs in the test stage.
     - job: netcdf-cxx4-build-job
       artifacts: true
     - job: mkl-build-job
+      artifacts: true
+    - job: gtest-build-job
       artifacts: true
     - job: mbdyn-build-job-gcov
       artifacts: true
@@ -126,6 +127,8 @@ mbdyn-tests-public-test-job-gcov:   # This job runs in the test stage.
       - echo "mbdyn-tests-public-test-job-gcov"
       - export PATH=${MBD_INSTALL_PREFIX}/bin:${GMSH_INSTALL_PREFIX}/bin:${OCT_PKG_INSTALL_PREFIX}/bin:${PATH}
       - export AWKPATH=${MBD_INSTALL_PREFIX}/share/awk:${AWKPATH}
+      - export TESTSUITE_TIME_CMD
+      - export JUNIT_XML_KEEP_ALL_OUTPUT
       - |
         if ! test -d ${MBD_TESTS_PUBLIC_INPUT_DIR}; then
           if ! git clone -b ${MBD_TESTS_PUBLIC_GITLAB_BRANCH} ${MBD_TESTS_PUBLIC_GITLAB} ${MBD_TESTS_PUBLIC_INPUT_DIR}; then
@@ -137,21 +140,20 @@ mbdyn-tests-public-test-job-gcov:   # This job runs in the test stage.
       - cd ${MBD_TESTS_PUBLIC_INPUT_DIR}
       - git pull --force
       - cd ${CI_PROJECT_DIR}
+      - sp_gradient_test --gtest_output=xml:${MBD_TESTS_PUBLIC_OUTPUT_DIR}/junit_xml_report_sp_gradient_test.xml
       - chmod +x testsuite/simple_testsuite.sh
       - mkdir -p ${MBD_TESTS_PUBLIC_OUTPUT_DIR} ## needed for realpath
       - log_file="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/${MBD_TESTS_PUBLIC_LOG_FILE}"
-      - status_file="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/${MBD_TESTS_PUBLIC_STATUS_FILE}"
-      - echo "unexpected" > "${status_file}"
       - echo "-------------- PATCHED TESTS --------------------" | tee "${log_file}"
-      - test_status="failed"
-      - (/usr/bin/time --verbose testsuite/simple_testsuite_patched.sh --scale-when "always" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}") && test_status="passed"
-      - echo "${test_status}" > "${status_file}"
+      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite_patched.sh --scale-when "always" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}"
   artifacts:
-    name: mbdyn-tests-public-test-job-gcov
+    name: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
     expire_in: 24h
     paths:
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/$MBD_TESTS_PUBLIC_LOG_FILE
-      - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/$MBD_TESTS_PUBLIC_STATUS_FILE
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/**/*.stdout
+      - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/**/junit_xml_report_*.xml
       - $MBD_BUILD_DIR_GCOV
     when: always
+    reports:
+      junit: $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/**/junit_xml_report_*.xml

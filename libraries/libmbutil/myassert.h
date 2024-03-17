@@ -77,6 +77,10 @@ Uso:
 #include <iostream>
 #include <except.h>
 
+#ifdef USE_GTEST
+#include <gtest/gtest.h>
+#endif
+
 #define NO_OP do {} while(0)
 
 #if defined(USE_MULTITHREAD) && defined(__cplusplus)
@@ -87,17 +91,20 @@ extern std::mutex mbdyn_lock_cout;
 #endif
 
 #ifdef DEBUG
+
 /* predefined debug level flags (reserved from 0x0000001 to 0x00000080) */
-const long int MYDEBUG_NONE                = 0x00000000;
-const long int MYDEBUG_ANY                 = 0xFFFFFFFF;
-const long int MYDEBUG_FNAMES              = 0x00000001;
+enum DebugFlags: long {
+     MYDEBUG_NONE                = 0x00000000,
+     MYDEBUG_ANY                 = 0xFFFFFFFF,
+     MYDEBUG_FNAMES              = 0x00000001,
 #ifdef __GNUC__
-const long int MYDEBUG_PRETTYFN            = 0x00000002;
+     MYDEBUG_PRETTYFN            = 0x00000002,
 #endif /* __GNUC__ */
+     DEFAULT_DEBUG_LEVEL         = 0x0FFFFFFF // Not setting MYDEBUG_STOP and MYDEBUG_ABORT by default
+};
 
 /* debug level global var */
 extern long int debug_level /* = MYDEBUG_ANY */ ;
-extern long int DEFAULT_DEBUG_LEVEL;
 
 struct debug_array {
    const char*  s;
@@ -117,13 +124,13 @@ class MyAssert {
 	};
 };
 
-extern void _Assert(const char* file, const int line, const char* msg = NULL);
+extern void _Assert(const char* file, const int line, const char* expr, const char* msg = NULL);
 extern std::ostream& _Out(std::ostream& out, const char* file, const int line);
 
 #define ASSERT(expr) \
     do { \
 	if (!(expr)) { \
-	    _Assert(__FILE__, __LINE__); \
+             _Assert(__FILE__, __LINE__, #expr);      \
 	} \
     } while (0)
 
@@ -131,7 +138,7 @@ extern std::ostream& _Out(std::ostream& out, const char* file, const int line);
 #define ASSERTBREAK(expr) \
     do { \
 	if (!(expr)) { \
-	    _Assert(__FILE__, __LINE__); \
+            _Assert(__FILE__, __LINE__, #expr);                 \
 	    throw MyAssert::ErrGeneric(MBDYN_EXCEPT_ARGS); \
 	} \
     } while (0)
@@ -139,19 +146,17 @@ extern std::ostream& _Out(std::ostream& out, const char* file, const int line);
 #define ASSERTMSG(expr, msg) \
     do { \
 	if (!(expr)) { \
-	    _Assert(__FILE__, __LINE__, (msg)); \
+            _Assert(__FILE__, __LINE__, #expr, (msg));  \
 	} \
     } while (0)
 
 #define ASSERTMSGBREAK(expr, msg) \
     do { \
 	if (!(expr)) { \
-	    _Assert(__FILE__, __LINE__, (msg)); \
+	    _Assert(__FILE__, __LINE__, #expr, (msg));      \
 	    throw MyAssert::ErrGeneric(MBDYN_EXCEPT_ARGS); \
 	} \
     } while (0)
-
-
 
 
 #define COUT \

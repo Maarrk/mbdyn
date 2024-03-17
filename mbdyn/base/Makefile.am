@@ -279,7 +279,8 @@ AM_CPPFLAGS = \
 -I$(srcdir)/../../mbdyn/hydr \
 -I$(srcdir)/../../modules \
 $(GINACLIB_CPPFLAGS) \
-@OCTAVE_INCLUDE@
+@OCTAVE_INCLUDE@ \
+@GTEST_INCLUDE@
 
 noinst_PROGRAMS = inusetest
 inusetest_SOURCES = inusetest.cc
