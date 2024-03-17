@@ -139,7 +139,7 @@ begin: elements;
 		isotropic, E, E, nu, NU, thickness, 1.0e-03,
 		prestress, PRESTRESS, 0., 0.; # , 0., 0., 0., 0., 0., 0., 0., 0., 0.
 
-	module load: "./libmodule-loadinc.so";
+	module load: "libmodule-loadinc.la";
 
 	user defined: 0, load increment normalization,
 		help,

@@ -62,7 +62,7 @@ veciter.h \
 withlab.cc \
 withlab.h
 
-libmbutil_la_LIBADD = @LIBS@
+libmbutil_la_LIBADD = @LIBS@ @GTEST_LIBS@
 libmbutil_la_LDFLAGS =
 
 AM_CPPFLAGS = \
@@ -70,7 +70,8 @@ AM_CPPFLAGS = \
 -I$(srcdir)/../../include \
 -I$(srcdir)/../../libraries/libmbutil \
 -I$(srcdir)/../../libraries/libmbmath \
--I$(srcdir)/../../mbdyn
+-I$(srcdir)/../../mbdyn \
+@GTEST_INCLUDE@
 
 noinst_PROGRAMS = mbsasltest testexcept
 mbsasltest_SOURCES = mbsasltest.c

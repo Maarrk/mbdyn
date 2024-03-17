@@ -53,6 +53,7 @@ AM_CPPFLAGS = \
 -I$(srcdir)/../../mbdyn/struct \
 -I$(srcdir)/../../mbdyn/aero \
 -I$(srcdir)/../../mbdyn/elec \
--I$(srcdir)/../../mbdyn/hydr
+-I$(srcdir)/../../mbdyn/hydr \
+@GTEST_INCLUDE@
 
 include $(top_srcdir)/build/bot.mk

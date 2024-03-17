@@ -35,25 +35,32 @@
 #include "except.h"
 
 MBDynErrBase::MBDynErrBase(MBDYN_EXCEPT_ARGS_DECL_NODEF)
+     :file(file), line(line), func(func), r(r)
 {
-	std::stringstream ss;
-	ss << "[" << file << ":" << line << ",func=" << func << "]";
-	if (!r.empty()) {
-		ss << " (" << r << ")";
-	}
-	s = ss.str();
+
 }
 
 void
 MBDynErrBase::Set(const std::string& s)
 {
-	this->s = s;
+        message = s;
 }
 
 const char *
-MBDynErrBase::what(void) const noexcept 
+MBDynErrBase::what(void) const noexcept
 {
-	return s.c_str();
+        // In most situations what() is not called at all.
+        // So, we may save some overhead if the actual error message is initialized just on demand.
+        if (message.empty()) {
+                std::stringstream ss;
+                ss << "[" << file << ":" << line << ",func=" << func << "]";
+                if (!r.empty()) {
+                        ss << " (" << r << ")";
+                }
+                message = ss.str();
+        }
+
+        return message.c_str();
 }
 
 void

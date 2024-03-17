@@ -54,27 +54,34 @@ mbdyn-build-job:       # This job runs in the build stage, which runs first.
       artifacts: true
     - job: mkl-build-job
       artifacts: true
+    - job: gtest-build-job
+      artifacts: true
     - job: mbdyn-checkout-job
   script:
     - export MBD_INSTALL_PREFIX=${CI_PROJECT_DIR}/${MBD_INSTALL_PREFIX}
     - export NC_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NC_INSTALL_PREFIX}
     - export NC_CXX4_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NC_CXX4_INSTALL_PREFIX}
     - export NL_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NL_INSTALL_PREFIX}
+    - export GTEST_INSTALL_PREFIX=${CI_PROJECT_DIR}/${GTEST_INSTALL_PREFIX}
     - export MKL_INSTALL_PREFIX=${HOME}/${MKL_INSTALL_PREFIX}
     - export MBD_BUILD_DIR=${CI_PROJECT_DIR}/${MBD_BUILD_DIR}
     - export OCT_PKG_INSTALL_PREFIX=${CI_PROJECT_DIR}/${OCT_PKG_INSTALL_PREFIX}
     - export MBD_COMPILER_FLAGS=${MBD_COMPILER_FLAGS}
+    - export MBD_TEST_PROGS_OUTPUT_DIR=${CI_PROJECT_DIR}/${MBD_TEST_PROGS_OUTPUT_DIR}
     - testsuite/mbdyn_build_job.sh
   artifacts:
    expire_in: 24h
-   name: mbdyn-install-prefix
+   name: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
    paths:
     - $MBD_INSTALL_PREFIX
     - $MBD_BUILD_DIR/**/config.log
+    - $MBD_TEST_PROGS_OUTPUT_DIR/**/*.xml
     - $OCT_PKG_INSTALL_PREFIX ## Because mbdyn_util_oct will be installed there!
    when: always
+   reports:
+     junit: $MBD_TEST_PROGS_OUTPUT_DIR/**/*.xml
   cache:
-   key: mbdyn-build-job
+   key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
    paths:
     - $MBD_BUILD_DIR
     - Makefile.in
@@ -139,6 +146,8 @@ mbdyn-build-job-gcov:       # This job runs in the build stage, which runs first
       artifacts: true
     - job: mkl-build-job
       artifacts: true
+    - job: gtest-build-job
+      artifacts: true
     - job: mbdyn-checkout-job
   rules:
     - if: $MBD_TEST_COVERAGE_ENABLED == "yes"
@@ -146,10 +155,12 @@ mbdyn-build-job-gcov:       # This job runs in the build stage, which runs first
     - export NC_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NC_INSTALL_PREFIX}
     - export NC_CXX4_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NC_CXX4_INSTALL_PREFIX}
     - export NL_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NL_INSTALL_PREFIX}
+    - export GTEST_INSTALL_PREFIX=${CI_PROJECT_DIR}/${GTEST_INSTALL_PREFIX}
     - export MKL_INSTALL_PREFIX=${HOME}/${MKL_INSTALL_PREFIX}
     - export MBD_INSTALL_PREFIX=${CI_PROJECT_DIR}/${MBD_INSTALL_PREFIX_GCOV}
     - export MBD_BUILD_DIR=${CI_PROJECT_DIR}/${MBD_BUILD_DIR_GCOV}
     - export OCT_PKG_INSTALL_PREFIX=${CI_PROJECT_DIR}/${OCT_PKG_INSTALL_PREFIX_GCOV}
+    - export MBD_TEST_PROGS_OUTPUT_DIR=${CI_PROJECT_DIR}/${MBD_TEST_PROGS_OUTPUT_DIR}
     - export MBD_COMPILER_FLAGS="${MBD_COMPILER_FLAGS_GCOV} --coverage"
     - export LDFLAGS="--coverage"
     ## Cleanup any profile data from previous builds in order to get a correct coverage report.
@@ -160,7 +171,7 @@ mbdyn-build-job-gcov:       # This job runs in the build stage, which runs first
     - testsuite/mbdyn_build_job.sh
   artifacts:
    expire_in: 24h
-   name: mbdyn-install-prefix-gcov
+   name: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
    paths:
     - $MBD_BUILD_DIR_GCOV/**/config.log
     - $MBD_BUILD_DIR_GCOV/**/*.cc ## Source files of modules are needed for gcovr
@@ -172,13 +183,16 @@ mbdyn-build-job-gcov:       # This job runs in the build stage, which runs first
     - $MBD_BUILD_DIR_GCOV/**/*.gcda ## Needed for gcovr
     - $MBD_BUILD_DIR_GCOV/**/*.gcno ## Needed for gcovr
     - $MBD_INSTALL_PREFIX_GCOV
+    - $MBD_TEST_PROGS_OUTPUT_DIR/**/*.xml
     - $OCT_PKG_INSTALL_PREFIX_GCOV ## Because mbdyn_util_oct will be installed there!
    exclude:
     - $MBD_BUILD_DIR_GCOV/**/*conftest.gcda
     - $MBD_BUILD_DIR_GCOV/**/*conftest.gcno
    when: always
+   reports:
+     junit: $MBD_TEST_PROGS_OUTPUT_DIR/**/*.xml
   cache:
-   key: mbdyn-build-job-gcov
+   key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
    paths:
     - $MBD_BUILD_DIR_GCOV
     - Makefile.in
@@ -284,13 +298,13 @@ mbdyn-build-job-manuals:       # This job runs in the build stage, which runs fi
     - make pdf
   artifacts:
    expire_in: 24h
-   name: mbdyn-manuals
+   name: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
    paths:
     - manual/input/mbdyn-input-*.pdf
     - manual/tecman/mbdyn-tecman-*.pdf
     - manual/install/mbdyn-install-*.pdf
   cache:
-   key: mbdyn-build-job-manuals
+   key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
    paths:
     - Makefile.in
     - aclocal.m4

@@ -48,15 +48,17 @@ MBD_SOURCE_DIR=${MBD_SOURCE_DIR:-`dirname ${program_dir}`}
 MBD_SKIP_BUILD="${MBD_SKIP_BUILD:-no}"
 MBD_INSTALL_PREFIX="${MBD_INSTALL_PREFIX:-${program_dir}/var/cache/mbdyn}"
 MBD_BUILD_DIR="${MBD_BUILD_DIR:-${program_dir}/var/tmp/build/mbdyn}"
+MBD_TEST_PROGS_OUTPUT_DIR="${MBD_TEST_PROGS_OUTPUT_DIR:-${program_dir}/var/tmp/tests/mbdyn-test-progs}"
 MBD_COMPILER_FLAGS="${MBD_COMPILER_FLAGS:--Ofast -Wall -march=native -mtune=native -Wno-unused-variable}"
 NC_INSTALL_PREFIX="${NC_INSTALL_PREFIX:-${program_dir}/var/cache/netcdf}"
 NC_CXX4_INSTALL_PREFIX="${NC_CXX4_INSTALL_PREFIX:-${program_dir}/var/cache/netcdf-cxx4}"
+GTEST_INSTALL_PREFIX="${GTEST_INSTALL_PREFIX:-${program_dir}/var/cache/gtest}"
 MKL_INSTALL_PREFIX="${MKL_INSTALL_PREFIX:-/usr/lib}"
 MKL_PKG_CONFIG="${MKL_PKG_CONFIG:-mkl-dynamic-lp64-gomp}"
 OCT_PKG_INSTALL_PREFIX="${OCT_PKG_INSTALL_PREFIX:-${program_dir}/var/cache/share/octave}"
 MBD_WITH_MODULE="${MBD_WITH_MODULE:-fabricate damper-gandhi pid hfelem fab-electric template2 cont-contact wheel4 mds indvel mcp_test1 scalarfunc muscles minmaxdrive drive-test loadinc cudatest randdrive imu convtest md autodiff_test rotor-loose-coupling namespace drive controller constlaw fab-sbearings rotor_disc hunt-crossley diff damper-hydraulic cyclocopter fab-motion flightgear hid ns damper-graall}"
 MBD_NUM_BUILD_JOBS="${MBD_NUM_BUILD_JOBS:-$(($(lscpu | awk '/^Socket\(s\)/{ print $2 }') * $(lscpu | awk '/^Core\(s\) per socket/{ print $4 }')))}"
-MBD_CONFIGURE_FLAGS="${MBD_CONFIGURE_FLAGS:---enable-python --enable-octave --enable-install_test_progs --enable-netcdf --with-umfpack --with-klu --with-suitesparseqr --with-static-modules --without-mpi --enable-runtime-loading --disable-Werror --with-trilinos}"
+MBD_CONFIGURE_FLAGS="${MBD_CONFIGURE_FLAGS:---enable-python --enable-octave --enable-install_test_progs --enable-netcdf --with-umfpack --with-klu --with-suitesparseqr --with-static-modules --without-mpi --enable-runtime-loading --disable-Werror --with-trilinos --with-gtest}"
 OCTAVE_MKOCTFILE="${MKOCTFILE:-mkoctfile}"
 OCTAVE_CLI="${OCTAVE_CLI:-octave-cli}"
 TRILINOS_INSTALL_PREFIX="${TRILINOS_INSTALL_PREFIX:-/usr}"
@@ -90,12 +92,20 @@ while ! test -z "$1"; do
             LDFLAGS="$2"
             shift
             ;;
+        --mbdyn-clean-build)
+            MBD_CLEAN_BUILD="$2"
+            shift
+            ;;
         --netcdf-install-prefix)
             NC_INSTALL_PREFIX="$2"
             shift
             ;;
         --netcdf-cxx4-install-prefix)
             NC_CXX4_INSTALL_PREFIX="$2"
+            shift
+            ;;
+        --gtest-install-prefix)
+            GTEST_INSTALL_PREFIX="$2"
             shift
             ;;
         --trilinos-install-prefix)
@@ -126,6 +136,14 @@ while ! test -z "$1"; do
             ;;
         --configure-flags)
             MBD_CONFIGURE_FLAGS="$2"
+            shift
+            ;;
+        --configure-flags-add)
+            MBD_CONFIGURE_FLAGS="${MBD_CONFIGURE_FLAGS} $2"
+            shift
+            ;;
+        --tasks)
+            MBD_NUM_BUILD_JOBS="$2"
             shift
             ;;
         --help)
@@ -299,6 +317,17 @@ else
     echo "Warning: MKL_PKG_CONFIG_PATH could not be detected"
 fi
 
+if test -d "${GTEST_INSTALL_PREFIX}"; then
+    GTEST_PKG_CONFIG=`find "${GTEST_INSTALL_PREFIX}" -name pkgconfig -and -type d`
+    if test -d "${GTEST_PKG_CONFIG}"; then
+        export PKG_CONFIG_PATH="${GTEST_PKG_CONFIG}:${PKG_CONFIG_PATH}"
+    else
+        echo "Warning: GTEST_PKG_CONFIG_PATH could not be detected"
+    fi
+else
+    echo "Warning: GTEST_PKG_CONFIG_PATH could not be detected"
+fi
+
 if ! test -z "${MBD_WITH_MODULE}"; then
     MBD_COMPILER_FLAGS="${MBD_COMPILER_FLAGS} -rdynamic" ## Needed for --enable-runtime-loading
 fi
@@ -307,10 +336,10 @@ echo CXXFLAGS="${MBD_COMPILER_FLAGS}"
 echo CPPFLAGS="${CPPFLAGS}"
 echo LDFLAGS="${LDFLAGS}"
 printf "configure ...\n"
-if ! test -f Makefile; then
-    echo "${MBD_BUILD_DIR}/Makefile does not exist!"
+if ! test -f Makefile || test "${program_dir}/mbdyn_build_job.sh" -nt Makefile || test "${MBD_SOURCE_DIR}/configure.ac" -nt Makefile; then
+    echo "${MBD_BUILD_DIR}/Makefile does not exist or it might be out of date!"
     echo "Run configure step ..."
-    if ! ${MBD_SOURCE_DIR}/configure \
+    if ! "${MBD_SOURCE_DIR}/configure" \
          PYTHON_VERSION=3 \
          CPPFLAGS="${CPPFLAGS}" \
          LDFLAGS="${LDFLAGS}" \
@@ -325,12 +354,11 @@ if ! test -f Makefile; then
          ${PARDISO_FLAGS} \
          --with-module="${MBD_WITH_MODULE}" \
          ${MBD_CONFIGURE_FLAGS}  ; then
-        ## FIXME: We should not use --disable-Werror, but need to fix a few warnings caused by Octave's headers instead
         echo "Failed to run  ${MBD_SOURCE_DIR}/configure"
         exit 1
     fi
 else
-    echo "${MBD_BUILD_DIR}/Makefile exist"
+    echo "${MBD_BUILD_DIR}/Makefile exists"
     echo "configure step will be skipped ..."
 fi
 
@@ -346,7 +374,8 @@ if ! make -j${MBD_NUM_BUILD_JOBS}; then
 fi
 
 echo "Run built-in unit tests"
-if ! make test; then
+mkdir -p "${MBD_TEST_PROGS_OUTPUT_DIR}"
+if ! make MBD_TEST_PROGS_OUTPUT_DIR="${MBD_TEST_PROGS_OUTPUT_DIR}" test; then
     echo "Built-in unit tests failed"
     exit 1
 fi

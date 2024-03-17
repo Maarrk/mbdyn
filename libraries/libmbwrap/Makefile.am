@@ -105,7 +105,8 @@ libmbwrap.la \
 @METIS_LIBS@ \
 @BLAS_LIBS@ \
 @FCLIBS@ \
-@LIBS@
+@LIBS@ \
+@GTEST_LIBS@
 
 cctest_SOURCES = cctest.cc
 cctest_LDADD = \
@@ -116,7 +117,8 @@ libmbwrap.la \
 @Y12_LIBS@ \
 @BLAS_LIBS@ \
 @LIBS@ \
-@FCLIBS@
+@FCLIBS@ \
+@GTEST_LIBS@
 
 if USE_ARPACK
 arptest_SOURCES = arptest.cc
@@ -130,7 +132,8 @@ libmbwrap.la \
 @Y12_LIBS@ \
 @BLAS_LIBS@ \
 @LIBS@ \
-@FCLIBS@
+@FCLIBS@ \
+@GTEST_LIBS@
 
 endif
 
@@ -143,6 +146,7 @@ AM_CPPFLAGS = \
 -I$(srcdir)/../liby12 \
 -I$(srcdir)/../libcolamd \
 -I$(srcdir)/../libnaive \
-@PASTIX_INC@
+@PASTIX_INC@ \
+@GTEST_INCLUDE@
 
 include $(top_srcdir)/build/bot.mk

@@ -103,6 +103,7 @@ mkl-build-job:       # This job runs in the build stage, which runs first.
               exit 1
           fi
   # artifacts:
+  #  name: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
   #  paths:
       ## FIXME: MKL_INSTALL_PREFIX cannot be used as an artifact because it is really huge!!
       ## - $MKL_INSTALL_PREFIX
