@@ -42,7 +42,6 @@ mbdyn-bootloader-job:
   stage: .pre
   script:
         - |
-          if ! test -z "${MBD_TESTSUITE_BOOTLOADER}"; then
-            echo ${MBD_TESTSUITE_BOOTLOADER}
-            ${MBD_TESTSUITE_BOOTLOADER}
-          fi
+            if ! test -z "${MBD_TESTSUITE_BOOTLOADER}"; then
+                echo "${MBD_TESTSUITE_BOOTLOADER}" | awk -v RS=';' '{printf("%s\0", $0)}' | xargs -L1 -0 sh -c
+            fi
