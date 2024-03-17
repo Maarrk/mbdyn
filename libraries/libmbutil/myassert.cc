@@ -16,7 +16,7 @@
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation (version 2 of the License).
- * 
+ *
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -33,14 +33,14 @@
 Macro di assert personalizzate
 
 Uso: ASSERT(<expr>);
-	- se <expr> e' vera ( != 0 ) non fa nulla;
-	- se <expr> e' falsa, scrive sul flusso di errore std::cerr il file e la riga
-		solo se DEBUG e' definita.
+        - se <expr> e' vera ( != 0 ) non fa nulla;
+        - se <expr> e' falsa, scrive sul flusso di errore std::cerr il file e la riga
+                solo se DEBUG e' definita.
 
 Uso: ASSERTMSG(<expr>, <msg>);
-	- se <expr> e' vera ( != 0 ) non fa nulla;
-	- se <expr> e' falsa, scrive sul flusso di errore std::cerr il file e la riga,
-		seguiti dal messaggio <msg>, solo se DEBUG e' definita.
+        - se <expr> e' vera ( != 0 ) non fa nulla;
+        - se <expr> e' falsa, scrive sul flusso di errore std::cerr il file e la riga,
+                seguiti dal messaggio <msg>, solo se DEBUG e' definita.
 
 Entrambe chiamano la funzione _Assert(file, line, msg = NULL);
 se msg e' definito, viene aggiunto in coda al messaggio di default
@@ -64,35 +64,41 @@ std::mutex mbdyn_lock_cout;
 
 #ifdef DEBUG
 
-long int debug_level = MYDEBUG_ANY;
-long int DEFAULT_DEBUG_LEVEL = MYDEBUG_ANY;
+long int debug_level = DEFAULT_DEBUG_LEVEL;
 
-void _Assert(const char* file, const int line, const char* msg)
+void _Assert(const char* file, const int line, const char* expr, const char* msg)
 {
+#ifdef USE_GTEST
+   ADD_FAILURE_AT(file, line) << ':' << expr << ':' << (msg ? msg : "") << '\n';
+#else
    std::cout.flush();
-   
-   std::cerr << std::endl << "ASSERT fault in file " << file 
-     << " at line " << line;
-   if (msg) { 
-      std::cerr << ':' << std::endl << msg; 
-   }
-   std::cerr << std::endl;
-   
-#ifdef DEBUG_STOP
-   throw MyAssert::ErrGeneric(MBDYN_EXCEPT_ARGS);
-#endif   
 
-#ifdef DEBUG_ABORT
-   abort();
+   std::cerr << "\nASSERT fault in file " << file
+     << " at line " << line;
+   if (msg) {
+      std::cerr << ':' << '\n' << msg;
+   }
+   std::cerr << '\n';
 #endif
-   
+
+   if (::debug_level & MYDEBUG_STOP) {
+      throw MyAssert::ErrGeneric(MBDYN_EXCEPT_ARGS, expr);
+   }
+
+   if (::debug_level & MYDEBUG_ABORT) {
+#ifdef USE_GTEST
+      FAIL();
+#else
+      abort();
+#endif
+   }
    return;
 }
 
 std::ostream& _Out(std::ostream& out, const char* file, const int line)
 {
    std::cout.flush();
-   
+
    // out << "File <" << file << ">, line [" << line << "]: ";
    out << "[" << file << "," << line << "]: ";
    return out;
@@ -104,45 +110,60 @@ int get_debug_options(const char *const s, const debug_array da[])
       ::debug_level = DEFAULT_DEBUG_LEVEL;
       return 0;
    }
-   
+
    const char* p = s;
    while (true) {
       const char* sep = std::strchr(p, ':');
       unsigned int l;
       if (sep != NULL) {
-	 l = int(sep-p);
+         l = int(sep-p);
       } else {
-	 l = strlen(p);
+         l = strlen(p);
       }
       debug_array* w = (debug_array*)da;
       while (w->s != NULL) {
-	 if (l == strlen(w->s) && strncmp(w->s, p, l) == 0) {
-	    break;
-	 }
-	 w++;
+         if (l == strlen(w->s) && strncmp(w->s, p, l) == 0) {
+            break;
+         }
+         w++;
       }
       if (w->s == NULL) {
-	 if (l == 4 && strncmp("none", p, 4) == 0) {
-	    ::debug_level = MYDEBUG_NONE;
-	 } else if (l == 3 && strncmp("any", p, 3) == 0) {
-	    ::debug_level = MYDEBUG_ANY;
-	 } else {
-	    silent_cerr("Unknown debug level \"");
-	    for (unsigned int i = 0; i < l; i++) {
-	       silent_cerr(p[i]);
-	    }
-	    silent_cerr("\"" << std::endl);
-	 }
+           static constexpr struct {
+                char name[9];
+                DebugFlags value;
+           } flags[] = {
+                {"none",     MYDEBUG_NONE},
+                {"any",      MYDEBUG_ANY}
+           };
+
+           bool validFlag = false;
+
+           for (const auto& flag: flags) {
+              const size_t n = strlen(flag.name);
+              if (l == n && strncmp(flag.name, p, n) == 0) {
+                 ::debug_level = flag.value;
+                 validFlag = true;
+                 break;
+              }
+           }
+
+           if (!validFlag) {
+              silent_cerr("Unknown debug level \"");
+              for (unsigned int i = 0; i < l; i++) {
+                 silent_cerr(p[i]);
+              }
+              silent_cerr("\"\n");
+           }
       } else {
-	 ::debug_level |= w->l;
-	 silent_cerr("debug level: " << w->s << std::endl);
+         ::debug_level |= w->l;
+         silent_cerr("debug level: " << w->s << "\n");
       }
       if (sep == NULL) {
-	 break;
+         break;
       }
       p = sep+1;
    }
-   
+
    return 0;
 }
 

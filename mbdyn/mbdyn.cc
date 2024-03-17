@@ -37,6 +37,10 @@
 #include <cerrno>
 #include <fstream>
 
+#ifdef USE_GTEST
+#include <gtest/gtest.h>
+#endif
+
 #include "ac/getopt.h"
 #include "task2cpu.h"
 
@@ -157,6 +161,9 @@ struct mbdyn_proc_t {
 	unsigned int nThreads;
 	bool using_mpi;
         bool bNonlinCPUTime;
+#ifdef USE_GTEST
+        bool bEnableGoogleTest;
+#endif
 #ifdef USE_MPI
 	int MyRank;
 	char *ProcessorName;
@@ -190,7 +197,8 @@ const debug_array da[] = {
 	{ "jacobian",		MYDEBUG_JAC			},
 	{ "init",		MYDEBUG_INIT			},
 	{ "output",		MYDEBUG_OUTPUT			},
-
+        { "stop",               MYDEBUG_STOP                    },
+        { "abort",              MYDEBUG_ABORT                   },
 	{ NULL,			MYDEBUG_NONE			}
 };
 #endif /* DEBUG */
@@ -260,6 +268,7 @@ mbdyn_usage(const char *sShortOpts)
 		<< "  -w, --warranty            prints the warranty conditions" << std::endl
 		<< "  -W, --working-dir {dir}   sets the working directory" << std::endl
                 << "  -a, --affinity {0,1, ...} sets the CPU affinity to a comma separated list of indices" << std::endl
+                << "  -G, --gtest               enable GoogleTest" << std::endl
 		<< std::endl
 		<< "Usually mbdyn reads the input from stdin and writes messages on stdout; a log" << std::endl
 		<< "is put in '{file}.out', and data output is sent to various '{file}.<ext>'" << std::endl
@@ -293,7 +302,7 @@ mbdyn_welcome(void)
 }
 
 /* Dati di getopt */
-static char sShortOpts[] = "C:d:eE::f:hHlN:o:pPrRsS:tTvwW:a:";
+static char sShortOpts[] = "Cd:eE::f:GhHlN:o:pPrRsS:tTvwW:a:";
 
 #ifdef HAVE_GETOPT_LONG
 static struct option LongOpts[] = {
@@ -302,7 +311,8 @@ static struct option LongOpts[] = {
 	{ "exceptions",     no_argument,       NULL,           int('e') },
 	{ "fp-mask",        optional_argument, NULL,           int('E') },
 	{ "input-file",     required_argument, NULL,           int('f') },
-	{ "help",           no_argument,       NULL,           int('h') },
+        { "gtest",          no_argument,       NULL,           int('G') },
+        { "help",           no_argument,       NULL,           int('h') },
 	{ "show-table",     no_argument,       NULL,           int('H') },
 	{ "license",        no_argument,       NULL,           int('l') },
 	{ "threads",	    required_argument, NULL,	       int('N') },
@@ -403,6 +413,12 @@ mbdyn_parse_arguments(mbdyn_proc_t& mbp, int argc, char *argv[], int& currarg)
 
 		case int('e'):
 			mbp.bException = true;
+#ifdef USE_GTEST
+                        if (mbp.bEnableGoogleTest) {
+                                silent_cerr("Warning: --gtest will be ignored with --exceptions\n");
+                        }
+                        mbp.bEnableGoogleTest = false;
+#endif
 			break;
 
 		case int('E'): {
@@ -472,7 +488,17 @@ mbdyn_parse_arguments(mbdyn_proc_t& mbp, int argc, char *argv[], int& currarg)
 			}
 			mbp.pIn = dynamic_cast<std::istream *>(&mbp.FileStreamIn);
 			break;
-
+                case int('G'):
+#ifdef USE_GTEST
+                        mbp.bEnableGoogleTest = true;
+                        if (mbp.bException) {
+                                silent_cerr("Warning: --exceptions will be ignored with --gtest\n");
+                        }
+                        mbp.bException = false;
+#else
+                        silent_cerr("option -G " << optarg << " is valid only with --with-gtest");
+#endif
+                        break;
 		case int('h'):
 			mbdyn_usage(sShortOpts);
 			throw NoErr(MBDYN_EXCEPT_ARGS);
@@ -1047,12 +1073,51 @@ mbdyn_program(mbdyn_proc_t& mbp, int argc, char *argv[], int& currarg)
 	throw NoErr(MBDYN_EXCEPT_ARGS);
 }
 
+#ifdef USE_GTEST
+class MBDynProgramGTest: public testing::Test {
+public:
+        MBDynProgramGTest(int argc, char* argv[], mbdyn_proc_t* mbp)
+                :argc(argc), argv(argv), mbp(mbp) {
+        }
+
+        virtual void TestBody() override {
+                try {
+                        int currarg = 0;
+
+                        if (argc > 0) {
+                                currarg = 1;
+                        }
+
+                        mbdyn_program(*mbp, argc, argv, currarg);
+                } catch (const NoErr&) {
+                        silent_cout("MBDyn terminated normally\n");
+                } catch (const MBDynErrBase& e) {
+                        silent_cerr("An error occurred during the execution of MBDyn (" << e.what() << "); aborting...\n");
+
+                        // Record the location in the source code. So, it may be displayed in GitLab CI.
+                        ADD_FAILURE_AT(e.GetFile(), e.GetLine())
+                             << "An error occurred during the execution of MBDyn (" << e.GetFunction() << "); aborting...\n";
+
+                        // RUN_ALL_TESTS will return a nonzero exit status if we call ADD_FAILURE_AT
+                }
+        }
+private:
+        const int argc;
+        char** const argv;
+        mbdyn_proc_t* const mbp;
+};
+#endif
+
 int
 main(int argc, char* argv[])
 {
+#ifdef USE_GTEST
+	testing::InitGoogleTest(&argc, argv);
+#endif
 	int	rc = EXIT_SUCCESS;
 
 	mbdyn_proc_t mbp;
+
        	mbp.bException = false;
        	mbp.bRedefine = false;
        	mbp.bTable = false;
@@ -1066,6 +1131,9 @@ main(int argc, char* argv[])
 	mbp.CurrInputFormat = MBDYN;
 	mbp.CurrInputSource = MBFILE_UNKNOWN;
 	mbp.bNonlinCPUTime = false;
+#ifdef USE_GTEST
+        mbp.bEnableGoogleTest = false;
+#endif
 #ifdef USE_MPI
         mbp.using_mpi = true;
 #else
@@ -1168,8 +1236,29 @@ main(int argc, char* argv[])
 
 	if (mbp.bException) {
 		mbdyn_program(mbp, argc, argv, currarg);
+#ifdef USE_GTEST
+        } else if (mbp.bEnableGoogleTest) {
+                mbdyn_proc_t* pmbp = &mbp;
+                std::ostringstream os;
 
-	} else {
+                for (int i = 0; i < argc; ++i) {
+                        os << argv[i] << ' ';
+                }
+
+                os << std::ends;
+
+                const std::string strTestName = os.str();
+                
+                testing::RegisterTest("mbdyn_program",
+                                      strTestName.c_str(),
+                                      nullptr,
+                                      mbp.sInputFileName.c_str(),
+                                      __FILE__,
+                                      __LINE__,
+                                      [=]() -> MBDynProgramGTest* { return new MBDynProgramGTest(argc, argv, pmbp); });
+                rc = RUN_ALL_TESTS();
+#endif
+        } else {
 	    	/* The program is a big try block */
 	    	try {
 			mbdyn_program(mbp, argc, argv, currarg);

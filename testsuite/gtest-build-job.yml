@@ -34,26 +34,26 @@
 # for use in the software MBDyn as described
 # in the GNU Public License version 2.1
 
-nlopt-build-job:       # This job runs in the build stage, which runs first.
+gtest-build-job:       # This job runs in the build stage, which runs first.
   stage: build
   needs:
       - job: mbdyn-cleanup-job
   script:
-      - NL_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NL_INSTALL_PREFIX}
-      - NL_BUILD_DIR=${CI_PROJECT_DIR}/${NL_BUILD_DIR}
+      - GTEST_INSTALL_PREFIX=${CI_PROJECT_DIR}/${GTEST_INSTALL_PREFIX}
+      - GTEST_BUILD_DIR=${CI_PROJECT_DIR}/${GTEST_BUILD_DIR}
       - |
-        if test -d "${NL_INSTALL_PREFIX}"; then
-          NL_PKG_CONFIG=`find ${NL_INSTALL_PREFIX} '(' -type d -and -name pkgconfig ')'`
+        if test -d "${GTEST_INSTALL_PREFIX}"; then
+          GTEST_PKG_CONFIG=`find ${GTEST_INSTALL_PREFIX} '(' -type d -and -name pkgconfig ')'`
         fi
-        if ! test -z "${NL_PKG_CONFIG}" && test -f "${NL_PKG_CONFIG}/nlopt.pc" && test "${MBD_CLEAN_ALL}" = "no"; then
-          echo "nlopt was already installed"
+        if ! test -z "${GTEST_PKG_CONFIG}" && test -f "${GTEST_PKG_CONFIG}/gtest.pc" && test "${MBD_CLEAN_ALL}" = "no"; then
+          echo "gtest was already installed"
           exit 0
         fi
       - |
-        if ! test -d ${NL_BUILD_DIR}; then
-          git clone -b master https://github.com/stevengj/nlopt.git ${NL_BUILD_DIR}
+        if ! test -d ${GTEST_BUILD_DIR}; then
+          git clone -b main https://github.com/google/googletest.git ${GTEST_BUILD_DIR}
         fi
-      - cd ${NL_BUILD_DIR}
+      - cd ${GTEST_BUILD_DIR}
       - |
         if ! test -d build_dir; then
           mkdir build_dir
@@ -61,20 +61,17 @@ nlopt-build-job:       # This job runs in the build stage, which runs first.
       - cd build_dir
       - |
         if ! test -f Makefile; then
-          cmake .. -DCMAKE_INSTALL_PREFIX="${NL_INSTALL_PREFIX}" -DBUILD_SHARED_LIBS=ON -DNLOPT_OCTAVE=OFF -DNLOPT_PYTHON=OFF
+          cmake .. -DCMAKE_INSTALL_PREFIX="${GTEST_INSTALL_PREFIX}" -DCMAKE_BUILD_TYPE=Release
         fi
       - make -j${MBD_NUM_BUILD_JOBS}
-      - rm -rf ${NL_INSTALL_PREFIX}
+      - rm -rf ${GTEST_INSTALL_PREFIX}
       - make install
   artifacts:
      name: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
      expire_in: 24h
      paths:
-      - $NL_INSTALL_PREFIX
+      - $GTEST_INSTALL_PREFIX
   cache:
    key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
    paths:
-      - $NC_C_BUILD_DIR
-      - $NC_CXX4_BUILD_DIR
-      - $NL_BUILD_DIR
-      - $GMSH_BUILD_DIR
+      - $GTEST_BUILD_DIR
