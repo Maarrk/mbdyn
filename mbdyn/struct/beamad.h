@@ -49,6 +49,11 @@
 
 class BeamAd: virtual public Beam {
 public:
+     using Beam::AssRes;
+     using Beam::AssJac;
+     using Beam::InitialAssRes;
+     using Beam::InitialAssJac;
+
      BeamAd(unsigned int uL,
             const StructNodeAd* pN1, const StructNodeAd* pN2, const StructNodeAd* pN3,
             const Vec3& F1, const Vec3& F2, const Vec3& F3,
@@ -180,6 +185,11 @@ protected:
 
 class ViscoElasticBeamAd: public ViscoElasticBeam, public BeamAd {
 public:
+     using ViscoElasticBeam::AssRes;
+     using ViscoElasticBeam::AssJac;
+     using ViscoElasticBeam::InitialAssRes;
+     using ViscoElasticBeam::InitialAssJac;
+
      ViscoElasticBeamAd(unsigned int uL,
                         const StructNodeAd* pN1,
                         const StructNodeAd* pN2,
