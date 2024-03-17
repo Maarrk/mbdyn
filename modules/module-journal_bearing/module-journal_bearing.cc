@@ -64,6 +64,11 @@ using namespace sp_grad;
 class JournalBearing: virtual public Elem, public UserDefinedElem
 {
 public:
+        using Elem::AssRes;
+        using Elem::AssJac;
+        using UserDefinedElem::InitialAssRes;
+        using UserDefinedElem::InitialAssJac;
+
         JournalBearing(unsigned uLabel, const DofOwner *pDO,
                        DataManager* pDM, MBDynParser& HP);
         virtual ~JournalBearing(void);
