@@ -368,7 +368,7 @@ if ! test -f Makefile; then
 fi
 
 printf "Compiling the code using %s jobs ...\n" ${MBD_NUM_BUILD_JOBS}
-if ! make V=1 -j${MBD_NUM_BUILD_JOBS}; then
+if ! make -j${MBD_NUM_BUILD_JOBS}; then
     echo "build failed"
     exit 1
 fi
