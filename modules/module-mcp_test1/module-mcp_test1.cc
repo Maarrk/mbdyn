@@ -506,6 +506,7 @@ MCPTest1::InitialAssRes(
 
 class MCPTest2: virtual public Elem, public UserDefinedElem
 {
+     unsing Elem::AssRes;
 public:
      MCPTest2(unsigned uLabel, const DofOwner *pDO,
               DataManager* pDM, MBDynParser& HP);
