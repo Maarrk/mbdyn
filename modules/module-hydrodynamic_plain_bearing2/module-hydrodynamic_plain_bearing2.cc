@@ -24893,6 +24893,7 @@ namespace {
 
      class GrooveShapeDriveCaller : public DriveCaller
      {
+     using DriveCaller::dGet;
      public:
           GrooveShapeDriveCaller(const DriveHandler* pDH, doublereal Ws, doublereal Wc, doublereal Hg);
 
