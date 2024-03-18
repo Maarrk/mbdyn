@@ -178,8 +178,8 @@ ModuleNS1::AssRes(SubVectorHandler& WorkVec,
 	const Vec3& X(m_pNode->GetXCurr());
 	Vec3 DX = X - m_X0;
 
-	doublereal dZ = m_N*DX;
-	doublereal dZP = m_N*m_pNode->GetVCurr();
+	// doublereal dZ = m_N*DX;
+	// doublereal dZP = m_N*m_pNode->GetVCurr();
 	// dZ and dZP are positive along m_N
 
 	doublereal dF = 0.;

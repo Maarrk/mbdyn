@@ -62,7 +62,7 @@ regionz_(nz)
 void
 MDRegion::RegionSplit()
 {
-    int npar_per_region = n_par_ / n_subregion_;
+    // int npar_per_region = n_par_ / n_subregion_;
 }
 
 MDSand::MDSand(const MDSand &T)
@@ -617,10 +617,13 @@ void
 MDSand::Interact(int i, int j)
 {
 
-    bool if_overlap = false, if_found = false, if_voc = false;
-    int ref_voc;
+    bool if_overlap = false;
+    // bool if_voc = false;
+    // bool if_found = false;
+    // int ref_voc;
     RealVec dr_ji, dv_ji, vn, vs, Fn, Fs, vs_direction, normal_direction;
-    double abs_vn, abs_vs, abs_Fn, abs_Fs, abs_Fss, abs_dr, overlap;
+    double abs_vn, abs_vs, abs_Fn, abs_Fs, abs_dr, overlap;
+    // double abs_Fss;
 
     dr_ji = sand_array_[j].pos - sand_array_[i].pos;
     // mr = 1 / (1 / sand_array_[i].m + 1 / sand_array_[j].m);
