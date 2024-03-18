@@ -62,7 +62,7 @@ using namespace sp_grad;
 
 class MCPTest1: virtual public Elem, public UserDefinedElem
 {
-     unsing Elem::AssRes;
+     using Elem::AssRes;
 public:
      MCPTest1(unsigned uLabel, const DofOwner *pDO,
               DataManager* pDM, MBDynParser& HP);
@@ -506,7 +506,7 @@ MCPTest1::InitialAssRes(
 
 class MCPTest2: virtual public Elem, public UserDefinedElem
 {
-     unsing Elem::AssRes;
+     using Elem::AssRes;
 public:
      MCPTest2(unsigned uLabel, const DofOwner *pDO,
               DataManager* pDM, MBDynParser& HP);
