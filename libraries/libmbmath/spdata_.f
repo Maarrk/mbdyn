@@ -112,7 +112,7 @@ C
 C get static data from structure rather than from common
 C
 	LENGTH = IV( 1 )
-	IPRIME = IV( 2 )	
+	IPRIME = IV( 2 )
 	IEMPTY = IV( 3 )
 C
 C  FIND A STARTING POSITION, IFREE, FOR THE INSERTION BY HASHING FIELD.
@@ -215,7 +215,7 @@ C
 C get static data from structure rather than from common
 C
 	LENGTH = IV( 1 )
-	IPRIME = IV( 2 )	
+	IPRIME = IV( 2 )
 C unused
 C	IEMPTY = IV( 3 )
 C
