@@ -66,7 +66,7 @@ TRILINOS_INC_DIR="${TRILINOS_INC_DIR:-${TRILINOS_INSTALL_PREFIX}/include/trilino
 SUITESPARSE_INC_DIR="${SUITESPARSE_INC_DIR:-/usr/include/suitesparse}"
 NUMPY_INC_DIR="${NUMPY_INC_DIR:-/usr/lib64/python3.11/site-packages/numpy/core/include}"
 PYTHON_INC_DIR="${PYTHON_INC_DIR:-/usr/include/python3.11}"
-CXXFLAGS="${CXXFLAGS:--Wno-unknown-pragmas}"
+#CXXFLAGS="${CXXFLAGS:--Wno-unknown-pragmas}"
 MBD_CLEAN_BUILD="${MBD_CLEAN_BUILD:-no}"
 MBD_CLEAN_ALL="${MBD_CLEAN_ALL:-no}"
 
