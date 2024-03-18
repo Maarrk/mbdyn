@@ -24893,14 +24893,13 @@ namespace {
 
      class GrooveShapeDriveCaller : public DriveCaller
      {
-     using DriveCaller::dGet;
      public:
           GrooveShapeDriveCaller(const DriveHandler* pDH, doublereal Ws, doublereal Wc, doublereal Hg);
 
           virtual ~GrooveShapeDriveCaller();
           bool bIsDifferentiable(void) const;
           virtual std::ostream& Restart(std::ostream& out) const;
-          doublereal dGet(const doublereal& dVar) const;
+          doublereal dGet(const doublereal& dVar) const override;
           virtual doublereal dGetP(const doublereal& dVar) const;
           virtual DriveCaller* pCopy(void) const;
 
