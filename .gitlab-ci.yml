@@ -126,6 +126,13 @@ variables:
       - "no"
     description: "Do not use any caches and build everything from scratch"
 
+  MBD_CLEAN_BUILD:
+    value: "yes"
+    options:
+      - "yes"
+      - "no"
+    description: "Clean up the build directory of MBDyn"
+    
   MBD_TEST_COVERAGE_ENABLED:
     value: "no"
     options:

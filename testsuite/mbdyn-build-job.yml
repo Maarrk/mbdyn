@@ -35,9 +35,6 @@
 # in the GNU Public License version 2.1
 
 variables:
-  ## Clean up the build directory of MBDyn
-  MBD_CLEAN_BUILD: "yes"
-
   ## Force no rebuild of MBDyn; The default must be "no", but it could be overridden manually when the pipeline is started!
   MBD_SKIP_BUILD: "no"
 
