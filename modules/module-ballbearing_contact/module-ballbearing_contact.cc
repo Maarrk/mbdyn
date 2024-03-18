@@ -66,6 +66,7 @@ using namespace sp_grad;
 
 class BallBearingContact: virtual public Elem, public UserDefinedElem
 {
+     using Elem::AssRes;
 public:
      BallBearingContact(unsigned uLabel, const DofOwner *pDO,
                         DataManager* pDM, MBDynParser& HP);
