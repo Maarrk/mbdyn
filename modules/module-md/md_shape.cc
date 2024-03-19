@@ -516,8 +516,6 @@ bool MDArch::GetSurfGeo (const RealVec & sand_pos, double sand_radius, RealVec &
         drz = dr * direction_z_;
     double
         theta;
-    double
-        PI = 3.1415926535897932384626433832795;
 
     if_inside = false;
 
