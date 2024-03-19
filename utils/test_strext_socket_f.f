@@ -1,41 +1,41 @@
 C $Header$ */
-C MBDyn (C) is a multibody analysis code. 
+C MBDyn (C) is a multibody analysis code.
 C http://www.mbdyn.org
-C 
+C
 C Copyright (C) 1996-2023
-C 
+C
 C Pierangelo Masarati	<pierangelo.masarati@polimi.it>
 C Paolo Mantegazza	<paolo.mantegazza@polimi.it>
-C 
+C
 C Dipartimento di Ingegneria Aerospaziale - Politecnico di Milano
 C via La Masa, 34 - 20156 Milano, Italy
 C http://www.aero.polimi.it
-C 
+C
 C Changing this copyright notice is forbidden.
-C 
+C
 C This program is free software; you can redistribute it and/or modify
 C it under the terms of the GNU General Public License as published by
 C the Free Software Foundation (version 2 of the License).
-C 
-C 
+C
+C
 C This program is distributed in the hope that it will be useful,
 C but WITHOUT ANY WARRANTY; without even the implied warranty of
 C MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 C GNU General Public License for more details.
-C 
+C
 C You should have received a copy of the GNU General Public License
 C along with this program; if not, write to the Free Software
 C Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-C 
+C
 C NOTE: this is all we use from MBDyn.  It was intentionally designed
 C to be configuration-independent.
 C
 C #include "mbc.h"
 
-      SUBROUTINE MAINF
+      FUNCTION MAINF()
 
       IMPLICIT NONE
-
+      INTEGER*4 MAINF
       INTEGER*4 REFNODE, NODES, ROT, ITERS, VERB
       INTEGER*4 STEPS, KEEPGOING, ITER, RC, I, J, N, CONVERGED
       REAL*4 RF(3), RM(3), NF(3, 100), NM(3, 100)
@@ -45,6 +45,7 @@ C #include "mbc.h"
 
       EQUIVALENCE(RR(1, 1), RTHETA(1))
       EQUIVALENCE(NR(1, 1, 1), NTHETA(1, 1))
+      MAINF = 1
 
       CALL TDATA(REFNODE, NODES, ROT, ITERS, VERB, RC)
       IF (NODES .GT. 100) THEN
@@ -106,4 +107,5 @@ C #include "mbc.h"
           ENDIF
         ENDDO
       ENDDO
-      END SUBROUTINE
+      MAINF = 0
+      END FUNCTION

@@ -41,6 +41,7 @@ class SubVectorHandler;
 /* STLVectorHandler - begin */
 
 class STLVectorHandler : public VectorHandler, public std::vector<doublereal> {
+     using VectorHandler::operator+=;
 public:
 	STLVectorHandler(integer iSize = 0);
 

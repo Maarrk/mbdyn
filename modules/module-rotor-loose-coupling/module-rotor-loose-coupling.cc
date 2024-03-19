@@ -63,8 +63,8 @@ private:
 
 	struct NodalForce {
 		const StructNode *pNode;
-		Vec3 F;
-		Vec3 M;
+                Vec3 F = ::Zero3;
+                Vec3 M = ::Zero3;
 	};
 
 	unsigned m_stepsPerRevolution;

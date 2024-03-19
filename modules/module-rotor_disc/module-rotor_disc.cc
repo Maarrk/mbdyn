@@ -190,7 +190,7 @@ RotorDisc::RotorDisc( unsigned int uLabel, const DofOwner *pDO,
     bool bGotOmega      = false;
     bool bGotChord      = false;
     bool bGotNBlades    = false;
-    bool bGotSigma      = false;
+    // bool bGotSigma      = false;
     // drive di input rotor angular speed;
     if (HP.IsKeyWord("angular" "velocity")){
         pOmega  = HP.GetDriveCaller();
@@ -348,7 +348,7 @@ RotorDisc::RotorDisc( unsigned int uLabel, const DofOwner *pDO,
     t2 = RotorSolidity*ClAlpha/8.0*sqrt(t1);
     t3 = -0.75*BladeTwist;
 
-    doublereal thetaCollHover = t0*(t1+t2)-t3;
+    doublereal thetaCollHover = t0*(t1+t2)-t3; (void)thetaCollHover; // silence unused warning
 
     //std::cout <<"rotordisc(" << uLabel << "): Initial Properties"<< std::endl;
     //std::cout <<"###########################" << std::endl;
@@ -655,19 +655,19 @@ void RotorDisc::computeLambdaNewman(int itMax, doublereal tollMax){
     
     doublereal ct2 = 0.5*Ct;
     // initial guess is lambda just found out
-    isnan(lambda) ? lambdaItPrev = 0.0 : lambdaItPrev=lambda;
+    lambdaItPrev = isnan(lambda) ? 0.0 : lambda;
     // lambdaItPrev = lambda;
     //lambdaIt     = lambda;
     vsx = mu*cos(alphaTPP);
 
-    doublereal b1,c1;
+    //doublereal b1,c1;
     //b1 = 0.5*RotorSolidity*Cl/8.0;
     //c1 = -RotorSolidity*Cl/12.0*(thetaColl+0.75*BladeTwist);
     //lambdaIt = -b1+sqrt(pow(b1,2.0)-c1);
 
     doublereal tollLn = 10.0;
     int it=0;
-    while ((it<=itMax) and (tollLn>=tollMax)){
+    do {
         vsz = mu*sin(alphaTPP)+lambdaItPrev;
         f = lambdaItPrev-ct2*pow((pow(vsx,2.0)+pow(vsz,2.0)),-0.5);
         dfdl = 1+ct2*vsz*pow((pow(vsx,2.0)+pow(vsz,2.0)),-1.5);
@@ -675,7 +675,7 @@ void RotorDisc::computeLambdaNewman(int itMax, doublereal tollMax){
         tollLn = abs(lambdaIt-lambdaItPrev);
         lambdaItPrev = lambdaIt;
         it++;
-    }
+    } while ((it<=itMax) && (tollLn>=tollMax));
 
     lambdaNewman = lambdaIt;
 

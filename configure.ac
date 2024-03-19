@@ -364,13 +364,13 @@ AC_RUN_IFELSE(
         ],
         [AC_MSG_RESULT([yes])],
         [
-                save_CXXFlAGS="$CXXFLAGS"
+                save_CXXFLAGS="$CXXFLAGS"
                 CXXFLAGS="$CXXFLAGS -std=c++17"
 
                 AC_RUN_IFELSE(
                         [AC_LANG_PROGRAM([],
                                 [
-                                        if (__cplusplus == 202101L || __cplusplus == 202002L|| __cplusplus == 201703L) {
+                                        if (__cplusplus >= 201703L) {
                                                 return 0;
                                         }
                                         return 1;
@@ -3627,7 +3627,7 @@ fi
 AC_LANG([C])
 
 dnl ----------------------------------------------------------------
-dnl Check if we are able to use latex to build MBDyn's PDF manuals.
+dnl Deal with -Werror.
 dnl ----------------------------------------------------------------
 
 if test "$ol_enable_Werror" != no ; then
@@ -3636,9 +3636,15 @@ if test "$ol_enable_Werror" != no ; then
         AX_CHECK_COMPILE_FLAG([-Wformat-truncation],[CFLAGS="$CFLAGS -Wno-error=format-truncation"], , [-Werror])
         AC_LANG([C++])
         AX_CHECK_COMPILE_FLAG([-Wformat-truncation],CXXFLAGS="$CXXFLAGS -Wno-error=format-truncation", , [-Werror])
+dnl	openmp is required by trilinos, add it just in case        
+	AX_CHECK_COMPILE_FLAG([-fopenmp],CXXFLAGS="$CXXFLAGS -fopenmp", , [-Werror])
         AC_LANG([C])
         FFLAGS="$FFLAGS"
 fi
+
+dnl ----------------------------------------------------------------
+dnl Check if we are able to use latex to build MBDyn's PDF manuals.
+dnl ----------------------------------------------------------------
 
 build_manuals=no
 

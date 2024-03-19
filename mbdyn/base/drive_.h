@@ -223,6 +223,8 @@ TimeStepDriveCaller::dGet(void) const
 /* MultDriveCaller - begin */
 
 class MultDriveCaller : public DriveCaller {
+        using DriveCaller::dGet;
+        using DriveCaller::dGetP;
 protected:
 	DriveOwner DO1, DO2;
 
@@ -232,17 +234,17 @@ public:
 	virtual ~MultDriveCaller(void);
 
 	/* Scrive il contributo del DriveCaller al file di restart */
-	virtual std::ostream& Restart(std::ostream& out) const;
+	virtual std::ostream& Restart(std::ostream& out) const override;
 
 	/* Copia */
-	virtual DriveCaller* pCopy(void) const;
+	virtual DriveCaller* pCopy(void) const override;
 
-	inline doublereal dGet(void) const;
-	inline doublereal dGet(const doublereal& dVar) const;
+	inline doublereal dGet(void) const override;
+	inline doublereal dGet(const doublereal& dVar) const override;
 
 	/* this is about drives that are differentiable */
-	virtual bool bIsDifferentiable(void) const;
-	virtual doublereal dGetP(const doublereal& dVar) const;
+	virtual bool bIsDifferentiable(void) const override;
+	virtual doublereal dGetP(const doublereal& dVar) const override;
 };
 
 inline doublereal
@@ -277,6 +279,8 @@ MultDriveCaller::dGetP(const doublereal& dVar) const
 
 class LinearDriveCaller : public DriveCaller {
 private:
+        using DriveCaller::dGet;
+        using DriveCaller::dGetP;
 	doublereal dC0;
 	doublereal dC1;
 
@@ -327,6 +331,8 @@ LinearDriveCaller::dGetP(const doublereal& /* dVar */ ) const
 /* ParabolicDriveCaller - begin */
 
 class ParabolicDriveCaller : public DriveCaller {
+        using DriveCaller::dGet;
+        using DriveCaller::dGetP;
 private:
 	doublereal dC0;
 	doublereal dC1;
@@ -338,19 +344,19 @@ public:
 	virtual ~ParabolicDriveCaller(void);
 
 	/* Copia */
-	virtual DriveCaller* pCopy(void) const;
+	virtual DriveCaller* pCopy(void) const override;
 
 	/* Scrive il contributo del DriveCaller al file di restart */
-	virtual std::ostream& Restart(std::ostream& out) const;
+	virtual std::ostream& Restart(std::ostream& out) const override;
 
-	inline doublereal dGet(const doublereal& dVar) const;
+	inline doublereal dGet(const doublereal& dVar) const override;
 #if 0
 	inline doublereal dGet(void) const;
 #endif
 
 	/* this is about drives that are differentiable */
-	virtual bool bIsDifferentiable(void) const;
-	virtual doublereal dGetP(const doublereal& dVar) const;
+	virtual bool bIsDifferentiable(void) const override;
+	virtual doublereal dGetP(const doublereal& dVar) const override;
 #if 0
 	virtual inline doublereal dGetP(void) const;
 #endif

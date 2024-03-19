@@ -94,7 +94,7 @@ begin: initial value;
     method: bdf;
     derivatives tolerance: 1e-4;
     derivatives max iterations: 20;
-	derivatives coefficient: 1.e-7;
+	derivatives coefficient: auto;
     #output: residual;
     #output: jacobian;
     output: iterations;
