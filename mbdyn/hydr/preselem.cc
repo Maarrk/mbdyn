@@ -954,93 +954,93 @@ Elem* ReadHydraulicElem(DataManager* pDM,
        const PressureNode* pNode = pDM->ReadNode<const PressureNode, Node::HYDRAULIC>(HP);
        
        /* Corsa pistone */
-       doublereal stroke = HP.GetReal();
-       if (stroke <= 0.) {		  
-	  silent_cerr("Accumulator(" << uLabel << "): "
-		  "null or negative stroke "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       doublereal stroke(0.);
+       try {
+               stroke = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: invalid stroke " << e.Get() << " (must be positive) [" << e.what() << "] for Accumulator(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Stroke: " << stroke << std::endl);
           
-       doublereal start = 0.;
+       doublereal start(0.);
        if (HP.IsKeyWord("start")) {	       
-	  // Corsa iniziale del setto    	   
-	  start = HP.GetReal();
-	  if (start > stroke) 
-	    {		  
-	       silent_cerr("Accumulator(" << uLabel << "): "
-		       "stroke less then initial position "
-		       "at line " << HP.GetLineData() << std::endl);
-	       throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-	    }
+	   // Corsa iniziale del setto
+           try {
+                   start = HP.GetReal(0., HighParser::range_ge_le<doublereal>(0., stroke));
+
+           } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+                   silent_cerr("error: invalid start " << e.Get() << " (must be non-negative and lower than or equal to stroke=" << stroke << ") [" << e.what() << "] for Accumulator(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+                   throw e;
+           }
        }	    	  
        DEBUGCOUT("start: " << start << std::endl);
        
        /* Area stantuffo */
-       doublereal area = HP.GetReal();
-       if (area <= 0.) {		  
-	  silent_cerr("Accumulator(" << uLabel << "): "
-		  "null or negative area "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       doublereal area(0.);
+       try {
+               area = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: invalid area " << e.Get() << " (must be positive) [" << e.what() << "] for Accumulator(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Area: " << area << std::endl);
        
        /* Area pipe */
-       doublereal area_pipe = HP.GetReal();
-       if (area_pipe <= 0.) {		  
-	  silent_cerr("Accumulator(" << uLabel << "): "
-		  "null or negative area_pipe "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       doublereal area_pipe(0.);
+       try {
+               area_pipe = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: invalid pipe area " << e.Get() << " (must be positive) [" << e.what() << "] for Accumulator(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("area_pipe: " << area_pipe << std::endl); 
        
        /* Massa stantuffo */
        doublereal mass = HP.GetReal();
-       if (mass <= 0.) {		  
-	  silent_cerr("Accumulator(" << uLabel << "): "
-		  "null or negative mass "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	 
+       try {
+               mass = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: invalid mass " << e.Get() << " (must be positive) [" << e.what() << "] for Accumulator(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Mass: " << mass << std::endl);
          
-       doublereal h_in = 1;
-       if (HP.IsKeyWord("lossin")) {	       
-	  // Perdita di carico entrata
-	  h_in = HP.GetReal();
-	  if (h_in < 0.) 
-	    {		  
-	       silent_cerr("Accumulator(" << uLabel << "): "
-		       "negative loss_in "
-		       "at line " << HP.GetLineData() << std::endl);
-	       throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-	    }
+       doublereal h_in(1.);
+       if (HP.IsKeyWord("loss" "in")) {	       
+	   // Perdita di carico entrata
+           try {
+                   h_in = HP.GetReal(0., HighParser::range_ge<doublereal>(0.));
+
+           } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+                   silent_cerr("error: invalid loss in " << e.Get() << " (must be non-negative) [" << e.what() << "] for Accumulator(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+                   throw e;
+           }
        }	    	  
        DEBUGCOUT("Loss_in: " << h_in << std::endl);
        
-       doublereal h_out = 0.5;
-	    if (HP.IsKeyWord("lossout")) {	       
-	       // Perdita di carico uscita    	   
-	       h_out = HP.GetReal();
- 	       if (h_out < 0.) 
-		 {		  
-		    silent_cerr("Accumulator(" << uLabel << "): "
-			    "negative loss_out "
-			    "at line " << HP.GetLineData() << std::endl);
-		    throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-		 }
-	    }	    	  
-	    DEBUGCOUT("loss_out: " << h_out << std::endl);
+       doublereal h_out(0.5);
+       if (HP.IsKeyWord("loss" "out")) {	       
+           // Perdita di carico uscita    	   
+           try {
+                   h_out = HP.GetReal(0., HighParser::range_ge<doublereal>(0.));
+
+           } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+                   silent_cerr("error: invalid loss out " << e.Get() << " (must be non-negative) [" << e.what() << "] for Accumulator(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+                   throw e;
+           }
+       }
+       DEBUGCOUT("loss_out: " << h_out << std::endl);
        
-       doublereal press0   = 0.;
-       doublereal press_max= 0.;
-       doublereal Kappa    = 0.;
+       doublereal press0(0.);
+       doublereal press_max(0.);
+       doublereal Kappa(0.);
        
        if (HP.IsKeyWord("gas")) {
-	  
 	  /* Pressione gas accumulatore scarico */
 	  press0 = HP.GetReal();
 	  if (press0 <= 0.) {		  
@@ -1093,6 +1093,7 @@ Elem* ReadHydraulicElem(DataManager* pDM,
 		     "at line " << HP.GetLineData() << std::endl);
 	     throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
 	  }
+	  DEBUGCOUT("spring: " << spring << std::endl);
 	  
 	  force0 = HP.GetReal();
 	  if (force0 < 0.) {		  
@@ -1101,7 +1102,6 @@ Elem* ReadHydraulicElem(DataManager* pDM,
 		     "at line " << HP.GetLineData() << std::endl);
 	     throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
 	  }
-	  DEBUGCOUT("spring: " << spring << std::endl);
 	  DEBUGCOUT("force0: " << force0 << std::endl);
        }
        

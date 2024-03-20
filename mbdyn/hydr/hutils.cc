@@ -240,9 +240,10 @@ Accumulator::AssRes(SubVectorHandler& WorkVec,
    doublereal x0;
    doublereal x0spring;
    doublereal density = HF->dGetDensity();
-  
-   x0 = (stroke*(pow(p1/press0, 1./Kappa)-1.))/pow(p1/press0, 1./Kappa);
-   x0spring = (p1*area-force0)/spring;
+ 
+   doublereal p10 = pow(p1/press0, 1./Kappa); 
+   x0 = (stroke*(p10 - 1.))/p10;
+   x0spring = (p1*area - force0)/spring;
       
    if (s < 0.) { 
       c1 = c_spost;
@@ -310,10 +311,10 @@ Accumulator::AssRes(SubVectorHandler& WorkVec,
    }
 
    Res_1 = density*v*area;    
-   Res_2 = (mass+weight)*vp-p1*area+pgas*area+force0+spring*s
-     +copysign(h*.5*density*area*ratio2*pow(v, 2), v)+c1*s
-     +c2*sp+c3*vp+c4+cf1*(s-s_max)+cf2*sp+cf3*vp+cf4;
-   Res_3 = sp-v;
+   Res_2 = (mass + weight)*vp - p1*area + pgas*area + force0 + spring*s
+     + copysign(h*.5*density*area*ratio2*pow(v, 2), v) + c1*s
+     + c2*sp + c3*vp + c4 + cf1*(s - s_max) + cf2*sp + cf3*vp + cf4;
+   Res_3 = sp - v;
 
    flow = -Res_1;  /* portata nodo 1 (per l'output) */
 
@@ -358,8 +359,8 @@ Accumulator::AssRes(SubVectorHandler& WorkVec,
 #endif // HYDR_DEVEL
    
    WorkVec.PutItem(1, iNode1RowIndex, Res_1);
-   WorkVec.PutItem(2, iFirstIndex+1, Res_2);         
-   WorkVec.PutItem(3, iFirstIndex+2, Res_3);
+   WorkVec.PutItem(2, iFirstIndex + 1, Res_2);         
+   WorkVec.PutItem(3, iFirstIndex + 2, Res_3);
        
    return WorkVec;
 }

@@ -60,7 +60,36 @@ previously defined fluid can be recalled by using the keyword
 
 \subsection{Accumulator}
 \label{sec:EL:HYDR:ACCUMULATOR}
-Not documented yet.
+%\begin{verbatim}
+\begin{Verbatim}[commandchars=\\\{\}]
+    \bnt{hydr_elem_type} ::= \kw{accumulator}
+
+    \bnt{hydr_elem_data} ::=
+        \bnt{node} ,
+        \bnt{stroke} ,
+        [ \kw{start} , \bnt{initial_position} , ]
+        \bnt{area} ,
+        \bnt{pipe_area} ,
+        \bnt{mass} ,
+        [ \kw{loss in} , \bnt{loss_in} , ]
+        [ \kw{loss out} , \bnt{loss_out} , ]
+        [ \kw{gas} , \bnt{press0} , \bnt{press_max}, \bnt{exponent} , ]
+        [ \kw{weight} , \bnt{weight} , ]
+        [ \kw{spring} , \bnt{spring} , \bnt{force0} , ]
+        \bnt{c_disp} ,
+        \bnt{c_vel} ,
+        \bnt{c_acc} , 
+        (\hty{HydraulicFluid}) \bnt{fluid_1}
+\end{Verbatim}
+%\end{verbatim}
+wnere
+\begin{itemize}
+\item \nt{stroke} must be positive
+\item \nt{initial\_position} must be non-negative and less than or equal to \nt{stroke}
+\item \nt{loss\_in} defaults to 1.
+\item \nt{loss\_out} defaults to 0.5
+\item \nt{c\_disp}, \nt{c\_vel}, and \nt{c\_acc} are stiffness, damping, and jerk coefficients used to deal with end of stroke reactions
+\end{itemize}
 
 
 
