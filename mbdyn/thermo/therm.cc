@@ -130,7 +130,7 @@ Elem* ReadThermal(DataManager* pDM,
 				r = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
 
 			} catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
-				silent_cerr("error: invalid thermal resistance " << e.Get() << " (must be non-negative) [" << e.what() << "] for ThermalResistance(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+				silent_cerr("error: invalid thermal resistance " << e.Get() << " (must be positive) [" << e.what() << "] for ThermalResistance(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
 				throw e;
 			}
 
@@ -157,7 +157,7 @@ Elem* ReadThermal(DataManager* pDM,
 				c = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
 
 			} catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
-				silent_cerr("error: invalid thermal capacitance " << e.Get() << " (must be non-negative) [" << e.what() << "] for ThermalCapacitance(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+				silent_cerr("error: invalid thermal capacitance " << e.Get() << " (must be positive) [" << e.what() << "] for ThermalCapacitance(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
 				throw e;
 			}
 
