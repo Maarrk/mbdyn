@@ -73,8 +73,8 @@ private:
     double sys_dissip_energy_;
     //--------------------
     double box_length_x_;
-    double box_length_z_;
     double box_length_y_;
+    double box_length_z_;
     double cell_length_;
     //--------------------
     double radius_min_;

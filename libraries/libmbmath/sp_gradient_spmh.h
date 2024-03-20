@@ -54,6 +54,7 @@
 
 class SpGradientSparseMatrixHandler: public SparseMatrixHandler {
      struct SparseRow;
+     using SparseMatrixHandler::MakeIndexForm;
 public:
      SpGradientSparseMatrixHandler(const integer& iNumRows, const integer& iNumCols);
      virtual ~SpGradientSparseMatrixHandler();

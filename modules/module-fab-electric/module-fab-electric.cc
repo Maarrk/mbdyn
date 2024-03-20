@@ -1259,17 +1259,17 @@ Switch::AssJac(VariableSubMatrixHandler& WorkMat,
 	WM.PutColIndex(2, iElecNodeFirstIndex2);
 	WM.PutColIndex(3, iFirstIndex);
 
-	doublereal V1 = pElec1->dGetX();
-	doublereal V2 = pElec2->dGetX();
-   doublereal S1 = S1drv.dGet();
+	// doublereal V1 = pElec1->dGetX();
+	// doublereal V2 = pElec2->dGetX();
+	doublereal S1 = S1drv.dGet();
 
-   WM.IncCoef(1, 3, 1.);
-   WM.DecCoef(2, 3, 1.);
+	WM.IncCoef(1, 3, 1.);
+	WM.DecCoef(2, 3, 1.);
 
-   WM.IncCoef(3, 1,-S1*dCoef);
-   WM.DecCoef(3, 2,-S1*dCoef);
+	WM.IncCoef(3, 1,-S1*dCoef);
+	WM.DecCoef(3, 2,-S1*dCoef);
 
-   WM.DecCoef(3, 3, 1.-S1);
+	WM.DecCoef(3, 3, 1.-S1);
 
 	return WorkMat;
 }
@@ -1286,26 +1286,26 @@ Switch::AssRes(SubVectorHandler& WorkVec,
 	WorkSpaceDim(&iNumRows, &iNumCols);
 	WorkVec.ResizeReset(iNumRows);
 
-   // Recover indexes:
+	// Recover indexes:
 	integer iElecNodeFirstIndex1 = pElec1->iGetFirstRowIndex() + 1;
 	integer iElecNodeFirstIndex2 = pElec2->iGetFirstRowIndex() + 1;
 	integer iFirstIndex = iGetFirstIndex() + 1;
 
-   // Allocate rows in the WorkVec:
-   WorkVec.PutRowIndex(1, iElecNodeFirstIndex1);
-   WorkVec.PutRowIndex(2, iElecNodeFirstIndex2);
-   WorkVec.PutRowIndex(3, iFirstIndex);
+	// Allocate rows in the WorkVec:
+	WorkVec.PutRowIndex(1, iElecNodeFirstIndex1);
+	WorkVec.PutRowIndex(2, iElecNodeFirstIndex2);
+	WorkVec.PutRowIndex(3, iFirstIndex);
 
 	doublereal i = XCurr(iFirstIndex);
 	doublereal V1 = pElec1->dGetX();
 	doublereal V2 = pElec2->dGetX();
-   doublereal S1 = S1drv.dGet();
+	doublereal S1 = S1drv.dGet();
 
-   DEBUGCOUT("Switch::AssRes(), V1, V2, Switch current: " << V1 << ", " << V2 << ", " << i << std::endl);
+	DEBUGCOUT("Switch::AssRes(), V1, V2, Switch current: " << V1 << ", " << V2 << ", " << i << std::endl);
 
-   WorkVec.DecCoef(1, i);
-   WorkVec.IncCoef(2, i);
-   WorkVec.IncCoef(3, S1*(V1-V2)+(1.-S1)*i);
+	WorkVec.DecCoef(1, i);
+	WorkVec.IncCoef(2, i);
+	WorkVec.IncCoef(3, S1*(V1-V2)+(1.-S1)*i);
 
 	return WorkVec;
 }
@@ -1674,13 +1674,13 @@ ElectricalSource::AssRes(SubVectorHandler& WorkVec,
 	integer iElecOutNodeFirstIndex2 = pElecOut2->iGetFirstRowIndex() + 1;
 	integer iFirstIndex = iGetFirstIndex() + 1;
 
-   doublereal V1in = 0.;
-   doublereal V2in = 0.;
-   doublereal V1out = pElecOut1->dGetX();
+	doublereal V1in = 0.;
+	doublereal V2in = 0.;
+	doublereal V1out = pElecOut1->dGetX();
 	doublereal V2out = pElecOut2->dGetX();
-   doublereal G1 = Vi1drv.dGet();
+	doublereal G1 = Vi1drv.dGet();
 
-   if (source_type!=CURRENTSOURCE && source_type!=VOLTAGESOURCE) {
+	if (source_type!=CURRENTSOURCE && source_type!=VOLTAGESOURCE) {
 
 	   integer iElecInNodeFirstIndex1 = pElecIn1->iGetFirstRowIndex() + 1;
 	   integer iElecInNodeFirstIndex2 = pElecIn2->iGetFirstRowIndex() + 1;
@@ -1692,24 +1692,24 @@ ElectricalSource::AssRes(SubVectorHandler& WorkVec,
 	   WorkVec.PutRowIndex(5, iFirstIndex);
 	   WorkVec.PutRowIndex(6, iFirstIndex + 1);
 
-      doublereal i_currIn = XCurr(iFirstIndex);
-      doublereal i_currOut = XCurr(iFirstIndex + 1);
-      doublereal V1in = pElecIn1->dGetX();
-	   doublereal V2in = pElecIn2->dGetX();
+	   doublereal i_currIn = XCurr(iFirstIndex); (void)i_currIn; // silence unused warning
+	   doublereal i_currOut = XCurr(iFirstIndex + 1); (void)i_currOut; // silence unused warning
+	   doublereal V1in = pElecIn1->dGetX(); (void)V1in; // silence unused warning
+	   doublereal V2in = pElecIn2->dGetX(); (void)V2in; // silence unused warning
 
-      DEBUGCOUT("ElectricalSource::AssRes(), V1in, V2in, i_currIn, V1out, V2out, i_currOut, G1: " << V1in
-         << ", " << V2in << ", " << i_currIn << ", " << V1out << ", " << V2out << ", "
-         << i_currOut  << ", " << G1 << std::endl);
+	   DEBUGCOUT("ElectricalSource::AssRes(), V1in, V2in, i_currIn, V1out, V2out, i_currOut, G1: " << V1in
+            << ", " << V2in << ", " << i_currIn << ", " << V1out << ", " << V2out << ", "
+            << i_currOut  << ", " << G1 << std::endl);
 
-   } else {
+	} else {
 
 	   WorkVec.PutRowIndex(1, iElecOutNodeFirstIndex1);
 	   WorkVec.PutRowIndex(2, iElecOutNodeFirstIndex2);
 	   WorkVec.PutRowIndex(3, iFirstIndex);
 
-      doublereal i_currOut = XCurr(iFirstIndex);
+	doublereal i_currOut = XCurr(iFirstIndex); (void)i_currOut; // silence unused warning
 
-      DEBUGCOUT("ElectricalSource::AssRes(), V1out, V2out, i_currOut, G1: " <<
+	DEBUGCOUT("ElectricalSource::AssRes(), V1out, V2out, i_currOut, G1: " <<
          V1out << ", " << V2out << ", " << i_currOut  << ", " << G1 << std::endl);
 
    }
@@ -2940,12 +2940,12 @@ ProximitySensor::AssJac(VariableSubMatrixHandler& WorkMat,
    Mat3x3 R2(pNode2->GetRCurr());
    Vec3 X1(pNode1->GetXCurr());
    Vec3 X2(pNode2->GetXCurr());
-	doublereal V1 = pElec1->dGetX();
-	doublereal V2 = pElec2->dGetX();
+   // doublereal V1 = pElec1->dGetX();
+   // doublereal V2 = pElec2->dGetX();
 
    // Calculate relative position and velocities:
    Vec3 dX = R2*X2tilde + X2 - R1*X1tilde - X1;
-	doublereal i = XCurr(iFirstIndex);
+   // doublereal i = XCurr(iFirstIndex);
    doublereal dist = dX.Norm();
    doublereal dFdR = sFun->ComputeDiff(dist, 1);
 

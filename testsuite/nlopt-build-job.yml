@@ -74,7 +74,4 @@ nlopt-build-job:       # This job runs in the build stage, which runs first.
   cache:
    key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
    paths:
-      - $NC_C_BUILD_DIR
-      - $NC_CXX4_BUILD_DIR
       - $NL_BUILD_DIR
-      - $GMSH_BUILD_DIR

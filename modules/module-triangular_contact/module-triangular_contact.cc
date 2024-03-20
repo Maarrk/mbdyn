@@ -136,6 +136,7 @@ private:
 
 class TriangularContact: virtual public Elem, public UserDefinedElem
 {
+     using Elem::AssRes;
 public:
      TriangularContact(unsigned uLabel, const DofOwner *pDO,
 		       DataManager* pDM, MBDynParser& HP);

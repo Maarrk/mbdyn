@@ -115,40 +115,44 @@ public:
 		return RotManip::VecRot(m);
   	};
 
-	inline void Manipulate(Vec3& v, const Mat3x3& m) const {
+	inline void Manipulate(Vec3& v, const Mat3x3& m) const override {
 		v = RotManip::VecRot(m);
 	};
 };
 
 class MatR_Manip : public Mat3x3_Manip {   
 public:
+        using Mat3x3_Manip::Manipulate;
 	inline Mat3x3 operator << (const Vec3& v) const {
 		return RotManip::Rot(v);
 	};
    
-	inline void Manipulate(Mat3x3& m, const Vec3& v) const {
+	inline void Manipulate(Mat3x3& m, const Vec3& v) const override {
 		m = RotManip::Rot(v);
 	};
 };
 
 class MatG_Manip : public Mat3x3_Manip {
 public:
+        using Mat3x3_Manip::Manipulate;
+        
 	inline Mat3x3 operator << (const Vec3& v) const {
 		return RotManip::DRot(v);
 	};
 
-	inline void Manipulate(Mat3x3& m, const Vec3& v) const {
+	inline void Manipulate(Mat3x3& m, const Vec3& v) const override {
 		m = RotManip::DRot(v);
 	};
 };
 
 class MatGm1_Manip : public Mat3x3_Manip {
 public:
+        using Mat3x3_Manip::Manipulate;
 	inline Mat3x3 operator << (const Vec3& v) const {
 		return RotManip::DRot_I(v);
 	};
    
-	inline void Manipulate(Mat3x3& m, const Vec3& v) const {
+	inline void Manipulate(Mat3x3& m, const Vec3& v) const override {
 		m = RotManip::DRot_I(v);
 	};
 };

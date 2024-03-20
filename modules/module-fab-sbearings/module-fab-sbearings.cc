@@ -809,7 +809,7 @@ private:
 
 public:
 	RollingBearingConstitutiveLaw(bool bBall, doublereal dDL, doublereal dNElms, doublereal dAlpha, doublereal dDamp)
-	: DSphere(dDL), ZRollElem(dNElms), LRoller(dDL), AlphaContact(dAlpha), bIsBallBearing(bBall), cDamping(dDamp) {
+	: DSphere(dDL), ZRollElem(dNElms), LRoller(dDL), AlphaContact(dAlpha), cDamping(dDamp), bIsBallBearing(bBall) {
 		NO_OP;
 	};
 

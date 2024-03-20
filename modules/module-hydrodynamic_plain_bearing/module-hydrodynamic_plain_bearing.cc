@@ -58,6 +58,7 @@
 
 class HydrodynamicPlainBearing: virtual public Elem, public UserDefinedElem
 {
+     using Elem::AssRes;
 public:
      HydrodynamicPlainBearing(unsigned uLabel, const DofOwner *pDO,
                               DataManager* pDM, MBDynParser& HP);

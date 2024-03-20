@@ -145,7 +145,7 @@ void FlightGearStreamOutputReader::setDefaultValues(std::vector<ScalarValue *> &
 		}
 	}
 
-	for (int i=1 ; i < allValues.size() ; i++){
+	for (unsigned int i=1 ; i < allValues.size() ; i++){
 		if(!assignedByUser.at(i)){
 			SAFENEW(pDC, NullDriveCaller);
 			allValues.at(i) = new ScalarDriveValue(pDC);

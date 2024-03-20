@@ -87,6 +87,11 @@ extern const char* psAeroNames[];
 
 class AirProperties 
 : virtual public Elem, public InitialAssemblyElem, public TplDriveOwner<Vec3> {
+     using Elem::AssRes;
+     using Elem::AssJac;
+     using InitialAssemblyElem::InitialAssRes;
+     using InitialAssemblyElem::InitialAssJac;
+     using Elem::Output;
 protected:
 	mutable Vec3 Velocity;
 	std::vector<const Gust *> gust;
@@ -104,7 +109,7 @@ public:
 	virtual void AddGust(const Gust *pG);
 
 	/* Scrive il contributo dell'elemento al file di restart */
-	virtual std::ostream& Restart(std::ostream& out) const;
+	virtual std::ostream& Restart(std::ostream& out) const override;
 
 	/* Tipo dell'elemento (usato per debug ecc.) */
 	virtual Elem::Type GetElemType(void) const { 
@@ -132,37 +137,37 @@ public:
    
 	/* Dimensioni del workspace */
 	virtual void
-	WorkSpaceDim(integer* piNumRows, integer* piNumCols) const;
+	WorkSpaceDim(integer* piNumRows, integer* piNumCols) const override;
 
 	/* assemblaggio jacobiano */
 	virtual VariableSubMatrixHandler& 
 	AssJac(VariableSubMatrixHandler& WorkMat, doublereal /* dCoef */ , 
 			const VectorHandler& /* XCurr */ ,
-			const VectorHandler& /* XPrimeCurr */ );
+			const VectorHandler& /* XPrimeCurr */ ) override;
 
 	/* assemblaggio residuo */
 	virtual SubVectorHandler&
 	AssRes(SubVectorHandler& WorkVec, doublereal /* dCoef */ ,
 			const VectorHandler& /* XCurr */ , 
-			const VectorHandler& /* XPrimeCurr */ );
+			const VectorHandler& /* XPrimeCurr */ ) override;
    
 	/* Numero di GDL iniziali */
-	virtual unsigned int iGetInitialNumDof(void) const;
+	virtual unsigned int iGetInitialNumDof(void) const override;
      
 	/* Dimensioni initiali del workspace */
 	virtual void
-	InitialWorkSpaceDim(integer* piNumRows, integer* piNumCols) const;
+	InitialWorkSpaceDim(integer* piNumRows, integer* piNumCols) const override;
 
 	/* assemblaggio jacobiano */
 	virtual VariableSubMatrixHandler& 
 	InitialAssJac(VariableSubMatrixHandler& WorkMat,
-			const VectorHandler& /* XCurr */ );
+			const VectorHandler& /* XCurr */ ) override;
 
 	/* assemblaggio residuo */
 	virtual SubVectorHandler&
-	InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr);
+	InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr) override;
 
-	virtual void Output(OutputHandler&) const;
+	virtual void Output(OutputHandler&) const override;
 
 	/*
 	 * Deprecated; use GetAirProps instead
@@ -185,14 +190,14 @@ public:
 	/* *******PER IL SOLUTORE BLOCK JACOBI-BROYDEN******** */
 	/* Fornisce il tipo e la label dei nodi che sono connessi all'elemento
 	 * utile per l'assemblaggio della matrice di connessione fra i dofs */
-	virtual int GetNumConnectedNodes(void) const {
+	virtual int GetNumConnectedNodes(void) const override {
 		return 0;
 	};
 
 	/* Dati privati */
-	virtual unsigned int iGetNumPrivData(void) const;
-	virtual unsigned int iGetPrivDataIdx(const char *s) const;
-	virtual doublereal dGetPrivData(unsigned int i) const;
+	virtual unsigned int iGetNumPrivData(void) const override;
+	virtual unsigned int iGetPrivDataIdx(const char *s) const override;
+	virtual doublereal dGetPrivData(unsigned int i) const override;
 };
 
 class DataManager;

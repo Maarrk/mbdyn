@@ -121,6 +121,7 @@ extern "C" int __FC_DECL__(def_joint_ad_ass_res_dv)(const doublereal X1[3],
 
 class DeformableJointAD: virtual public Elem, public UserDefinedElem
 {
+     using Elem::AssRes;
 public:
      DeformableJointAD(unsigned uLabel, const DofOwner *pDO,
 		       DataManager* pDM, MBDynParser& HP);
@@ -1091,6 +1092,7 @@ const char* DeformableJointAD::AssemblyFuncName(enum AssemblyFlag flag)
 
 class InlineJointAD: virtual public Elem, public UserDefinedElem
 {
+     using Elem::AssRes;
 public:
      InlineJointAD(unsigned uLabel, const DofOwner *pDO,
 		   DataManager* pDM, MBDynParser& HP);

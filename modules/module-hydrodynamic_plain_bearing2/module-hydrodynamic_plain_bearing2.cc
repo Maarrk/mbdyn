@@ -24899,13 +24899,13 @@ namespace {
           virtual ~GrooveShapeDriveCaller();
           bool bIsDifferentiable(void) const;
           virtual std::ostream& Restart(std::ostream& out) const;
-          doublereal dGet(const doublereal& dVar) const;
+          doublereal dGet(const doublereal& dVar) const override;
           virtual doublereal dGetP(const doublereal& dVar) const;
           virtual DriveCaller* pCopy(void) const;
 
      private:
           template <typename T>
-          void dGet(const T& x, T& y) const;
+          void ddGet(const T& x, T& y) const;
 
           const doublereal Ws, Wc, Hg;
      };
@@ -24929,7 +24929,7 @@ namespace {
 
      template <typename T>
      void
-     GrooveShapeDriveCaller::dGet(const T& x, T& y) const
+     GrooveShapeDriveCaller::ddGet(const T& x, T& y) const
      {
           // y = -0.5 * Hg * (1. + tanh(M_PI * (2. * (fabs(x) - 0.5 * Ws) / Wc - 1.)));
 
@@ -24946,7 +24946,7 @@ namespace {
      {
           doublereal y;
 
-          dGet(x, y);
+          ddGet(x, y);
 
           return y;
      }
@@ -24957,7 +24957,7 @@ namespace {
 
           x.Reset(dVar, 1, 1.);
 
-          dGet(x, y);
+          ddGet(x, y);
 
           SP_GRAD_ASSERT(y.begin() < y.end());
 

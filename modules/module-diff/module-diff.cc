@@ -103,8 +103,8 @@ ModuleDiffDrive::ModuleDiffDrive(
 : Elem(uLabel, flag(0)),
 UserDefinedElem(uLabel, pDO),
 DriveOwner(0),
+iNumDrives(0),  
 m_pDM(pDM),
-iNumDrives(0),
 m_dAlpha(0),
 m_dBeta(0),
 m_dTimePrev(0)
@@ -265,9 +265,9 @@ ModuleDiffDrive::iGetPrivDataIdx(const char *s) const
 doublereal
 ModuleDiffDrive::dGetPrivData(unsigned int i) const
 {
-	if (i > 0 && i <= iNumDrives) {
+        if (i > 0 && i <= static_cast<unsigned int>(iNumDrives)) {
 		return m_dX[i - 1]; 
-	} else if (i > iNumDrives && i <= 2*iNumDrives) {
+	} else if (i > static_cast<unsigned int>(iNumDrives) && i <= 2*static_cast<unsigned int>(iNumDrives)) {
 		return m_dXP[i - iNumDrives - 1];
 	}
 	silent_cerr("ModuleDiffDrive: invalid private data index." << std::endl);

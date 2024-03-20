@@ -11,6 +11,6 @@
 ###############################################################################
 
 # FIXME: this flag is needed by g++ 4.8 to include <cstdint>
-MODULE_INCLUDE="-std=c++0x"
+# MODULE_INCLUDE="-std=c++0x"
 
 MODULE_DEPENDENCIES=sendToFlightgear.lo recFromFlightgear.lo

@@ -83,6 +83,7 @@ FileDrive::iGetNumDrives(void) const
 /* FileDriveCaller - begin */
 
 class FileDriveCaller : public DriveCaller {
+        using DriveCaller::dGet;
 protected:
 	const FileDrive* pFileDrive;
 	integer iNumDrive;
@@ -94,13 +95,13 @@ public:
 	virtual ~FileDriveCaller(void);
 
 	/* Copia */
-	virtual DriveCaller* pCopy(void) const;
+	virtual DriveCaller* pCopy(void) const override;
 
 	/* Scrive il contributo del DriveCaller al file di restart */
-	virtual std::ostream& Restart(std::ostream& out) const;
+	virtual std::ostream& Restart(std::ostream& out) const override;
 
 	/* Restituisce il valore del driver */
-	virtual inline doublereal dGet(const doublereal& dVal) const;
+	virtual inline doublereal dGet(const doublereal& dVal) const override;
 	/* virtual inline doublereal dGet(void) const; */
 };
 

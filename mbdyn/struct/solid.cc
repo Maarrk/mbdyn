@@ -198,6 +198,11 @@ struct CollocDataPressureUPC<true, ElementType> {
 template <typename ElementType, typename CollocationType, typename SolidCSLType, typename StructNodeType = StructDispNodeAd>
 class SolidElemStatic: public SolidElem, public IncomprSolidElemStatic<SolidCSLType::eConstLawType == ConstLawType::ELASTICINCOMPR, ElementType::iNumNodesPressure> {
 public:
+     using SolidElem::AssRes;
+     using SolidElem::AssJac;
+     using SolidElem::InitialAssRes;
+     using SolidElem::InitialAssJac;
+     
      typedef IncomprSolidElemStatic<SolidCSLType::eConstLawType == ConstLawType::ELASTICINCOMPR, ElementType::iNumNodesPressure> IncomprSolidElemType;
 
      static constexpr ConstLawType::Type eConstLawType = SolidCSLType::eConstLawType;
@@ -544,6 +549,11 @@ struct MassMatrixHelper<MassMatrixType::LUMPED> {
 template <typename ElementType, typename CollocationType, typename SolidCSLType, MassMatrixType eMassMatrix>
 class SolidElemDynamic: public SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructDispNodeAd> {
 public:
+     using SolidElem::AssRes;
+     using SolidElem::AssJac;
+     using SolidElem::InitialAssRes;
+     using SolidElem::InitialAssJac;
+     
      typedef SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructDispNodeAd> SolidElemStaticType;
      using SolidElemStaticType::eConstLawType;
      using SolidElemStaticType::iNumNodes;

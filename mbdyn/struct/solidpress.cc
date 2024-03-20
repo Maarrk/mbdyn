@@ -181,6 +181,11 @@ private:
 template <typename ElementType, typename CollocationType, typename PressureSource>
 class SurfaceLoad: public SurfaceLoadElem {
 public:
+     using SurfaceLoadElem::AssRes;
+     using SurfaceLoadElem::AssJac;
+     using SurfaceLoadElem::InitialAssRes;
+     using SurfaceLoadElem::InitialAssJac;
+
      static constexpr sp_grad::index_type iNumNodes = ElementType::iNumNodes;
      static constexpr sp_grad::index_type iNumEvalPoints = CollocationType::iNumEvalPoints;
      static constexpr sp_grad::index_type iNumDof = iNumNodes * 3;
@@ -237,6 +242,11 @@ template <typename ElementType, typename CollocationType, typename PressureSourc
 class PressureLoad: public SurfaceLoad<ElementType, CollocationType, PressureSource> {
      typedef SurfaceLoad<ElementType, CollocationType, PressureSource> BaseType;
 public:
+     using SurfaceLoadElem::AssRes;
+     using SurfaceLoadElem::AssJac;
+     using SurfaceLoadElem::InitialAssRes;
+     using SurfaceLoadElem::InitialAssJac;
+
      using BaseType::iNumNodes;
      using BaseType::iNumEvalPoints;
      using BaseType::iNumDof;
@@ -351,6 +361,11 @@ template <typename ElementType, typename CollocationType, typename PressureSourc
 class SurfaceTraction: public SurfaceLoad<ElementType, CollocationType, PressureSource> {
      typedef SurfaceLoad<ElementType, CollocationType, PressureSource> BaseType;
 public:
+     using SurfaceLoadElem::AssRes;
+     using SurfaceLoadElem::AssJac;
+     using SurfaceLoadElem::InitialAssRes;
+     using SurfaceLoadElem::InitialAssJac;
+
      using BaseType::iNumNodes;
      using BaseType::iNumEvalPoints;
      using BaseType::iNumDof;

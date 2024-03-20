@@ -273,7 +273,12 @@ CompactSparseMatrixHandler_tpl<off, idx_type>::~CompactSparseMatrixHandler_tpl(v
 template <int off, typename idx_type>
 const doublereal* CompactSparseMatrixHandler_tpl<off, idx_type>::pdGetMat(void) const {
      return &Ax.front();
-};
+}
+
+template <int off, typename idx_type>
+doublereal* CompactSparseMatrixHandler_tpl<off, idx_type>::pdGetMat(void) {
+     return &Ax.front();
+}
 
 template <int off, typename idx_type>
 void

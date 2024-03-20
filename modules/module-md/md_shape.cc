@@ -516,19 +516,12 @@ bool MDArch::GetSurfGeo (const RealVec & sand_pos, double sand_radius, RealVec &
         drz = dr * direction_z_;
     double
         theta;
-    double
-        PI = 3.1415926535897932384626433832795;
 
     if_inside = false;
-    if (abs (drz) > 10000 * abs (dry))
-        theta = PI / 2.0;
-    else
-    {
-        if (dry > 0)
-            theta = abs (atan (drz / dry));
-        if (dry < 0)
-            theta = PI - abs (atan (drz / dry));
-    }
+
+    // Note: atan2 will always return a valid result, even if drz == 0 and dry == 0
+    theta = abs (atan2 (drz, dry)); // Avoid compilation error with "-Wmaybe-uninitialized -Werror"
+
     RealVec
         surf_drv;
 
