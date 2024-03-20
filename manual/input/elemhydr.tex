@@ -56,6 +56,14 @@ previously defined fluid can be recalled by using the keyword
 \end{Verbatim}
 %\end{verbatim}
 
+
+
+\subsection{Accumulator}
+\label{sec:EL:HYDR:ACCUMULATOR}
+Not documented yet.
+
+
+
 \subsection{Actuator}
 The \kw{actuator} element models the hydraulic and interactional aspects
 of a two-way linear hydraulic actuator.
@@ -101,47 +109,6 @@ and the related chapter of the tutorials
 \begin{quote}
 \htmladdnormallink{\kw{http://www.aero.polimi.it/mbdyn/documentation/tutorials/}}{http://www.aero.polimi.it/mbdyn/documentation/tutorials/}
 \end{quote}
-
-
-
-\subsection{Minor Loss}
-A pressure loss between two pressure nodes.
-\label{sec:EL:HYDR:MINOR_LOSS}
-%\begin{verbatim}
-\begin{Verbatim}[commandchars=\\\{\}]
-    \bnt{hydr_elem_type} ::= \kw{minor loss}
-
-    \bnt{hydr_elem_data} ::=
-        \bnt{node_1} , \bnt{node_2} ,
-        \bnt{k12} , \bnt{k21} , \bnt{area} ,
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
-\end{Verbatim}
-%\end{verbatim}
-Coefficients \nt{k12} and \nt{k21} characterize the pressure loss
-when the flow goes from \nt{node\_1} to \nt{node\_2} and vice versa.
-Turbulent flow is assumed.
-
-
-
-\subsection{Three Way Minor Loss}
-A pressure loss between three pressure nodes,
-depending on the sign of the pressure drop.
-\label{sec:EL:HYDR:THREE_WAY_MINOR_LOSS}
-%\begin{verbatim}
-\begin{Verbatim}[commandchars=\\\{\}]
-    \bnt{hydr_elem_type} ::= \kw{three way minor loss}
-
-    \bnt{hydr_elem_data} ::=
-        \bnt{node_1} , \bnt{node_2} , \bnt{node_3} ,
-        \bnt{k12} , \bnt{k31} , \bnt{area_12} , \bnt{area_31} ,
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
-\end{Verbatim}
-%\end{verbatim}
-Coefficients \nt{k12} and \nt{k31} and the respective values of area
-characterize the pressure loss when the flow goes
-from \nt{node\_1} to \nt{node\_2} and from \nt{node\_3} to \nt{node\_1},
-respectively.
-Turbulent flow is assumed.
 
 
 
@@ -211,6 +178,182 @@ when the maximum stroke is reached.
 
 
 
+\subsection{Dynamic Pipe}
+\label{sec:EL:HYDR:DYNAMIC_PIPE}
+Same syntax as the \kw{pipe} hydraulic element
+(Section~\ref{sec:EL:HYDR:PIPE}),
+it also considers fluid compressibility in terms of pressure time derivative,
+and thus the corresponding dynamic effect.
+%\begin{verbatim}
+\begin{Verbatim}[commandchars=\\\{\}]
+    \bnt{hydr_elem_type} ::= \kw{dynamic pipe}
+\end{Verbatim}
+%\end{verbatim}
+
+\subsubsection{Output}
+\begin{itemize}
+\item[1:] label
+\item[2:] pressure at node 1
+\item[3:] pressure at node 2
+\item[4:] pressure derivative at node 1
+\item[5:] pressure derivative at node 2
+\item[6:] flow at node 1
+\item[7:] flow at node 2
+\item[8:] flow rate at node 1
+\item[9:] flow rate at node 2
+\item[10:] density at node 1
+\item[11:] reference density
+\item[12:] density at node 2
+\item[13:] derivative of density with respect to pressure at node 1
+\item[14:] derivative of density with respect to pressure at node 2
+\item[15:] Reynolds number
+\item[16:] flow type flag (boolean; true when flow is turbulent, false otherwise)
+\end{itemize}
+
+
+
+\subsection{Flow Valve}
+\label{sec:EL:HYDR:FLOW_VALVE}
+%\begin{verbatim}
+\begin{Verbatim}[commandchars=\\\{\}]
+    \bnt{hydr_elem_type} ::= \kw{flow valve}
+
+    \bnt{hydr_elem_data} ::=
+        \bnt{node_1} , \bnt{node_2} , \bnt{node_3} ,
+        \bnt{area} ,
+        \bnt{mass} ,
+        \bnt{max_area} ,
+        \bnt{spring_stiffness} ,
+        \bnt{spring_preload} ,
+        \bnt{width} ,
+        \bnt{displacement_penalty} ,
+        \bnt{velocity_penalty} ,
+        \bnt{acceleration_penalty} ,
+        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+\end{Verbatim}
+%\end{verbatim}
+
+
+
+\subsection{Imposed Flow}
+\label{sec:EL:HYDR:IMPOSED_FLOW}
+No specific element has been implemented to impose the flow at one node.
+The \kw{abstract} variant of the \kw{force} element
+(Section~\ref{sec:EL:FORCE:ABSTRACT}) can be used instead.
+The magnitude of the abstract force is the mass flow extracted
+from the circuit at that node.
+In fact, a negative value of the abstract force means that the flow enters
+the node.
+
+\paragraph{Example.} \
+\begin{verbatim}
+    set: integer HYDRAULIC_NODE_LABEL = 100;
+    set: integer IMPOSED_FLOW_LABEL = 200;
+    force: IMPOSED_PRESSURE_LABEL, abstract,
+        HYDRAULIC_NODE_LABEL, hydraulic,
+        const, -1e-3;
+\end{verbatim}
+
+
+
+\subsection{Imposed Pressure}
+\label{sec:EL:HYDR:IMPOSED_PRESSURE}
+No specific element has been implemented to impose the pressure at one node.
+The \kw{clamp} variant of the \kw{genel} element
+(Section~\ref{sec:EL:GENEL:CLAMP}) can be used instead.
+
+\paragraph{Example.} \
+\begin{verbatim}
+    set: integer HYDRAULIC_NODE_LABEL = 100;
+    set: integer IMPOSED_PRESSURE_LABEL = 200;
+    genel: IMPOSED_PRESSURE_LABEL, clamp,
+        HYDRAULIC_NODE_LABEL, hydraulic,
+        const, 101325.0;
+\end{verbatim}
+
+
+
+
+\subsection{Minor Loss}
+A pressure loss between two pressure nodes.
+\label{sec:EL:HYDR:MINOR_LOSS}
+%\begin{verbatim}
+\begin{Verbatim}[commandchars=\\\{\}]
+    \bnt{hydr_elem_type} ::= \kw{minor loss}
+
+    \bnt{hydr_elem_data} ::=
+        \bnt{node_1} , \bnt{node_2} ,
+        \bnt{k12} , \bnt{k21} , \bnt{area} ,
+        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+\end{Verbatim}
+%\end{verbatim}
+Coefficients \nt{k12} and \nt{k21} characterize the pressure loss
+when the flow goes from \nt{node\_1} to \nt{node\_2} and vice versa.
+Turbulent flow is assumed.
+
+
+
+\subsection{Orifice}
+\label{sec:EL:HYDR:ORIFICE}
+%\begin{verbatim}
+\begin{Verbatim}[commandchars=\\\{\}]
+    \bnt{hydr_elem_type} ::= \kw{orifice}
+
+    \bnt{hydr_elem_data} ::=
+        \bnt{node_1} , \bnt{node_2} ,
+        \bnt{pipe_diameter} ,
+        \bnt{orifice_area} , # diaphragm area
+        [ \kw{area} , \bnt{pipe_area} , ] # defaults to (\bnt{pipe_diameter}/2)^2*pi
+        [ \kw{reynolds} , \bnt{critical_reynolds_number} , ] # defaults to 10
+        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+\end{Verbatim}
+%\end{verbatim}
+
+
+
+\subsection{Pipe}
+\label{sec:EL:HYDR:PIPE}
+This element models a simple pipeline connecting two \kw{hydraulic} nodes.
+In detail, it models the pressure loss due to fluid viscosity
+according to a constitutive law that depends on the Reynolds number
+computed on average fluid velocity and hydraulic diameter.
+Transition between laminar and turbulent flow is also modeled.
+%\begin{verbatim}
+\begin{Verbatim}[commandchars=\\\{\}]
+    \bnt{hydr_elem_type} ::= \kw{pipe}
+
+    \bnt{hydr_elem_data} ::=
+        \bnt{node_1} , \bnt{node_2} ,
+        \bnt{hydraulic_diameter} ,
+        [ \kw{area} , \bnt{area} , ]
+        \bnt{length} ,
+        [ \kw{turbulent} , ]
+        [ \kw{initial value} , \bnt{flow} , ]
+        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+\end{Verbatim}
+%\end{verbatim}
+When \kw{area} is not given, it defaults to the equivalent area
+computed according to the hydraulic diameter.
+The flag \kw{turbulent} forces the flow to be considered turbulent
+since the first iteration, when the initial conditions would fall
+in the transition region.
+The \kw{initial value} parameter refers to the initial value
+of the flow internal state.
+
+\paragraph{Example.} \
+\begin{verbatim}
+    set: integer NODE_1 = 10;
+    set: integer NODE_2 = 20;
+    set: integer PIPE = 100;
+    set: integer FLUID = 1000;
+    # ...
+    hydraulic: PIPE, pipe, NODE_1, NODE_2,
+        5e-3, 100.e-3,
+        fluid, reference, FLUID;
+\end{verbatim}
+
+
+
 \subsection{Pressure Flow Control Valve}
 \label{sec:EL:HYDR:PRESSURE_FLOW_CONTROL_VALVE}
 %\begin{verbatim}
@@ -261,51 +404,6 @@ at the sides of the valve body and participate in the force balance.
 \end{Verbatim}
 %\end{verbatim}
 
-\subsection{Flow Valve}
-\label{sec:EL:HYDR:FLOW_VALVE}
-%\begin{verbatim}
-\begin{Verbatim}[commandchars=\\\{\}]
-    \bnt{hydr_elem_type} ::= \kw{flow valve}
-
-    \bnt{hydr_elem_data} ::=
-        \bnt{node_1} , \bnt{node_2} , \bnt{node_3} ,
-        \bnt{area} ,
-        \bnt{mass} ,
-        \bnt{max_area} ,
-        \bnt{spring_stiffness} ,
-        \bnt{spring_preload} ,
-        \bnt{width} ,
-        \bnt{displacement_penalty} ,
-        \bnt{velocity_penalty} ,
-        \bnt{acceleration_penalty} ,
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
-\end{Verbatim}
-%\end{verbatim}
-
-
-
-\subsection{Orifice}
-\label{sec:EL:HYDR:ORIFICE}
-%\begin{verbatim}
-\begin{Verbatim}[commandchars=\\\{\}]
-    \bnt{hydr_elem_type} ::= \kw{orifice}
-
-    \bnt{hydr_elem_data} ::=
-        \bnt{node_1} , \bnt{node_2} ,
-        \bnt{pipe_diameter} ,
-        \bnt{orifice_area} , # diaphragm area
-        [ \kw{area} , \bnt{pipe_area} , ] # defaults to (\bnt{pipe_diameter}/2)^2*pi
-        [ \kw{reynolds} , \bnt{critical_reynolds_number} , ] # defaults to 10
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
-\end{Verbatim}
-%\end{verbatim}
-
-
-
-\subsection{Accumulator}
-\label{sec:EL:HYDR:ACCUMULATOR}
-Not documented yet.
-
 
 
 \subsection{Tank}
@@ -314,118 +412,25 @@ Not documented yet.
 
 
 
-\subsection{Pipe}
-\label{sec:EL:HYDR:PIPE}
-This element models a simple pipeline connecting two \kw{hydraulic} nodes.
-In detail, it models the pressure loss due to fluid viscosity
-according to a constitutive law that depends on the Reynolds number
-computed on average fluid velocity and hydraulic diameter.
-Transition between laminar and turbulent flow is also modeled.
+\subsection{Three Way Minor Loss}
+A pressure loss between three pressure nodes,
+depending on the sign of the pressure drop.
+\label{sec:EL:HYDR:THREE_WAY_MINOR_LOSS}
 %\begin{verbatim}
 \begin{Verbatim}[commandchars=\\\{\}]
-    \bnt{hydr_elem_type} ::= \kw{pipe}
+    \bnt{hydr_elem_type} ::= \kw{three way minor loss}
 
     \bnt{hydr_elem_data} ::=
-        \bnt{node_1} , \bnt{node_2} ,
-        \bnt{hydraulic_diameter} ,
-        [ \kw{area} , \bnt{area} , ]
-        \bnt{length} ,
-        [ \kw{turbulent} , ]
-        [ \kw{initial value} , \bnt{flow} , ]
+        \bnt{node_1} , \bnt{node_2} , \bnt{node_3} ,
+        \bnt{k12} , \bnt{k31} , \bnt{area_12} , \bnt{area_31} ,
         \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
 \end{Verbatim}
 %\end{verbatim}
-When \kw{area} is not given, it defaults to the equivalent area
-computed according to the hydraulic diameter.
-The flag \kw{turbulent} forces the flow to be considered turbulent
-since the first iteration, when the initial conditions would fall
-in the transition region.
-The \kw{initial value} parameter refers to the initial value
-of the flow internal state.
-
-\paragraph{Example.} \
-\begin{verbatim}
-    set: integer NODE_1 = 10;
-    set: integer NODE_2 = 20;
-    set: integer PIPE = 100;
-    set: integer FLUID = 1000;
-    # ...
-    hydraulic: PIPE, pipe, NODE_1, NODE_2,
-        5e-3, 100.e-3,
-        fluid, reference, FLUID;
-\end{verbatim}
-
-
-
-\subsection{Dynamic Pipe}
-\label{sec:EL:HYDR:DYNAMIC_PIPE}
-Same syntax as the \kw{pipe} hydraulic element
-(Section~\ref{sec:EL:HYDR:PIPE}),
-it also considers fluid compressibility in terms of pressure time derivative,
-and thus the corresponding dynamic effect.
-%\begin{verbatim}
-\begin{Verbatim}[commandchars=\\\{\}]
-    \bnt{hydr_elem_type} ::= \kw{dynamic pipe}
-\end{Verbatim}
-%\end{verbatim}
-
-\subsubsection{Output}
-\begin{itemize}
-\item[1:] label
-\item[2:] pressure at node 1
-\item[3:] pressure at node 2
-\item[4:] pressure derivative at node 1
-\item[5:] pressure derivative at node 2
-\item[6:] flow at node 1
-\item[7:] flow at node 2
-\item[8:] flow rate at node 1
-\item[9:] flow rate at node 2
-\item[10:] density at node 1
-\item[11:] reference density
-\item[12:] density at node 2
-\item[13:] derivative of density with respect to pressure at node 1
-\item[14:] derivative of density with respect to pressure at node 2
-\item[15:] Reynolds number
-\item[16:] flow type flag (boolean; true when flow is turbulent, false otherwise)
-\end{itemize}
-
-
-
-\subsection{Imposed Pressure}
-\label{sec:EL:HYDR:IMPOSED_PRESSURE}
-No specific element has been implemented to impose the pressure at one node.
-The \kw{clamp} variant of the \kw{genel} element
-(Section~\ref{sec:EL:GENEL:CLAMP}) can be used instead.
-
-\paragraph{Example.} \
-\begin{verbatim}
-    set: integer HYDRAULIC_NODE_LABEL = 100;
-    set: integer IMPOSED_PRESSURE_LABEL = 200;
-    genel: IMPOSED_PRESSURE_LABEL, clamp,
-        HYDRAULIC_NODE_LABEL, hydraulic,
-        const, 101325.0;
-\end{verbatim}
-
-
-\subsection{Imposed Flow}
-\label{sec:EL:HYDR:IMPOSED_FLOW}
-No specific element has been implemented to impose the flow at one node.
-The \kw{abstract} variant of the \kw{force} element
-(Section~\ref{sec:EL:FORCE:ABSTRACT}) can be used instead.
-The magnitude of the abstract force is the mass flow extracted
-from the circuit at that node.
-In fact, a negative value of the abstract force means that the flow enters
-the node.
-
-\paragraph{Example.} \
-\begin{verbatim}
-    set: integer HYDRAULIC_NODE_LABEL = 100;
-    set: integer IMPOSED_FLOW_LABEL = 200;
-    force: IMPOSED_PRESSURE_LABEL, abstract,
-        HYDRAULIC_NODE_LABEL, hydraulic,
-        const, -1e-3;
-\end{verbatim}
-
+Coefficients \nt{k12} and \nt{k31} and the respective values of area
+characterize the pressure loss when the flow goes
+from \nt{node\_1} to \nt{node\_2} and from \nt{node\_3} to \nt{node\_1},
+respectively.
+Turbulent flow is assumed.
 
 
 
