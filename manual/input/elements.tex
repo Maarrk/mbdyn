@@ -4151,7 +4151,7 @@ orientation description defined by the
 The three components of the reaction couple in the local frame, 
 and the angles $\vartheta$ and $\varphi$ are also available
 as private data of the element under the names \kw{lambda[\bnt{i}]},
-with \nt{i}=1,2,3, \kw{theta} and \kw{phi}.
+with \nt{i} = 1, 2, 3, \kw{theta} and \kw{phi}.
 For a description of the formulation and of the angles describe above,
 see the Technical Manual.
 
@@ -5457,17 +5457,25 @@ The following data are available:
 \item \kw{"py"} relative position along node 1 position orientation axis 2
 \item \kw{"pz"} relative position along node 1 position orientation axis 3
 
+\item[-] alternatively, \kw{"X[i]"}, \kw{i} = 1, 2, 3, relative position along node 1 position orientation axis \kw{i}
+
 \item \kw{"rx"} relative orientation about node 1 rotation orientation axis 1
 \item \kw{"ry"} relative orientation about node 1 rotation orientation axis 2
 \item \kw{"rz"} relative orientation about node 1 rotation orientation axis 3
 
-\item \kw{"Fx"} reaction force about node 1 position orientation axis 1
-\item \kw{"Fy"} reaction force about node 1 position orientation axis 2
-\item \kw{"Fz"} reaction force about node 1 position orientation axis 3
+\item[-] alternatively, \kw{"Phi[i]"}, \kw{i} = 1, 2, 3, relative orientation about node 1 rotation orientation axis \kw{i}
+
+\item \kw{"Fx"} reaction force along node 1 position orientation axis 1
+\item \kw{"Fy"} reaction force along node 1 position orientation axis 2
+\item \kw{"Fz"} reaction force along node 1 position orientation axis 3
+
+\item[-] alternatively, \kw{"f[i]"}, \kw{i} = 1, 2, 3, reaction force along node 1 position orientation axis \kw{i}
 
 \item \kw{"Mx"} reaction moment about node 1 rotation orientation axis 1
 \item \kw{"My"} reaction moment about node 1 rotation orientation axis 2
 \item \kw{"Mz"} reaction moment about node 1 rotation orientation axis 3
+
+\item[-] alternatively, \kw{"m[i]"}, \kw{i} = 1, 2, 3, reaction moment about node 1 rotation orientation axis \kw{i}
 
 \item \kw{"dx"} imposed relative position along node 1 position orientation axis 1
 \item \kw{"dy"} imposed relative position along node 1 position orientation axis 2
@@ -5477,13 +5485,17 @@ The following data are available:
 \item \kw{"ty"} imposed relative orientation about node 1 rotation orientation axis 2
 \item \kw{"tz"} imposed relative orientation about node 1 rotation orientation axis 3
 
-\item \kw{"vx"} relative velocity along node 1 rotation orientation axis 1
-\item \kw{"vy"} relative velocity along node 1 rotation orientation axis 2
-\item \kw{"vz"} relative velocity along node 1 rotation orientation axis 3
+\item \kw{"vx"} relative velocity along node 1 position orientation axis 1
+\item \kw{"vy"} relative velocity along node 1 position orientation axis 2
+\item \kw{"vz"} relative velocity along node 1 position orientation axis 3
+
+\item[-] alternatively, \kw{"V[i]"}, \kw{i} = 1, 2, 3, relative velocity along node 1 position orientation axis \kw{i}
 
 \item \kw{"wx"} relative angular velocity about node 1 rotation orientation axis 1
 \item \kw{"wy"} relative angular velocity about node 1 rotation orientation axis 2
 \item \kw{"wz"} relative angular velocity about node 1 rotation orientation axis 3
+
+\item[-] alternatively, \kw{"Omega[i]"}, \kw{i} = 1, 2, 3, relative angular velocity about node 1 rotation orientation axis \kw{i}
 \end{enumerate}
 
 \subsubsection{Hints}
@@ -5610,17 +5622,25 @@ The following data are available:
 \item \kw{"py"} absolute position along absolute position orientation axis 2
 \item \kw{"pz"} absolute position along absolute position orientation axis 3
 
+\item[-] alternatively, \kw{"X[i]"}, \kw{i} = 1, 2, 3, absolute position along absolute position orientation axis \kw{i}
+
 \item \kw{"rx"} absolute orientation about absolute rotation orientation axis 1
 \item \kw{"ry"} absolute orientation about absolute rotation orientation axis 2
 \item \kw{"rz"} absolute orientation about absolute rotation orientation axis 3
 
-\item \kw{"Fx"} reaction force about absolute position orientation axis 1
-\item \kw{"Fy"} reaction force about absolute position orientation axis 2
-\item \kw{"Fz"} reaction force about absolute position orientation axis 3
+\item[-] alternatively, \kw{"Phi[i]"}, \kw{i} = 1, 2, 3, absolute orientation about absolute rotation orientation axis \kw{i}
+
+\item \kw{"Fx"} reaction force along absolute position orientation axis 1
+\item \kw{"Fy"} reaction force along absolute position orientation axis 2
+\item \kw{"Fz"} reaction force along absolute position orientation axis 3
+
+\item[-] alternatively, \kw{"f[i]"}, \kw{i} = 1, 2, 3, reaction force along absolute position orientation axis \kw{i}
 
 \item \kw{"Mx"} reaction moment about absolute rotation orientation axis 1
 \item \kw{"My"} reaction moment about absolute rotation orientation axis 2
 \item \kw{"Mz"} reaction moment about absolute rotation orientation axis 3
+
+\item[-] alternatively, \kw{"m[i]"}, \kw{i} = 1, 2, 3, reaction moment about absolute rotation orientation axis \kw{i}
 
 \item \kw{"dx"} imposed absolute position along absolute position orientation axis 1
 \item \kw{"dy"} imposed absolute position along absolute position orientation axis 2
@@ -5634,9 +5654,13 @@ The following data are available:
 \item \kw{"vy"} absolute velocity along absolute position orientation axis 2
 \item \kw{"vz"} absolute velocity along absolute position orientation axis 3
 
+\item[-] alternatively, \kw{"V[i]"}, \kw{i} = 1, 2, 3, absolute velocity along absolute position orientation axis \kw{i}
+
 \item \kw{"wx"} absolute angular velocity about absolute rotation orientation axis 1
 \item \kw{"wy"} absolute angular velocity about absolute rotation orientation axis 2
 \item \kw{"wz"} absolute angular velocity about absolute rotation orientation axis 3
+
+\item[-] alternatively, \kw{"Omega[i]"}, \kw{i} = 1, 2, 3, absolute angular velocity about absolute rotation orientation axis \kw{i}
 \end{enumerate}
 
 \subsubsection{Hints}

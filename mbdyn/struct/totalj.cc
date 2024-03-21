@@ -1912,34 +1912,45 @@ TotalJoint::iGetNumPrivData(void) const
 	return 24;
 }
 
-unsigned int
-TotalJoint::iGetPrivDataIdx(const char *s) const
+// used by both TotalJoint and TotalPinJoint
+static unsigned int
+s_iGetPrivDataIdx(const char *s_in)
 {
-	ASSERT(s != NULL);
+	ASSERT(s_in != NULL);
 
-	if (strlen(s) != 2) {
-		return 0;
-	}
-
+	const char *s = s_in;
 	unsigned int off = 0;
+	bool bSqBr(false);
 
 	switch (s[0]) {
+	case 'X':
+		bSqBr = true;
 	case 'p':
 		/* relative position */
 		break;
 
+	case 'P':
+		if (strncmp(s, "Phi", STRLENOF("Phi")) != 0) {
+			return 0;
+		}
+		s += STRLENOF("Phi") - 1;
+		bSqBr = true;
 	case 'r':
-		/* relative orientation */
+		/* relative orientation (orientation vector) */
 		off += 3;
 		break;
 
+	case 'f':
+		bSqBr = true;
 	case 'F':
-		/* force */
+		/* force (in local frame) */
 		off += 6;
 		break;
 
+	case 'm':
+		bSqBr = true;
 	case 'M':
-		/* moment */
+		/* moment (in local frame) */
 		off += 9;
 		break;
 
@@ -1953,11 +1964,19 @@ TotalJoint::iGetPrivDataIdx(const char *s) const
 		off += 15;
 		break;
 
+	case 'V':
+		bSqBr = true;
 	case 'v':
 		/* relative linear velocity */
 		off += 18;
 		break;
 
+	case 'O':
+		if (strncmp(s, "Omega", STRLENOF("Omega")) != 0) {
+			return 0;
+		}
+		s += STRLENOF("Omega") - 1;
+		bSqBr = true;
 	case 'w':
 		/* relative angular velocity */
 		off += 21;
@@ -1967,6 +1986,33 @@ TotalJoint::iGetPrivDataIdx(const char *s) const
 		return 0;
 	}
 
+	if (bSqBr) {
+		// '[', ']', and trailing '\0'
+		if (s[1] != '[' || s[3] != ']' || s[4] != '\0') {
+			return 0;
+		}
+
+		// get component ('1', '2', or '3')
+		switch (s[2]) {
+		case '1':
+			return off + 1;
+
+		case '2':
+			return off + 2;
+
+		case '3':
+			return off + 3;
+		}
+
+		return 0;
+	}
+
+	// trailing '\0'
+	if (s[2] != '\0') {
+		return 0;
+	}
+
+	// get component ('x', 'y', or 'z')
 	switch (s[1]) {
 	case 'x':
 		return off + 1;
@@ -1979,6 +2025,13 @@ TotalJoint::iGetPrivDataIdx(const char *s) const
 	}
 
 	return 0;
+}
+
+
+unsigned int
+TotalJoint::iGetPrivDataIdx(const char *s) const
+{
+	return s_iGetPrivDataIdx(s);
 }
 
 doublereal
@@ -3686,70 +3739,7 @@ TotalPinJoint::iGetNumPrivData(void) const
 unsigned int
 TotalPinJoint::iGetPrivDataIdx(const char *s) const
 {
-	ASSERT(s != NULL);
-
-	if (strlen(s) != 2) {
-		return 0;
-	}
-
-	unsigned int off = 0;
-
-	switch (s[0]) {
-	case 'p':
-		/* relative position */
-		break;
-
-	case 'r':
-		/* relative orientation */
-		off += 3;
-		break;
-
-	case 'F':
-		/* force */
-		off += 6;
-		break;
-
-	case 'M':
-		/* moment */
-		off += 9;
-		break;
-
-	case 'd':
-		/* imposed relative position */
-		off += 12;
-		break;
-
-	case 't':
-		/* imposed relative orientation */
-		off += 15;
-		break;
-
-	case 'v':
-		/* relative linear velocity */
-		off += 18;
-		break;
-
-	case 'w':
-		/* relative angular velocity */
-		off += 21;
-		break;
-
-	default:
-		return 0;
-	}
-
-	switch (s[1]) {
-	case 'x':
-		return off + 1;
-
-	case 'y':
-		return off + 2;
-
-	case 'z':
-		return off + 3;
-	}
-
-	return 0;
+	return s_iGetPrivDataIdx(s);
 }
 
 doublereal
