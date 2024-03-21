@@ -40,6 +40,8 @@
 #include "friction.h"
 #endif
 
+extern unsigned int total_iGetPrivDataIdx(const char *s_in);
+
 /* TotalJoint - begin */
 
 class TotalJoint :

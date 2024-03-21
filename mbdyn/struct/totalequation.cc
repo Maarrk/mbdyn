@@ -33,6 +33,7 @@
 #include <iostream>
 #include <fstream>
 
+#include "totalj.h"
 #include "totalequation.h"
 #include "Rot.hh"
 #include "hint_impl.h"
@@ -1102,67 +1103,7 @@ TotalEquation::iGetNumPrivData(void) const
 unsigned int
 TotalEquation::iGetPrivDataIdx(const char *s) const
 {
-	ASSERT(s != NULL);
-
-	unsigned int off = 0;
-
-	switch (s[0]) {
-	case 'p':
-		/* relative position */
-		break;
-
-	case 'r':
-		/* relative orientation */
-		off += 3;
-		break;
-
-	case 'F':
-		/* force */
-		off += 6;
-		break;
-
-	case 'M':
-		/* moment */
-		off += 9;
-		break;
-
-	case 'd':
-		/* imposed relative position */
-		off += 12;
-		break;
-
-	case 't':
-		/* imposed relative orientation */
-		off += 15;
-		break;
-	
-	case 'v':
-		/* relative linear velocity */
-		off += 18;
-		break;
-
-	case 'w':
-		/* relative angular velocity */
-		off += 21;
-		break;
-
-
-	default:
-		return 0;
-	}
-
-	switch (s[1]) {
-	case 'x':
-		return off + 1;
-
-	case 'y':
-		return off + 2;
-
-	case 'z':
-		return off + 3;
-	}
-
-	return 0;
+	return total_iGetPrivDataIdx(s);
 }
 
 doublereal

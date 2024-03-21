@@ -1912,9 +1912,9 @@ TotalJoint::iGetNumPrivData(void) const
 	return 24;
 }
 
-// used by both TotalJoint and TotalPinJoint
-static unsigned int
-s_iGetPrivDataIdx(const char *s_in)
+// used by TotalJoint, TotalPinJoint, and TotalEquation
+unsigned int
+total_iGetPrivDataIdx(const char *s_in)
 {
 	ASSERT(s_in != NULL);
 
@@ -2031,7 +2031,7 @@ s_iGetPrivDataIdx(const char *s_in)
 unsigned int
 TotalJoint::iGetPrivDataIdx(const char *s) const
 {
-	return s_iGetPrivDataIdx(s);
+	return total_iGetPrivDataIdx(s);
 }
 
 doublereal
@@ -3739,7 +3739,7 @@ TotalPinJoint::iGetNumPrivData(void) const
 unsigned int
 TotalPinJoint::iGetPrivDataIdx(const char *s) const
 {
-	return s_iGetPrivDataIdx(s);
+	return total_iGetPrivDataIdx(s);
 }
 
 doublereal
