@@ -5131,6 +5131,17 @@ To model a lumped spring of stiffness $K$, such that $F = K (\ell - \ell_0)$ and
         L_0,
         linear elastic, K*L_0;
 \end{verbatim}
+Similar considerations apply to the damping characteristic of a viscoelastic constitutive law:
+\begin{verbatim}
+    set: const real L_0 = 0.35;  # reference length
+    set: const real K = 2.0e+7;  # lumped spring stiffness
+    set: const real C = 2.0e+2;  # lumped damper characteristic
+    joint: 99, rod,
+        1, position, null,
+        2, position, null,
+        L_0,
+        linear viscoelastic, K*L_0, C*L_0;
+\end{verbatim}
 
 For further details on the supported constitutive laws, 
 see Section~\ref{sec:ConstitutiveLaw}.
