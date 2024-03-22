@@ -28,6 +28,22 @@
 
 \chapter{Modules}
 
+As a general rule, entities defined as run-time loadable modules by definition may not appear in the input manual, as they are temporary, experimental or in any case elusive by their very nature.
+They are expected to honor the \kw{help} keyword as their first argument.  If present it should trigger the printing on the screen of the input syntax.  If not followed by any arguments, the simulation is expected to end with no error.
+
+\paragraph{Example}
+
+\noindent
+Print help on screen and continue with the simulation:
+\begin{verbatim}
+    user defined: 10, wheel2, help,
+        10, ...
+\end{verbatim}
+Print help on screen and gently stop:
+\begin{verbatim}
+    user defined: 10, wheel2, help;
+\end{verbatim}
+
 \section{Element Modules}
 Recall that element modules are invoked as \kw{user defined} elements,
 whose syntax is
@@ -119,7 +135,7 @@ user defined: CURR_DRUM,
     timestep, DT,
     output, yes;	
 \end{verbatim}
-While this one defines a cyclocopter with a twodimensional inflow model.
+While this one defines a cyclocopter with a two-dimensional inflow model.
 
 
 \subsubsection{Output}
@@ -355,9 +371,9 @@ implements a scalar mass-damper-spring system.
 \subsubsection{Output}
 \begin{itemize}
 \item 1: element label
-\item 2--4:   impulse on nonsmooth node in global ref. frame
-\item 5--7:   position of nonsmooth node in global ref. frame
-\item 8--10:  velocity of nonsmooth node in global ref. frame
+\item 2--4:   impulse on nonsmooth node in global ref.\ frame
+\item 5--7:   position of nonsmooth node in global ref.\ frame
+\item 8--10:  velocity of nonsmooth node in global ref.\ frame
 \item 11--13: constraint reaction between multibody node and nonsmooth node
 \item 14:    norm of the impulse reaction normal to the contact plane
 \item 15:    number of active constraints during step
@@ -391,11 +407,11 @@ This module implements a simple tire model for aircraft landing and ground handl
 \emph{Authors: Louis Gagnon, Marco Morandini, and Pierangelo Masarati}
 
 \noindent
-This module implements a rigid ring tire model similar to the models commonly known as SWIFT. It is used as an element that will apply a 3D force and a 3D moment to the ring node of a wheel-ring multibody system. A wheel node is also necessary for inertia and contact forces calculations. It is intended to evaluate the transient behavior of the tire rolling on a deteriorated road profile. The equations are integrated implicitly except for the road profile, which is an input. This profile has to be previously filtered by a super ellipse function because the wheel4 module will only apply the tandem-cam part of the profile filtering. It is tailored for, but not restricted to, applications at low camber angles, limited steering and velocity changes, and continuous contact with the road. It is expected to be accurate under excitation frequencies up to 100~Hz and road deformations up to 20\% of the tire radius. A variable time-step algorithm is also embed and speeds up the simulation in cases where the road is flat.
+This module implements a rigid ring tire model similar to the models commonly known as SWIFT. It is used as an element that will apply a 3D force and a 3D moment to the ring node of a wheel-ring multibody system. A wheel node is also necessary for inertia and contact forces calculations. It is intended to evaluate the transient behavior of the tire rolling on a deteriorated road profile. The equations are integrated implicitly except for the road profile, which is an input. This profile has to be previously filtered by a super ellipse function because the \kw{wheel4} module will only apply the tandem-cam part of the profile filtering. It is tailored for, but not restricted to, applications at low camber angles, limited steering and velocity changes, and continuous contact with the road. It is expected to be accurate under excitation frequencies up to 100~Hz and road deformations up to 20\% of the tire radius. A variable time-step algorithm is also embed and speeds up the simulation in cases where the road is flat.
 
 Two runnable examples are available and will clarify the implementation in an actual multibody simulation:
 \begin{itemize}
-\item the simple example \textit{axleExampleNoData} located within the module-wheel4 directory of the MBDyn package
+\item the simple example \textit{axleExampleNoData} located within the \texttt{module-wheel4} directory of the MBDyn package
 \item the more complex \textit{semitrailer} model is available on the example page of the MBDyn website; this example provides the script necessary to apply the super ellipse filter on the road profile; \htmladdnormallink{\kw{http://www.mbdyn.org/?Documentation\_\_\_Official\_Documentation\_\_\_Examples}}{http://www.mbdyn.org/?Documentation\_\_\_Official\_Documentation\_\_\_Examples}
 \end{itemize}
 
@@ -466,14 +482,14 @@ where the keyword \kw{loadedRadius} enables the use of the alternative, validate
 
 \begin{tabular}{p{0.3\textwidth}p{0.7\textwidth}}
 \hline
-	           & \textbf{variable timestep algorithm parameter} \\
-	\bnt{dtOn} & boolean to enable or disable adjustable timestep calculation (will greatly increase the rapidity of the solution only if you have few bumps on a very smooth road and will otherwise slow down the simulation) \\
+	           & \textbf{variable time step algorithm parameter} \\
+	\bnt{dtOn} & boolean to enable or disable adjustable time step calculation (will greatly increase the rapidity of the solution only if you have few bumps on a very smooth road and will otherwise slow down the simulation) \\
 	\bnt{TmaxH} & maximum height change wanted on the road profile for one step \\
 	\bnt{dtRes} & resolution of bump search  \\
-	\bnt{maxstep} & maximum timestep imposed in the initial value section \\
-	\bnt{minstep} &  minimum timestep imposed in the initial value section \\
-	\bnt{TdivF3} &  timestep adjustment factor if force switched sign 3 times in the last \kw{TminS} steps\\
-	\bnt{TdivF4} &  timestep adjustment factor if force switched sign 4 or more times in the last \kw{TminS} steps\\
+	\bnt{maxstep} & maximum time step imposed in the initial value section \\
+	\bnt{minstep} &  minimum time step imposed in the initial value section \\
+	\bnt{TdivF3} &  time step adjustment factor if force switched sign 3 times in the last \kw{TminS} steps\\
+	\bnt{TdivF4} &  time step adjustment factor if force switched sign 4 or more times in the last \kw{TminS} steps\\
 	\hline
 \end{tabular}
 	
@@ -513,8 +529,8 @@ Information about the informally cited works may be found in the following two t
 The output can be obtained either in plain text in the \textbf{.usr} file or in NetCDF format in the \textbf{.nc} file. Section~\ref{sec:NetCDF:Node:Structural Node} explains the NetCDF output whereas the plain text output is as follows,
 \begin{itemize}
 \item 1: element label
-\item 2: velocity of wheel in x-dir (longitudinal, forward)
-\item 3: velocity of wheel in y-dir (lateral)
+\item 2: velocity of wheel in $x$-dir. (longitudinal, forward)
+\item 3: velocity of wheel in $y$-dir. (lateral)
 \item 4: relative speed between center of wheel and contact point on tire in the forward direction
 \item 5--7: moment applied on ring by this module
 \item 8--10: moment arm on ring
@@ -550,8 +566,8 @@ The output can be obtained either in plain text in the \textbf{.usr} file or in 
 \item 70: front edge x-point of the tandem (front contact point of patch)
 \item 71: rear edge x-point of the tandem (rear contact point of patch)
 \item 72: centrifugally induced virtual displacement of tire in the radial direction (units of distance)
-\item 73: patch vertical velocity calculated using road displacement and timestep
-\item 74: timestep
+\item 73: patch vertical velocity calculated using road displacement and time step
+\item 74: time step
 \end{itemize}
 
 
@@ -725,7 +741,7 @@ the symbols:
     more on this function later);
 \end{enumerate}
 The two model differ in the implementation of the active force-length function $f_1(x)$. The
-\kw{pennestri} model is the one originally proposed in~\cite{PENNESTRI-2007-JB}:
+\kw{Pennestri} model is the one originally proposed in~\cite{PENNESTRI-2007-JB}:
 \begin{equation}
   f_1(x) = \mathrm{e}^{\left(-40(x - 0.95)^4 + (x - 0.95)^2\right)} \\
 \end{equation}
@@ -795,7 +811,7 @@ is set to yes, a warning will be printed in \texttt{stderr} when over/underflow 
 are reached. 
 
 The contribution of the muscle short-range stiffness (SRS) can be added with \kw{short
-range stiffness}. The optional  parameter \nt{delta} represents the maximum nondimensional
+range stiffness}. The optional  parameter \nt{delta} represents the maximum non-dimensional
 stretch perturbation, above which the short-range stiffness contribution to the muscle
 force gradient vanishes. A default value of $5.7\cdot10^{-3}$ is set. The optional
 parameter \nt{gamma} represents the SRS constant, according to the model proposed by
@@ -888,7 +904,7 @@ attached to in the \texttt{.jnt} file. The following columns are added:
   \item (if \kw{reflexive}) \kw{Lref}: the current value of \nt{lref};
   \item (if \kw{short range stiffness}): \kw{SRSf}: the short-range stiffness force contribution;
   \item (if \kw{short range stiffness}): \kw{SRSdfdx}: the gradient of the short-range
-    stiffness force contribution with respect to the nondimensional stretch.
+    stiffness force contribution with respect to the non-dimensional stretch.
 \end{itemize}
 The same parameters are also added to the NetCDF output of the element, with the names indicated above.
 
