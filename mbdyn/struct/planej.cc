@@ -2166,26 +2166,19 @@ PlaneRotationJoint::InitialAssJac(VariableSubMatrixHandler& WorkMat,
    /* Equazioni: vedi joints.dvi */
    
    /*       equazioni ed incognite
-    * F1                                     Delta_x1         0+1 =  1
-    * M1                                     Delta_g1         3+1 =  4
-    * FP1                                    Delta_xP1        6+1 =  7
-    * MP1                                    Delta_w1         9+1 = 10
-    * F2                                     Delta_x2        12+1 = 13
-    * M2                                     Delta_g2        15+1 = 16
-    * FP2                                    Delta_xP2       18+1 = 19
-    * MP2                                    Delta_w2        21+1 = 22
-    * vincolo spostamento                    Delta_F         24+1 = 25
-    * vincolo rotazione                      Delta_M         27+1 = 28
-    * derivata vincolo spostamento           Delta_FP        29+1 = 30
-    * derivata vincolo rotazione             Delta_MP        32+1 = 33
+    * M1                                     Delta_g1         0+1 =  1
+    * MP1                                    Delta_w1         3+1 =  4
+    * M2                                     Delta_g2         6+1 =  7
+    * MP2                                    Delta_w2         9+1 = 10
+    * vincolo rotazione                      Delta_M         12+1 = 13
+    * derivata vincolo rotazione             Delta_MP        14+1 = 15
     */
         
-    
    /* Indici */
    integer iNode1FirstPosIndex = pNode1->iGetFirstPositionIndex()+3;
-   integer iNode1FirstVelIndex = iNode1FirstPosIndex+6+3;
+   integer iNode1FirstVelIndex = iNode1FirstPosIndex+6;
    integer iNode2FirstPosIndex = pNode2->iGetFirstPositionIndex()+3;
-   integer iNode2FirstVelIndex = iNode2FirstPosIndex+6+3;
+   integer iNode2FirstVelIndex = iNode2FirstPosIndex+6;
    integer iFirstReactionIndex = iGetFirstIndex();
    integer iReactionPrimeIndex = iFirstReactionIndex+2;
    
@@ -2209,9 +2202,8 @@ PlaneRotationJoint::InitialAssJac(VariableSubMatrixHandler& WorkMat,
    /* Setta gli indici delle reazioni */
    for (int iCnt = 1; iCnt <= 4; iCnt++) {
       WM.PutRowIndex(12+iCnt, iFirstReactionIndex+iCnt);
-      WM.PutColIndex(12+iCnt, iFirstReactionIndex+iCnt);	
+      WM.PutColIndex(12+iCnt, iFirstReactionIndex+iCnt);
    }   
-
    
    /* Recupera i dati */
    const Mat3x3& R1(pNode1->GetRRef());
@@ -2224,21 +2216,6 @@ PlaneRotationJoint::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 	       XCurr(iReactionPrimeIndex+2),
 	       0.);
    
-   /* Matrici identita' */   
-   for (int iCnt = 1; iCnt <= 3; iCnt++) {
-      /* Contributo di forza all'equazione della forza, nodo 1 */
-      WM.PutCoef(iCnt, 12+iCnt, 1.);
-      
-      /* Contrib. di der. di forza all'eq. della der. della forza, nodo 1 */
-      WM.PutCoef(3+iCnt, 14+iCnt, 1.);
-      
-      /* Contributo di forza all'equazione della forza, nodo 2 */
-      WM.PutCoef(6+iCnt, 12+iCnt, -1.);
-      
-      /* Contrib. di der. di forza all'eq. della der. della forza, nodo 2 */
-      WM.PutCoef(9+iCnt, 14+iCnt, -1.);
-   }
-      
    /* Matrici di rotazione dai nodi alla cerniera nel sistema globale */
    Mat3x3 R1hTmp(R1*R1h);
    Mat3x3 R2hTmp(R2*R2h);
@@ -2279,11 +2256,11 @@ PlaneRotationJoint::InitialAssJac(VariableSubMatrixHandler& WorkMat,
    Vec3 TmpPrime2(e3a.Cross(Omega2.Cross(e1b))-e1b.Cross(Omega1.Cross(e3a)));
    
    /* Equazione di momento, nodo 1 */
-   WM.Sub(4, 4, Mat3x3(MatCrossCross, MTmp, e3a));
-   WM.Add(4, 16, Mat3x3(MatCrossCross, e3a, MTmp));
+   WM.Sub(1, 1, Mat3x3(MatCrossCross, MTmp, e3a));
+   WM.Add(1, 7, Mat3x3(MatCrossCross, e3a, MTmp));
    for (int iCnt = 1; iCnt <= 3; iCnt++) {
-      WM.PutCoef(iCnt, 13, Tmp1.dGet(iCnt));
-      WM.PutCoef(iCnt, 14, Tmp2.dGet(iCnt));	
+      WM.PutCoef(iCnt, 13, Tmp1(iCnt));
+      WM.PutCoef(iCnt, 14, Tmp2(iCnt));	
    }
    
    /* Equazione di momento, nodo 2 */
