@@ -1257,51 +1257,52 @@ Elem* ReadHydraulicElem(DataManager* pDM,
        const PressureNode* pNode2 = pDM->ReadNode<const PressureNode, Node::HYDRAULIC>(HP);
        
        /* Diametro */
-       doublereal diameter = HP.GetReal();
-       if (diameter <= 0.) {		  
-	  silent_cerr("Pipe(" << uLabel << "): "
-		  "null or negative diameter "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       doublereal diameter;
+       try {
+               diameter = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: invalid diameter " << e.Get() << " (must be positive) [" << e.what() << "] for Pipe(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Diameter: " << diameter << std::endl);
        
-       // Area      	   
-       doublereal area = diameter*diameter*M_PI_4;
-       if (HP.IsKeyWord("area")) 
-	 {
-	    area = HP.GetReal();
-	    if (area <= 0.) 
-	      {		  
-		 silent_cerr("Pipe(" << uLabel << "): "
-			 "null or negative area "
-			 "at line " << HP.GetLineData() << std::endl);
-		 throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-	      }	
-	      }
+       // Area
+       // actually, it should be the other way 'round: get the area first, then estimate the hydraulic diameter as sqrt(A/pi)
+       doublereal area(diameter*diameter*M_PI_4);
+       if (HP.IsKeyWord("area")) {
+           try {
+               area = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+           } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: invalid area " << e.Get() << " (must be positive) [" << e.what() << "] for Pipe(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+           }
+       }
        DEBUGCOUT("Area: " << area << std::endl);
        
        /* Lunghezza */
-       doublereal lenght = HP.GetReal();
-       if (lenght <= 0.) {		  
-	  silent_cerr("Pipe(" << uLabel << "): "
-		  "null or negative lenght "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
-       DEBUGCOUT("Lenght: " << lenght << std::endl); 
+       doublereal length;
+       try {
+               length = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: invalid length " << e.Get() << " (must be positive) [" << e.what() << "] for Pipe(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
+       DEBUGCOUT("Length: " << length << std::endl); 
        
        /* Transizione se e' 0 parto da laminare se e' 1 parto da turbolento */
-       flag turbulent = 0;
+       flag turbulent(0);
        if (HP.IsKeyWord("turbulent")) {
 	  turbulent = 1;
-	  DEBUGCOUT("Turbulent" << std::endl); 
        }
-       doublereal q0 = 0.;
+       DEBUGCOUT("Turbulent: " (Turbulent == 0 ? "false" : "true") << std::endl); 
+       doublereal q0(0.);
        if (HP.IsKeyWord("initial" "value")) {
 	  q0 = HP.GetReal();
-	  DEBUGCOUT("Initial q = " << q0 << std::endl); 
        }
+       DEBUGCOUT("Initial flow = " << q0 << std::endl); 
        
        HydraulicFluid* hf = HP.GetHydraulicFluid();
        ASSERT(hf != NULL);
@@ -1312,7 +1313,7 @@ Elem* ReadHydraulicElem(DataManager* pDM,
 			      Pipe,
 			      Pipe(uLabel, pDO, hf, pNode1, pNode2, 
 				   diameter, 
-				   area, lenght, turbulent, q0, fOut));
+				   area, length, turbulent, q0, fOut));
        break;
     }
       
@@ -1348,14 +1349,14 @@ Elem* ReadHydraulicElem(DataManager* pDM,
        DEBUGCOUT("Area: " << area << std::endl);
        
        /* Lunghezza */
-       doublereal lenght = HP.GetReal();
-       if (lenght <= 0.) {		  
+       doublereal length = HP.GetReal();
+       if (length <= 0.) {		  
 	  silent_cerr("DynamicPipe(" << uLabel << "): "
-		  "null or negative lenght "
+		  "null or negative length "
 		  "at line " << HP.GetLineData() << std::endl);
 	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
        }	     
-       DEBUGCOUT("Lenght: " << lenght << std::endl); 
+       DEBUGCOUT("Length: " << length << std::endl); 
        
        /* Transizione se e' 0 parto da laminare se e' 1 parto da turbolento */
        flag turbulent = 0;
@@ -1378,7 +1379,7 @@ Elem* ReadHydraulicElem(DataManager* pDM,
 			      DynamicPipe,
 			      DynamicPipe(uLabel, pDO, hf,
 					   pNode1, pNode2, diameter, 
-					   area, lenght, turbulent, q0, fOut));
+					   area, length, turbulent, q0, fOut));
        break;
     }	   
       
