@@ -58,8 +58,9 @@ HydraulicElem(uL, pDO, hf, fOut),
 pNode1(p1),
 stroke(St), start(start), area(As), area_pipe(A_pipe), mass(ms),
 press0(P0), press_max(Pmax),
-Kappa(k), weight(Wg), spring(Kspr),force0(F0), h_in(h_in), h_out(h_out),
-c_spost(cs), c_vel(cv), c_acc(ca)
+Kappa(k), weight(Wg), spring(Kspr), force0(F0), h_in(h_in), h_out(h_out),
+density(0.), c_spost(cs), c_vel(cv), c_acc(ca),
+s(0.), v(0.), sp(0.), vp(0.), pgas(0.), flow(0.)
 {
    ASSERT(pNode1 != NULL);
    ASSERT(pNode1->GetNodeType() == Node::HYDRAULIC);
@@ -146,7 +147,7 @@ Accumulator::AssJac(VariableSubMatrixHandler& WorkMat,
    WM.PutColIndex(2, iFirstIndex+1);
    WM.PutRowIndex(3, iFirstIndex+2);
    WM.PutColIndex(3, iFirstIndex+2);
-   doublereal density = HF->dGetDensity();
+   density = HF->dGetDensity();
   
    /* unused? doublereal p1 = pNode1->dGetX(); */
    s = XCurr(iFirstIndex+1);  /* spostamento */
@@ -239,7 +240,7 @@ Accumulator::AssRes(SubVectorHandler& WorkVec,
    pgas = 0.;
    doublereal x0;
    doublereal x0spring;
-   doublereal density = HF->dGetDensity();
+   density = HF->dGetDensity();
  
    doublereal p10 = pow(p1/press0, 1./Kappa); 
    x0 = (stroke*(p10 - 1.))/p10;
