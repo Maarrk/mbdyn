@@ -1900,7 +1900,11 @@ HydraulicFluid*
 MBDynParser::GetHydraulicFluid(void)
 {
 	/* verifica che sia stato chiamato con "hydraulic" "fluid" */
-	if (!IsKeyWord("hydraulic" "fluid") && !IsKeyWord("fluid")) {
+	if (IsKeyWord("fluid")) {
+		pedantic_cerr("warning, keyword \"fluid\" deprecated; use \"hydraulic fluid\" instead at line "
+			<< GetLineData() << std::endl);
+
+	} else if (!IsKeyWord("hydraulic" "fluid")) {
 		silent_cerr("hydraulic fluid expected at line "
 			<< GetLineData() << std::endl);
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
@@ -1915,8 +1919,8 @@ MBDynParser::GetHydraulicFluid(void)
 	unsigned int uLabel = GetInt();
 	HFType::const_iterator i = HF.find(uLabel);
 	if (i == HF.end()) {
-		silent_cerr("hydraulic fluid " << uLabel
-			<< " is undefined at line " << GetLineData()
+		silent_cerr("undefined hydraulic fluid " << uLabel
+			<< " at line " << GetLineData()
 			<< std::endl);
 		throw MBDynParser::ErrGeneric(MBDYN_EXCEPT_ARGS);
 	}
