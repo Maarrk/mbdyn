@@ -216,10 +216,10 @@ ReadJoint(DataManager* pDM,
 		"cardano" "hinge",
 		"cardano" "rotation",
 		"cardano" "pin",
-		"plane" "hinge",
+		"plane" "hinge",			// deprecated
 		"revolute" "hinge",
 		"revolute" "rotation",
-		"plane" "pin",
+		"plane" "pin",				// deprecated
 		"revolute" "pin",
 		"axial" "rotation",
 		"plane" "displacement",
@@ -283,10 +283,10 @@ ReadJoint(DataManager* pDM,
 		CARDANOHINGE,
 		CARDANOROTATION,
 		CARDANOPIN,
-		PLANEHINGE,
+		PLANEHINGE,			// deprecated
 		REVOLUTEHINGE,
 		REVOLUTEROTATION,
-		PLANEPIN,
+		PLANEPIN,			// deprecated
 		REVOLUTEPIN,
 		AXIALROTATION,
 		PLANEDISPLACEMENT,
@@ -701,6 +701,16 @@ ReadJoint(DataManager* pDM,
 	case GIMBALROTATION:
 	case PLANEDISPLACEMENT:
 		{
+		switch (CurrKeyWord) {
+		case PLANEHINGE:
+			silent_cerr("line " << HP.GetLineData()
+				<< ": deprecated \"plane hinge\" joint name;"
+				<< " use \"revolute hinge\" instead" << std::endl);
+			break;
+
+		default:
+			break;
+		}
 		/* nodo collegato 1 */
 		const StructNode* pNode1 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
 
@@ -858,9 +868,6 @@ ReadJoint(DataManager* pDM,
 
 		/* allocazione e creazione cerniera piana */
 		case PLANEHINGE:
-			silent_cerr("line " << HP.GetLineData()
-				<< ": deprecated \"plane hinge\" joint name;"
-				<< " use \"revolute hinge\" instead" << std::endl);
 		case REVOLUTEHINGE:
 			{
 			bool calcInitdTheta = true;
