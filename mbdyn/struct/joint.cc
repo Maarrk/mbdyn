@@ -375,6 +375,11 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructDispNode* pNode2 = pDM->ReadNode<const StructDispNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
 		const StructNode *pN2 = dynamic_cast<const StructNode *>(pNode2);
 
 		Vec3 f2(Zero3);
@@ -481,6 +486,11 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
 
 		Vec3 f2(Zero3);
 		if (HP.IsKeyWord("position")) {
@@ -768,6 +778,11 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
 
 		/* Stessa cosa per il nodo 2 */
 
@@ -910,7 +925,7 @@ ReadJoint(DataManager* pDM,
 			if (!HP.IsKeyWord("friction")) {
 				silent_cerr("missing keyword \"friction\" at line "
 					<< HP.GetLineData() << std::endl);
-					throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+				throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
 			}
 			doublereal r = HP.GetReal();
 
@@ -1247,6 +1262,11 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
 
 		Vec3 q(Zero3);
 		bool bOffset(false);
@@ -1328,6 +1348,11 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
 
 		Vec3 q(Zero3);
 		bool bOffset(false);
@@ -1412,6 +1437,11 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructDispNode* pNode2 = pDM->ReadNode<const StructDispNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
 		const StructNode *pN2 = dynamic_cast<const StructNode *>(pNode2);
 		DEBUGCOUT("Linked to Node " << pNode2->GetLabel() << std::endl);
 
@@ -1597,6 +1627,11 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
 
 		Vec3 f2(Zero3);
 		if (HP.IsKeyWord("position")) {
@@ -1737,6 +1772,11 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
 
 		ReferenceFrame RF2(pNode2);
 
@@ -2071,6 +2111,11 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
 
 		/* Offset */
 		ReferenceFrame RF2(pNode2);
@@ -2424,6 +2469,12 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+
 		ReferenceFrame RF2(pNode2);
 
 		/* Stessa cosa per il nodo 2 */
@@ -2485,6 +2536,12 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+
 		ReferenceFrame RF2(pNode2);
 
 		/* Stessa cosa per il nodo 2 */
@@ -2540,6 +2597,12 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+
 		RF = ReferenceFrame(pNode2);
 
 		/* Stessa cosa per il nodo 2 */
@@ -2647,6 +2710,12 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+
 		ReferenceFrame RF2(pNode2);
 
 		Vec3 f2(HP.GetPosRel(RF2, RF1, f1));
@@ -2787,6 +2856,12 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+
 		ReferenceFrame RF2(pNode2);
 
 		Vec3 f2(Zero3);
@@ -2878,6 +2953,12 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+
 		ReferenceFrame RF2(pNode2);
 
 		Vec3 f2(Zero3);
@@ -3032,6 +3113,12 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+
 		ReferenceFrame RF2(pNode2);
 
 		Vec3 f2(Zero3);
@@ -3175,6 +3262,12 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		const StructNode* pNode2 = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+
 		ReferenceFrame RF2(pNode2);
 
 		Vec3 f2(Zero3);
@@ -3920,6 +4013,12 @@ ReadJoint(DataManager* pDM,
 
 		/* nodo collegato 2 */
 		StructNode* pNode2 = dynamic_cast<StructNode *>(pDM->ReadNode(HP, Node::STRUCTURAL));
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+
 
 		Vec3 q(Zero3);
 		// bool bOffset(false);
@@ -3977,6 +4076,12 @@ ReadJoint(DataManager* pDM,
              const ReferenceFrame RF1{pNode1};
 
              const StructDispNodeAd* pNode2 = pDM->ReadNode<const StructDispNodeAd, Node::STRUCTURAL>(HP);
+		if (pNode2 == pNode1) {
+			silent_cerr("Joint(" << uLabel << "): the same node " << pNode1->GetLabel() << " cannot be connected twice at line "
+				<< HP.GetLineData() << std::endl);
+			throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+
              const ReferenceFrame RF2{pNode2};
 
              const Vec3 X2 = HP.IsKeyWord("position") ? HP.GetPosAbs(RF2) : RF2.GetX();
