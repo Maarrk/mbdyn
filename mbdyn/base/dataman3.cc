@@ -2299,7 +2299,7 @@ DataManager::ReadNodes(MBDynParser& HP)
 
 				/* lettura dei dati specifici */
 				doublereal dx(0.);
-				ReadScalarAlgebraicNode(HP, uLabel, Node::ABSTRACT, dx);
+				ReadScalarAlgebraicNode(HP, uLabel, Node::HYDRAULIC, dx);
 				doublereal dScale = dReadScale(HP, DofOwner::HYDRAULICNODE);
 				flag fOut = fReadOutput(HP, Node::HYDRAULIC);
 
