@@ -43,11 +43,11 @@
 \end{Verbatim}
 %\end{verbatim}
 The field \nt{hydraulic\_element\_data} usually contains information
-about fluid properties, which are handled by means of a \hty{HydraulicFluid}.
+about the required hydraulic fluid properties, which are handled by means of a \hty{HydraulicFluid}.
 This can be directly inserted, following the syntax described in
-Section~\ref{sec:HydraulicFluid} preceded by the keyword \kw{fluid}, or a
-previously defined fluid can be recalled by using the keyword 
-\kw{reference} followed by the label of the desired fluid:
+Section~\ref{sec:HydraulicFluid} preceded by the keyword \kw{hydraulic fluid}, or a
+previously defined hydraulic fluid can be recalled by using the keyword 
+\kw{reference} followed by the label of the desired hydraulic fluid:
 %\begin{verbatim}
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{hydraulic_fluid_properties} ::=
@@ -184,7 +184,7 @@ and the related chapter of the tutorials
         \bnt{area} ,
         [ \kw{loss} , \bnt{loss_factor} , ]
         (\hty{DriveCaller}) \bnt{state} ,
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+        \kw{hydraulic fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
 \end{Verbatim}
 %\end{verbatim}
 This element represents a valve that connects
@@ -217,7 +217,7 @@ of area that leaks when \nt{state} is exactly zero.
         \bnt{displacement_penalty} ,
         \bnt{velocity_penalty} ,
         \bnt{acceleration_penalty} ,
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+        \kw{hydraulic fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
 \end{Verbatim}
 %\end{verbatim}
 This element represents a valve that connects
@@ -289,7 +289,7 @@ and thus the corresponding dynamic effect.
         \bnt{displacement_penalty} ,
         \bnt{velocity_penalty} ,
         \bnt{acceleration_penalty} ,
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+        \kw{hydraulic fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
 \end{Verbatim}
 %\end{verbatim}
 
@@ -344,7 +344,7 @@ A pressure loss between two pressure nodes.
     \bnt{hydr_elem_data} ::=
         \bnt{node_1} , \bnt{node_2} ,
         \bnt{k12} , \bnt{k21} , \bnt{area} ,
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+        \kw{hydraulic fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
 \end{Verbatim}
 %\end{verbatim}
 Coefficients \nt{k12} and \nt{k21} characterize the pressure loss
@@ -365,7 +365,7 @@ Turbulent flow is assumed.
         \bnt{orifice_area} , # diaphragm area
         [ \kw{area} , \bnt{pipe_area} , ] # defaults to (\bnt{pipe_diameter}/2)^2*pi
         [ \kw{reynolds} , \bnt{critical_reynolds_number} , ] # defaults to 10
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+        \kw{hydraulic fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
 \end{Verbatim}
 %\end{verbatim}
 
@@ -389,7 +389,7 @@ Transition between laminar and turbulent flow is also modeled.
         \bnt{length} ,
         [ \kw{turbulent} , ]
         [ \kw{initial value} , \bnt{flow} , ]
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+        \kw{hydraulic fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
 \end{Verbatim}
 %\end{verbatim}
 When \kw{area} is not given, it defaults to the equivalent area
@@ -397,7 +397,7 @@ computed according to the hydraulic diameter.
 The flag \kw{turbulent} forces the flow to be considered turbulent
 since the first iteration, when the initial conditions would fall
 in the transition region.
-The \kw{initial value} parameter refers to the initial value
+The \kw{initial value} parameter is the initial value
 of the flow internal state.
 
 \paragraph{Example.} \
@@ -434,7 +434,7 @@ of the flow internal state.
         \bnt{displacement_penalty} ,
         \bnt{velocity_penalty} ,
         \bnt{acceleration_penalty} ,
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+        \kw{hydraulic fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
 \end{Verbatim}
 %\end{verbatim}
 Same as Dynamic Control Valve (\ref{sec:EL:HYDR:DYNAMIC_CONTROL_VALVE}),
@@ -460,7 +460,7 @@ at the sides of the valve body and participate in the force balance.
         \bnt{displacement_penalty} ,
         \bnt{velocity_penalty} ,
         \bnt{acceleration_penalty} ,
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+        \kw{hydraulic fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
 \end{Verbatim}
 %\end{verbatim}
 
@@ -483,7 +483,7 @@ depending on the sign of the pressure drop.
     \bnt{hydr_elem_data} ::=
         \bnt{node_1} , \bnt{node_2} , \bnt{node_3} ,
         \bnt{k12} , \bnt{k31} , \bnt{area_12} , \bnt{area_31} ,
-        \kw{fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
+        \kw{hydraulic fluid} , (\hty{HydraulicFluid}) \bnt{fluid}
 \end{Verbatim}
 %\end{verbatim}
 Coefficients \nt{k12} and \nt{k31} and the respective values of area
