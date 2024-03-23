@@ -211,7 +211,7 @@ Elem* ReadHydraulicElem(DataManager* pDM,
        DEBUGCOUT("Area2: " << area2 << std::endl);
        
        /* lunghezza cilindro (a meno dello spessore */
-       doublereal dl = HP.GetReal();
+       doublereal dl;
        try {
                dl = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
 
@@ -220,7 +220,6 @@ Elem* ReadHydraulicElem(DataManager* pDM,
                throw e;
        }
        DEBUGCOUT("dl: " << dl << std::endl);
-       
        
        HydraulicFluid* hf1 = HP.GetHydraulicFluid();
        ASSERT(hf1 != NULL);
