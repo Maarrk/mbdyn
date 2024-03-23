@@ -182,8 +182,8 @@ Elem* ReadHydraulicElem(DataManager* pDM,
 	     axis = HP.GetUnitVecRel(RF);
           } catch (ErrNullNorm& err) {
 	     silent_cerr("Actuator(" << uLabel << "): "
-		     "need a definite direction, not "
-		     << axis << "!" << std::endl);
+		     "need a definite direction, not {"
+		     << axis << "}!" << std::endl);
 	     throw ErrNullNorm(MBDYN_EXCEPT_ARGS);
 	  }
        } 

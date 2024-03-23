@@ -60,6 +60,14 @@ previously defined fluid can be recalled by using the keyword
 
 \subsection{Accumulator}
 \label{sec:EL:HYDR:ACCUMULATOR}
+This element implements a simple accumulator.
+Three options are available: gas, weight, and spring.
+The element must be connected to a hydraulic network via a hydraulic node.
+The rate of accumulated fluid depends on the pressure difference between the accumulator chamber and of the node.
+Although a \kw{weight} mode is provided, it does not account for the actual gravity field;
+it assumes that the accumulator is mounted with the piston in the vertical position and that gravity is uniform.
+Although the mass of the piston is required, it does not account for the actual motion the system is subjected to;
+it assumes that the cylinder is in an inertial reference frame.  Use with care!
 %\begin{verbatim}
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{hydr_elem_type} ::= \kw{accumulator}
@@ -89,23 +97,23 @@ where
 \item \nt{area}, the area of the accumulator, must be positive
 \item \nt{pipe\_area}, the area of the pipe leading to the accumulator, must be positive
 \item \nt{mass}, the mass of the accumulator, must be positive
-\item \nt{loss\_in} defaults to 1.0
-\item \nt{loss\_out} defaults to 0.5
+\item \nt{loss\_in}, (?, must be non-negative); defaults to 1.0
+\item \nt{loss\_out} (?, must be non-negative); defaults to 0.5
 \item if the keyword \kw{gas} is used, it must be followed by
 \begin{itemize}
-\item \nt{press\_0}, the pressure of the gas when the accumulator is empty
-\item \nt{press\_max}, the maximum pressure of the gas
-\item \nt{exponent}, the exponent of the polytropic curve that describes the state of the gas
+\item \nt{press\_0}, the pressure of the gas when the accumulator is empty, must be positive
+\item \nt{press\_max}, the maximum pressure of the gas, must be greater than or equal to \nt{press\_0}
+\item \nt{exponent}, the exponent of the polytropic curve that describes the state of the gas, must be positive
 \end{itemize}
-\item if the keyword \kw{weight} is used, it must be followed by \nt{weight} (TBD)
+\item if the keyword \kw{weight} is used, it must be followed by \nt{weight}; must be positive (TBD)
 \item if the keyword \kw{spring} is used, it must be followed by
 \begin{itemize}
-\item \nt{spring}, the stiffness of the spring
-\item \nt{force\_0}, the preload of the spring when the accumulator is empty
+\item \nt{spring}, the stiffness of the spring, must be positive
+\item \nt{force\_0}, the preload of the spring when the accumulator is empty, must be non-negative
 \end{itemize}
-\item \nt{c\_disp}, \nt{c\_vel}, and \nt{c\_acc} are stiffness, damping, and jerk coefficients used to deal with end of stroke reactions
+\item \nt{c\_disp}, \nt{c\_vel}, and \nt{c\_acc} are stiffness, damping, and acceleration-related coefficients used to deal with end position reactions; must be non-negative
 \end{itemize}
-The three types (\kw{gas}, \kw{weight}, and \kw{spring}) can be simultaneously present, although only some combinations make sense.
+The three types of accumulation principles (\kw{gas}, \kw{weight}, and \kw{spring}) can be simultaneously present, although only some combinations make sense.
 
 
 
@@ -116,10 +124,15 @@ The two hydraulic nodes represent the pressure in the two chambers
 of the cylinder.
 The two structural nodes represent the cylinder and the piston.
 Their relative motion is assumed to consist essentially
-in a displacement along a given direction in the reference frame
-of structural node 1.
+of a displacement along a given direction in the reference frame
+of the first structural node.
 The user must take care of this by constraining the two nodes
-with an appropriate set of \kw{joint} elements.
+with an appropriate set of \kw{joint} elements
+(e.g., a \kw{total joint} that only allows relative motion along the axis of the cylinder;
+the relative rotation about the same axis may indifferently be allowed or constrained).
+The mass of the piston must be provided using appropriate elements associated with the piston's node.
+Mechanical friction between the piston and the cylinder (e.g., associated with sealings)
+must be taken care of using appropriate mechanical elements (e.g., a \kw{rod} joint with a viscous constitutive law).
 Other hydraulic aspects of this component, like leakages between
 the two chambers and between the chambers and the outside,
 and the related pressure losses, must be explicitly taken care of,
@@ -141,7 +154,8 @@ e.g.\ by means of \kw{minor loss} elements.
         \{ \kw{same} | \kw{hydraulic fluid} , (\hty{HydraulicFluid}) \bnt{fluid_2} \}
 \end{Verbatim}
 %\end{verbatim}
-The vector \nt{direction} is internally normalized to unity.
+The vector \nt{direction} is internally normalized to unit norm.
+It represents the direction of the stroke in the reference system of \nt{struct\_node\_1}.
 By default, it is direction 3 in the reference frame of the \kw{structural}
 node \nt{struct\_node\_1}.
 
@@ -154,6 +168,7 @@ and the related chapter of the tutorials
 \begin{quote}
 \htmladdnormallink{\kw{http://www.aero.polimi.it/mbdyn/documentation/tutorials/}}{http://www.aero.polimi.it/mbdyn/documentation/tutorials/}
 \end{quote}
+
 
 
 
