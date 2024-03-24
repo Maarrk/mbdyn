@@ -280,12 +280,14 @@ and thus the corresponding dynamic effect.
 
     \bnt{hydr_elem_data} ::=
         \bnt{node_1} , \bnt{node_2} , \bnt{node_3} ,
-        \bnt{area} ,
-        \bnt{mass} ,
-        \bnt{max_area} ,
+        \bnt{diaphragm_area} ,
+        \bnt{valve_mass} ,
+        \bnt{pipe_area} ,
+        \bnt{valve_max_area} ,
         \bnt{spring_stiffness} ,
         \bnt{spring_preload} ,
         \bnt{width} ,
+        \bnt{max_stroke} ,
         \bnt{displacement_penalty} ,
         \bnt{velocity_penalty} ,
         \bnt{acceleration_penalty} ,
@@ -293,6 +295,16 @@ and thus the corresponding dynamic effect.
 \end{Verbatim}
 %\end{verbatim}
 
+\subsubsection{Output}
+\begin{itemize}
+\item[1:] label
+\item[2:] valve displacement
+\item[3:] valve velocity
+\item[4:] valve acceleration
+\item[5:] flow through way 1
+\item[6:] flow through way 2
+\item[7:] flow through way 3
+\end{itemize}
 
 
 \subsection{Imposed Flow}

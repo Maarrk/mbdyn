@@ -771,95 +771,124 @@ Elem* ReadHydraulicElem(DataManager* pDM,
        const PressureNode* pNode3 = pDM->ReadNode<const PressureNode, Node::HYDRAULIC>(HP);
        
        /* Area diaframma */
-       doublereal area_diaf = HP.GetReal();
-       if (area_diaf <= 0.) {		  
-	  silent_cerr("FlowValve(" << uLabel << "): "
-		  "null or negative area_diaf "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       doublereal area_diaf;
+       try {
+               area_diaf = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: diaphragm area " << e.Get() << " (must be positive) [" << e.what() << "] for FlowValve(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Area_diaf: " << area_diaf << std::endl);
        
        /* Massa valvola */
-       doublereal mass = HP.GetReal();
-       if (mass <= 0.) {
-	  silent_cerr("FlowValve(" << uLabel << "): "
-		  "null or negative valve mass "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       doublereal mass;
+       try {
+               mass = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: valve mass " << e.Get() << " (must be positive) [" << e.what() << "] for FlowValve(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Valve mass: " << mass << std::endl);
        
        /* Area tubo */
-       doublereal area_pipe = HP.GetReal();
-       if (area_pipe <= 0.) {
-	  silent_cerr("FlowValve(" << uLabel << "): "
-		  "null or negative area_pipe "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       doublereal area_pipe;
+       try {
+               area_pipe = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: pipe area " << e.Get() << " (must be positive) [" << e.what() << "] for FlowValve(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Area_pipe: " << area_pipe << std::endl);
             
        /* Area massima della valvola */
-       doublereal area_max = HP.GetReal();
-       if (area_max <= 0.) {
-	  silent_cerr("FlowValve(" << uLabel << "): "
-		  "null or negative area_max "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       doublereal area_max;
+       try {
+               area_max = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: valve max area " << e.Get() << " (must be positive) [" << e.what() << "] for FlowValve(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Area_max: " << area_max << std::endl);
        
        /* Kappa : costante della molla */
-       doublereal Kappa = HP.GetReal();
-       if (Kappa <= 0.) {
-	  silent_cerr("FlowValve(" << uLabel << "): "
-		  "null or negative Kappa "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       doublereal Kappa;
+       try {
+               Kappa = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: spring stiffness " << e.Get() << " (must be positive) [" << e.what() << "] for FlowValve(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Kappa: " << Kappa << std::endl);
        
        /* Forza0: precarico della molla */
-       doublereal force0 = HP.GetReal();
-       if (force0 < 0.) {		  
-	  silent_cerr("FlowValve(" << uLabel << "): "
-		  "negative force0 "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	 
+       doublereal force0;
+       try {
+               force0 = HP.GetReal(0., HighParser::range_ge<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: spring preload " << e.Get() << " (must be non-negative) [" << e.what() << "] for FlowValve(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Force0: " << force0 << std::endl);
        
        /* Larghezza luce di passaggio */
-       doublereal width = HP.GetReal();
-       if (width <= 0.) {		  
-	  silent_cerr("FlowValve(" << uLabel << "): "
-		  "null or negative width "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       doublereal width;
+       try {
+               width = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: width " << e.Get() << " (must be positive) [" << e.what() << "] for FlowValve(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Width: " << width << std::endl);
        
        /* Corsa massima della valvola */
-       doublereal s_max = HP.GetReal();
-       if (s_max < 0.) {		  
-	  silent_cerr("FlowValve(" << uLabel << "): "
-		  "negative s_max "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       doublereal s_max;
+       try {
+               s_max = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: max stroke " << e.Get() << " (must be positive) [" << e.what() << "] for FlowValve(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("s_max: " << s_max << std::endl);
        
        /* c dello spostamento */
-       doublereal c_spost = HP.GetReal();
+       doublereal c_spost;
+       try {
+               c_spost = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: displacement penalty " << e.Get() << " (must be positive) [" << e.what() << "] for FlowValve(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("c_spost: " << c_spost << std::endl);
        
        /* c della velocita' */
-       doublereal c_vel = HP.GetReal();
+       doublereal c_vel;
+       try {
+               c_vel = HP.GetReal(0., HighParser::range_ge<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: velocity penalty " << e.Get() << " (must be non-negative) [" << e.what() << "] for FlowValve(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("c_vel: " << c_vel << std::endl);
        
        /* c della accelerazione */
-       doublereal c_acc = HP.GetReal();
+       doublereal c_acc;
+       try {
+               c_acc = HP.GetReal(0., HighParser::range_ge<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: acceleration penalty " << e.Get() << " (must be non-negative) [" << e.what() << "] for FlowValve(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("c_acc: " << c_acc << std::endl);
        
        HydraulicFluid* hf = HP.GetHydraulicFluid();
@@ -1392,7 +1421,7 @@ Elem* ReadHydraulicElem(DataManager* pDM,
        throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
     }	
    }
-   
+ 
    /* Se non c'e' il punto e virgola finale */
    if (HP.IsArg()) {
       silent_cerr("semicolon expected "

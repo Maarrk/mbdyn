@@ -2031,6 +2031,8 @@ Kappa(K), force0(F0), width(w), s_max(s_mx), c_spost(cs), c_vel(cv), c_acc(ca)
    ASSERT(F0 >= 0.);
    ASSERT(w > std::numeric_limits<doublereal>::epsilon()); 
    ASSERT(s_max >= 0.);
+
+   // allow to initialize position/velocity of the valve?
    
    h = .02; /* coefficiente di perdita di carico concentrata tra i nodi 1 e 2 (smorza il moto della valvola) */
 }
