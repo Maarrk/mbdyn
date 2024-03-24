@@ -1737,13 +1737,8 @@ DataManager::ReadScalarDifferentialNode(MBDynParser& HP,
 	doublereal& dX, doublereal& dXP) const
 {
 	if (ReadScalarAlgebraicNode(HP, uLabel, type, dX) == 1) {
-		if (HP.IsArg()) {
-			if (!HP.IsKeyWord("derivative")) {
-				pedantic_cerr(psNodeNames[type] << "(" << uLabel << "): "
-					"initial derivative value specified without "
-     					"\"derivative\" keyword (deprecated)" << std::endl);
-			}
-				
+		// this is mandatory
+		if (HP.IsKeyWord("derivative")) {
 			dXP = HP.GetReal();
 			DEBUGLCOUT(MYDEBUG_INPUT,
 				"Initial derivative value xp = "
