@@ -40,6 +40,17 @@ This module implements several electric components.
 \subsubsection{BJT}
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{name} ::= \kw{bjt}
+
+    \bnt{module_data} ::=
+        \{ \kw{npn} | \kw{pnp} \} ,
+        \bnt{collector_electric_node_label} ,
+        \bnt{base_electric_node_label} ,
+        \bnt{emitter_electric_node_label} ,
+        (\hty{real}) \bnt{base_to_emitter_leakage_saturation_current} ,
+        (\hty{real}) \bnt{base_to_collector_leakage_saturation_current} ,
+        (\hty{real}) \bnt{ideal_maximum_forward_beta} ,
+        (\hty{real}) \bnt{ideal_maximum_reverse_beta} ,
+        [ , \kw{thermal voltage} , (\hty{real}) \bnt{thermal_voltage} ]
 \end{Verbatim}
 
 
@@ -52,7 +63,6 @@ This module implements several electric components.
         \bnt{electric_node_2_label} ,
         (\hty{real}) \bnt{capacitance}
 \end{Verbatim}
-
 
 \paragraph{Output.}
 \label{sec:MODULE:FAB-ELECTRIC:CAPACITOR:OUTPUT}
@@ -68,18 +78,44 @@ The format is:
 \subsubsection{Diode}
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{name} ::= \kw{diode}
+
+    \bnt{module_data} ::=
+        \bnt{electric_node_1_label} ,
+        \bnt{electric_node_2_label} ,
+        (\hty{real}) \bnt{forward_saturation_current} ,
+        (\hty{real}) \bnt{forward_ideality_factor} ,
+        (\hty{real}) \bnt{breakdown_current} ,
+        (\hty{real}) \bnt{breakdown_voltage} ,
+        (\hty{real}) \bnt{reverse_ideality_factor}
+        [ , \kw{thermal voltage} , (\hty{real}) \bnt{thermal_voltage} ]
 \end{Verbatim}
 
 
 \subsubsection{Electrical source}
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{name} ::= \kw{electrical source}
+
+    \bnt{module_data} ::=
+        \{ \kw{current} | \kw{voltage} \} ,
+            [ \kw{control} , \{ \kw{current} | \kw{voltage} \} ,
+                \bnt{input_electric_node_1_label} ,
+                \bnt{input_electric_node_2_label} , ]
+        \bnt{output_electric_node_1_label} ,
+        \bnt{output_electric_node_2_label} ,
+        (\hty{DriveCaller}) \bnt{source_driver}
 \end{Verbatim}
 
 
 \subsubsection{Ideal transformer}
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{name} ::= \kw{ideal transformer}
+
+    \bnt{module_data} ::=
+        \bnt{input_electric_node_1_label} ,
+        \bnt{input_electric_node_2_label} ,
+        \bnt{output_electric_node_1_label} ,
+        \bnt{output_electric_node_2_label} ,
+        (\hty{DriveCaller}) \bnt{tranformer_ratio}
 \end{Verbatim}
 
 
@@ -107,12 +143,29 @@ The format is:
 \subsubsection{Operational amplifier}
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{name} ::= \kw{operational amplifier}
+
+    \bnt{module_data} ::=
+        \bnt{input_electric_node_1_label} ,
+        \bnt{input_electric_node_2_label} ,
+        \bnt{reference_electric_node_1_label} ,
+        \bnt{output_electric_node_2_label}
+        [ , \kw{gain} , (\hty{real}) \bnt{gain} ]
+        [ , \kw{input resistance} , (\hty{real}) \bnt{input_resistance} ]
 \end{Verbatim}
 
 
 \subsubsection{Proximity sensor}
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{name} ::= \kw{proximity sensor}
+
+    \bnt{module_data} ::=
+        \bnt{struct_node_1_label} ,
+            [ , \kw{position}, (\hty{Vec3}) \bnt{node_1_offset} , ]
+        \bnt{struct_node_2_label} ,
+            [ , \kw{position}, (\hty{Vec3}) \bnt{node_2_offset} , ]
+        \bnt{electric_node_1_label} ,
+        \bnt{electric_node_2_label} ,
+        (\hty{ScalarFunction}) \bnt{distance_to_voltage_conversion_function}
 \end{Verbatim}
 
 
@@ -141,7 +194,16 @@ The format is:
 \subsubsection{Switch}
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{name} ::= \kw{switch}
+
+    \bnt{module_data} ::=
+        \bnt{electric_node_1_label} ,
+        \bnt{electric_node_2_label} ,
+        (\hty{DriveCaller}) \bnt{switch_state}
 \end{Verbatim}
+where \nt{switch\_state} is a drive that determines the state of the switch (0: open, 1: closed).
+
+\noindent
+\emph{NOTE: untested!}
 
 
 
