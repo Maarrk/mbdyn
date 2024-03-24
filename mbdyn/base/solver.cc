@@ -606,14 +606,14 @@ Solver::Prepare(void)
         
 	if (eAbortAfter == AFTER_INPUT) {
 		/* Esce */
-		pDM->Output(0, dTime, 0., true);
+		pDM->Output(0, dTime, 0., 0, 0., 0., false, true);
 		Out << "End of Input; no simulation or assembly is required."
 			<< std::endl;
 		return false;
 
 	} else if (eAbortAfter == AFTER_ASSEMBLY) {
 		/* Fa l'output dell'assemblaggio iniziale e poi esce */
-		pDM->Output(0, dTime, 0., true);
+		pDM->Output(0, dTime, 0., 0, 0., 0., false, true);
 		Out << "End of Initial Assembly; no simulation is required."
 			<< std::endl;
 		return false;
@@ -953,7 +953,7 @@ Solver::Prepare(void)
 		silent_cerr("Initial derivatives calculation " << iStIter
 			<< " does not converge; aborting..." << std::endl
 			<< "(hint: try playing with the \"derivatives coefficient\" value)" << std::endl);
-		pDM->Output(0, dTime, 0., true);
+		pDM->Output(0, dTime, 0., iStIter, dTest, dSolTest, false, true);
 		throw ErrMaxIterations(MBDYN_EXCEPT_ARGS);
 	}
 	catch (NonlinearSolver::ErrSimulationDiverged& e) {
@@ -1014,7 +1014,7 @@ Solver::Prepare(void)
 		 */
 
 
-		pDM->Output(0, dTime, 0., true);
+		pDM->Output(0, dTime, 0., iStIter, dTest, dSolTest, false, true);
 		Out << "End of derivatives; no simulation is required."
 			<< std::endl;
 		return false;
@@ -1023,7 +1023,7 @@ Solver::Prepare(void)
 		/*
 		 * Fa l'output della soluzione delle derivate iniziali ed esce
 		 */
-		pDM->Output(0, dTime, 0., true);
+		pDM->Output(0, dTime, 0., iStIter, dTest, dSolTest, false, true);
 		Out << "Interrupted during derivatives computation." << std::endl;
 		throw ErrInterrupted(MBDYN_EXCEPT_ARGS);
 	}
@@ -1087,7 +1087,7 @@ Solver::Prepare(void)
 				"TimeStep=" << dCurrTimeStep
 				<< " cannot be reduced further; "
 				"aborting..." << std::endl);
-			pDM->Output(0, dTime, dCurrTimeStep, true);
+			pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, false, true);
 			throw ErrMaxIterations(MBDYN_EXCEPT_ARGS);
 		}
 		catch (NonlinearSolver::ErrSimulationDiverged& e) {
@@ -1136,14 +1136,14 @@ Solver::Prepare(void)
 			 * ed esce
 			 */
 #ifdef DEBUG_FICTITIOUS
-			pDM->Output(0, dTime, dCurrTimeStep, true);
+			pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, false, true);
 #endif /* DEBUG_FICTITIOUS */
 				Out << "Interrupted during dummy step" << iSubStep << " ." << std::endl;
 			throw ErrInterrupted(MBDYN_EXCEPT_ARGS);
 		}
 
 #ifdef DEBUG_FICTITIOUS
-		pDM->Output(0, dTime, dCurrTimeStep, true);
+		pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, false, true);
 #endif /* DEBUG_FICTITIOUS */
 		}
 
@@ -1185,7 +1185,7 @@ Solver::Prepare(void)
 					"TimeStep=" << dCurrTimeStep
 					<< " cannot be reduced further; "
 					"aborting..." << std::endl);
-				pDM->Output(0, dTime, dCurrTimeStep, true);
+				pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, false, true);
 				throw ErrMaxIterations(MBDYN_EXCEPT_ARGS);
 			}
 			catch (NonlinearSolver::ErrSimulationDiverged& e) {
@@ -1234,14 +1234,14 @@ Solver::Prepare(void)
 			 * ed esce
 			 */
 #ifdef DEBUG_FICTITIOUS
-			pDM->Output(0, dTime, dCurrTimeStep, true);
+			pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, false, true);
 #endif /* DEBUG_FICTITIOUS */
 				Out << "Interrupted during dummy step" << iSubStep << " ." << std::endl;
 				throw ErrInterrupted(MBDYN_EXCEPT_ARGS);
 			}
 
 #ifdef DEBUG_FICTITIOUS
-		pDM->Output(0, dTime, dCurrTimeStep, true);
+		pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, false, true);
 #endif /* DEBUG_FICTITIOUS */
 		}
 
@@ -1283,7 +1283,7 @@ Solver::Prepare(void)
 					"TimeStep=" << dCurrTimeStep
 					<< " cannot be reduced further; "
 					"aborting..." << std::endl);
-				pDM->Output(0, dTime, dCurrTimeStep, true);
+				pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, false, true);
 				throw ErrMaxIterations(MBDYN_EXCEPT_ARGS);
 			}
 			catch (NonlinearSolver::ErrSimulationDiverged& e) {
@@ -1332,14 +1332,14 @@ Solver::Prepare(void)
 			 * ed esce
 			 */
 #ifdef DEBUG_FICTITIOUS
-			pDM->Output(0, dTime, dCurrTimeStep, true);
+			pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, false, true);
 #endif /* DEBUG_FICTITIOUS */
 				Out << "Interrupted during dummy step" << iSubStep << " ." << std::endl;
 				throw ErrInterrupted(MBDYN_EXCEPT_ARGS);
 			}
 
 #ifdef DEBUG_FICTITIOUS
-		pDM->Output(0, dTime, dCurrTimeStep, true);
+		pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, false, true);
 #endif /* DEBUG_FICTITIOUS */
 		}
 
@@ -1386,7 +1386,7 @@ Solver::Prepare(void)
 					"TimeStep=" << dCurrTimeStep
 					<< " cannot be reduced further; "
 					"aborting..." << std::endl);
-				pDM->Output(0, dTime, dCurrTimeStep, true);
+				pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, false, true);
 				throw ErrMaxIterations(MBDYN_EXCEPT_ARGS);
 			}
 
@@ -1443,7 +1443,7 @@ Solver::Prepare(void)
 			if (mbdyn_stop_at_end_of_time_step()) {
 				/* */
 #ifdef DEBUG_FICTITIOUS
-				pDM->Output(0, dTime, dCurrTimeStep);
+				pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, false);
 #endif /* DEBUG_FICTITIOUS */
 				Out << "Interrupted during dummy step"  << iSubStep << " ."
 					<< std::endl;
@@ -1470,7 +1470,7 @@ Solver::Prepare(void)
 	} /* Fine dei passi fittizi */
 
 	/* Output delle "condizioni iniziali" */
-	bOut = pDM->Output(0, dTime, dCurrTimeStep);
+	bOut = pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, bSolConv);
 
 	if (outputMsg()) {
 		Out
@@ -1600,7 +1600,7 @@ IfFirstStepIsToBeRepeated:
 			<< "TimeStep=" << dCurrTimeStep
 			<< " cannot be reduced further; "
 			"aborting..." << std::endl);
-		pDM->Output(0, dTime, dCurrTimeStep, true);
+		pDM->Output(0, dTime, dCurrTimeStep, iStIter, dTest, dSolTest, bSolConv, true);
 
 		throw Solver::ErrMaxIterations(MBDYN_EXCEPT_ARGS);
 	}
@@ -1639,7 +1639,7 @@ IfFirstStepIsToBeRepeated:
 	SAFEDELETE(pFirstRegularStep);
 	pFirstRegularStep = 0;
 
-	bOut = pDM->Output(lStep, dTime + dCurrTimeStep, dCurrTimeStep);
+	bOut = pDM->Output(lStep, dTime + dCurrTimeStep, dCurrTimeStep, iStIter, dTest, dSolTest, bSolConv);
 
 	/* Si fa dare l'std::ostream al file di output per il log */
 	std::ostream& Out = pDM->GetOutFile();
@@ -1874,7 +1874,7 @@ IfFirstStepIsToBeRepeated:
 		dTotErr += dTest;
 		iTotIter += iStIter;
 
-		bOut = pDM->Output(lStep, dTime + dCurrTimeStep, dCurrTimeStep);
+		bOut = pDM->Output(lStep, dTime + dCurrTimeStep, dCurrTimeStep, iStIter, dTest, dSolTest, bSolConv);
 		/* Si fa dare l'std::ostream al file di output per il log */
 		std::ostream& Out = pDM->GetOutFile();
 		if (outputMsg()) {
@@ -2115,7 +2115,7 @@ IfFirstStepIsToBeRepeated:
 		dTotErr += dTest;
 		iTotIter += iStIter;
 
-		bOut = pDM->Output(lStep, dTime + dCurrTimeStep, dCurrTimeStep);
+		bOut = pDM->Output(lStep, dTime + dCurrTimeStep, dCurrTimeStep, iStIter, dTest, dSolTest, bSolConv);
 
 		/* Si fa dare l'std::ostream al file di output per il log */
 		std::ostream& Out = pDM->GetOutFile();
@@ -2387,7 +2387,7 @@ IfStepIsToBeRepeated:
 	dTotErr += dTest;
 	iTotIter += iStIter;
 
-	bOut = pDM->Output(lStep, dTime + dCurrTimeStep, dCurrTimeStep);
+	bOut = pDM->Output(lStep, dTime + dCurrTimeStep, dCurrTimeStep, iStIter, dTest, dSolTest, bSolConv);
 
 	/* Si fa dare l'std::ostream al file di output per il log */
 	std::ostream& Out = pDM->GetOutFile();

@@ -714,7 +714,7 @@ IfStepIsToBeRepeated:
 	dTotErr += dTest;
 	iTotIter += iStIter;
 
-	bOut = pDM->Output(lStep, dTime + dCurrTimeStep, dCurrTimeStep);
+	bOut = pDM->Output(lStep, dTime + dCurrTimeStep, dCurrTimeStep, iStIter, dTest, dSolTest, bSolConv);
 
 	/* Si fa dare l'std::ostream al file di output per il log */
 	std::ostream& Out = pDM->GetOutFile();

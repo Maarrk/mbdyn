@@ -208,6 +208,10 @@ protected:
 	MBDynNcVar Var_Step;
 	MBDynNcVar Var_Time;
 	MBDynNcVar Var_TimeStep;
+	MBDynNcVar Var_StIter;
+	MBDynNcVar Var_Test;
+	MBDynNcVar Var_SolTest;
+	MBDynNcVar Var_SolConv;
 
 	/* for eigenanalysis output */
         MBDynNcDim m_Dim_Eig_iIdxSize;
@@ -429,7 +433,12 @@ public:
 	/* stampa i risultati */
 	virtual bool
 	Output(long lStep, const doublereal& dTime,
-		const doublereal& dTimeStep, bool force = false) const;
+		const doublereal& dTimeStep,
+		integer	iStIter,
+		const doublereal& dTest,
+		const doublereal& dSolTest,
+		bool bSolConv,
+		bool force = false) const;
 	virtual void
 	Output(const VectorHandler& X, const VectorHandler& XP) const;
 

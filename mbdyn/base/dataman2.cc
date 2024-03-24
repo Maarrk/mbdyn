@@ -1519,6 +1519,14 @@ DataManager::OutputPrepare(void)
 			OutputHandler::Dimensions::Time, "simulation time");
 		Var_TimeStep = OutHdl.CreateVar<doublereal>("run.timestep", 
 			OutputHandler::Dimensions::Time, "integration time step");
+		Var_StIter = OutHdl.CreateVar<integer>("run.iterations", 
+			OutputHandler::Dimensions::Time, "iterations for convergence");
+		Var_Test = OutHdl.CreateVar<doublereal>("run.restest", 
+			OutputHandler::Dimensions::Time, "test on residual");
+		Var_SolTest = OutHdl.CreateVar<doublereal>("run.soltest", 
+			OutputHandler::Dimensions::Time, "test on solution");
+		Var_SolConv = OutHdl.CreateVar<integer>("run.solconv", 
+			OutputHandler::Dimensions::Time, "convergence from solution (1) or residual (0)");
 	}
 #endif /* USE_NETCDF */
 
@@ -2433,6 +2441,10 @@ bool
 DataManager::Output(long lStep,
 	const doublereal& dTime,
 	const doublereal& dTimeStep,
+	integer	iStIter,
+	const doublereal& dTest,
+	const doublereal& dSolTest,
+	bool bSolConv,
 	bool force) const
 {
 	/* Nota: il casting di OutHdl e' necessario in quanto la funzione propria
@@ -2470,6 +2482,10 @@ DataManager::Output(long lStep,
 		OutHdl.WriteNcVar(Var_Step, lStep);
 		OutHdl.WriteNcVar(Var_Time, dTime);
 		OutHdl.WriteNcVar(Var_TimeStep, dTimeStep);
+		OutHdl.WriteNcVar(Var_StIter, iStIter);
+		OutHdl.WriteNcVar(Var_Test, dTest);
+		OutHdl.WriteNcVar(Var_SolTest, dSolTest);
+		OutHdl.WriteNcVar(Var_SolConv, integer(bSolConv));
 	}
 #endif /* USE_NETCDF */
 
