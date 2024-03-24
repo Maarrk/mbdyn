@@ -2124,9 +2124,9 @@ DataManager::ReadNodes(MBDynParser& HP)
 					bAlgebraic = true;
 
 				} else if (!HP.IsKeyWord("differential")) {
-					pedantic_cout("unspecified "
+					pedantic_cerr("unspecified "
 						<< psNodeNames[Node::ABSTRACT] << "(" << uLabel << ") "
-						"at line " << HP.GetLineData() << "; "
+						"type at line " << HP.GetLineData() << "; "
 						"assuming \"differential\"" << std::endl);
 				}
 
