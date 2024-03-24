@@ -1718,8 +1718,8 @@ DataManager::ReadScalarAlgebraicNode(MBDynParser& HP,
 	if (HP.IsArg()) {
 		/* eat keyword "value" */
 		if (!HP.IsKeyWord("value")) {
-			pedantic_cerr(psNodeNames[type] << "(" << uLabel
-     				<< "): initial value specified without "
+			pedantic_cerr(psNodeNames[type] << "(" << uLabel << "): "
+				"initial value specified without "
      				"\"value\" keyword (deprecated)" << std::endl);
 		}
 		dX = HP.GetReal();
@@ -1737,7 +1737,13 @@ DataManager::ReadScalarDifferentialNode(MBDynParser& HP,
 	doublereal& dX, doublereal& dXP) const
 {
 	if (ReadScalarAlgebraicNode(HP, uLabel, type, dX) == 1) {
-		if (HP.IsKeyWord("derivative")) {
+		if (HP.IsArg()) {
+			if (!HP.IsKeyWord("derivative")) {
+				pedantic_cerr(psNodeNames[type] << "(" << uLabel << "): "
+					"initial derivative value specified without "
+     					"\"derivative\" keyword (deprecated)" << std::endl);
+			}
+				
 			dXP = HP.GetReal();
 			DEBUGLCOUT(MYDEBUG_INPUT,
 				"Initial derivative value xp = "
@@ -2010,6 +2016,13 @@ DataManager::ReadNodes(MBDynParser& HP)
 				doublereal dScale = dReadScale(HP, DofOwner::ELECTRICNODE);
 				flag fOut = fReadOutput(HP, Node::ELECTRIC);
 
+				/* check for trailing semicolon */
+				if (HP.IsArg()) {
+					silent_cerr("ElectricNode(" << uLabel << "): semicolon expected "
+						"at line " << HP.GetLineData() << std::endl);
+					throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+				}
+
 				/* allocazione e creazione */
 				int i = NodeData[Node::ELECTRIC].iExpectedNum
 					- iNumTypes[Node::ELECTRIC] - 1;
@@ -2057,6 +2070,13 @@ DataManager::ReadNodes(MBDynParser& HP)
 				ReadScalarDifferentialNode(HP, uLabel, Node::THERMAL, dx, dxp);
 				doublereal dScale = dReadScale(HP, DofOwner::THERMALNODE);
 				flag fOut = fReadOutput(HP, Node::THERMAL);
+
+				/* check for trailing semicolon */
+				if (HP.IsArg()) {
+					silent_cerr("ThermalNode(" << uLabel << "): semicolon expected "
+						"at line " << HP.GetLineData() << std::endl);
+					throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+				}
 
 				/* allocazione e creazione */
 				int i = NodeData[Node::THERMAL].iExpectedNum
@@ -2122,6 +2142,13 @@ DataManager::ReadNodes(MBDynParser& HP)
 				}
 				doublereal dScale = dReadScale(HP, DofOwner::ABSTRACTNODE);
 				flag fOut = fReadOutput(HP, Node::ABSTRACT);
+
+				/* check for trailing semicolon */
+				if (HP.IsArg()) {
+					silent_cerr("AbstractNode(" << uLabel << "): semicolon expected "
+						"at line " << HP.GetLineData() << std::endl);
+					throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+				}
 
 				/* allocazione e creazione */
 				int i = NodeData[Node::ABSTRACT].iExpectedNum
@@ -2193,6 +2220,13 @@ DataManager::ReadNodes(MBDynParser& HP)
 						"will be linked to an element" << std::endl);
 					flag fOut = fReadOutput(HP, Node::PARAMETER);
 
+					/* check for trailing semicolon */
+					if (HP.IsArg()) {
+						silent_cerr("ParameterNode(" << uLabel << "): semicolon expected "
+							"at line " << HP.GetLineData() << std::endl);
+						throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+					}
+
 					/* allocazione e creazione */
 					SAFENEWWITHCONSTRUCTOR(pN,
 						Elem2Param,
@@ -2222,6 +2256,13 @@ DataManager::ReadNodes(MBDynParser& HP)
 					}
 
 					flag fOut = fReadOutput(HP, Node::PARAMETER);
+
+					/* check for trailing semicolon */
+					if (HP.IsArg()) {
+						silent_cerr("ParameterNode(" << uLabel << "): semicolon expected "
+							"at line " << HP.GetLineData() << std::endl);
+						throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+					}
 
 					/* allocazione e creazione */
 					SAFENEWWITHCONSTRUCTOR(pN,
@@ -2268,6 +2309,13 @@ DataManager::ReadNodes(MBDynParser& HP)
 
 					flag fOut = fReadOutput(HP, Node::PARAMETER);
 
+					/* check for trailing semicolon */
+					if (HP.IsArg()) {
+						silent_cerr("ParameterNode(" << uLabel << "): semicolon expected "
+							"at line " << HP.GetLineData() << std::endl);
+						throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+					}
+
 					/* allocazione e creazione */
 					SAFENEWWITHCONSTRUCTOR(pN,
 						ParameterNode,
@@ -2302,6 +2350,13 @@ DataManager::ReadNodes(MBDynParser& HP)
 				ReadScalarAlgebraicNode(HP, uLabel, Node::HYDRAULIC, dx);
 				doublereal dScale = dReadScale(HP, DofOwner::HYDRAULICNODE);
 				flag fOut = fReadOutput(HP, Node::HYDRAULIC);
+
+				/* check for trailing semicolon */
+				if (HP.IsArg()) {
+					silent_cerr("HydraulicNode(" << uLabel << "): semicolon expected "
+						"at line " << HP.GetLineData() << std::endl);
+					throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
+				}
 
 				/* allocazione e creazione */
 				int i = NodeData[Node::HYDRAULIC].iExpectedNum
