@@ -367,44 +367,54 @@ struct ContContactCLR : public ConstitutiveLawRead<doublereal, doublereal> {
 				<< HP.GetLineData() << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
-		doublereal dRest = HP.GetReal();
-		if (dRest < 0.) {
-			silent_cerr("ContContactCLR: invalid \"restitution\" at line "
-				<< HP.GetLineData() << std::endl);
-			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+		doublereal dRest;
+		const char *mustbe;
+		try {
+			if (type == ContContactCL::CC_FLORES_ET_AL) {
+				mustbe = "positive";
+				dRest = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
 
-		} else if ((type == ContContactCL::CC_FLORES_ET_AL) && (dRest <= 0.)) {
-			silent_cerr("ContContactCLR: null \"restitution\" incompatible with \"Flores\" at line "
-				<< HP.GetLineData() << std::endl);
-			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+			} else {
+				mustbe = "non-negative";
+				dRest = HP.GetReal(0., HighParser::range_ge<doublereal>(0.));
+			}
+
+		} catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+			silent_cerr("ContContactCLR: invalid \"restitution\" " << e.Get() << " (must be " << mustbe << ") [" << e.what() << "] at line " << HP.GetLineData() << std::endl);
+			throw e;
 		}
 
 		if (!HP.IsKeyWord("kappa")) {
 			silent_cerr("ContContactCLR: \"kappa\" expected at line " << HP.GetLineData() << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
-		doublereal dK = HP.GetReal();
-		if (dK <= 0.) {
-			silent_cerr("ContContactCLR: invalid \"kappa\" at line " << HP.GetLineData() << std::endl);
-			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+		doublereal dK;
+		try {
+			dK = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+		} catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+			silent_cerr("ContContactCLR: invalid \"kappa\" " << e.Get() << " (must be positive) [" << e.what() << "] at line " << HP.GetLineData() << std::endl);
+			throw e;
 		}
 
 		if (!HP.IsKeyWord("exp")) {
 			silent_cerr("ContContactCLR: \"exp\" expected at line " << HP.GetLineData() << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
-		doublereal dExp = HP.GetReal();
-		if (dExp < 1.) {
-			silent_cerr("ContContactCLR: invalid \"exp\" at line " << HP.GetLineData() << std::endl);
-			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+		doublereal dExp;
+		try {
+			dExp = HP.GetReal(0., HighParser::range_ge<doublereal>(1.));
+		} catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+			silent_cerr("ContContactCLR: invalid \"exp\" " << e.Get() << " (must be >= 1.) [" << e.what() << "] at line " << HP.GetLineData() << std::endl);
+			throw e;
 		}
-		
+
 		doublereal dInitialEpsPrimeTol = 1.e-6;
 		if (HP.IsKeyWord("EpsPrimeTol")) {
-			dInitialEpsPrimeTol = HP.GetReal();
-			if (dInitialEpsPrimeTol < 0.) {
-				silent_cerr("ContContactCLR: invalid \"EpsPrimeTol\" at line " << HP.GetLineData() << std::endl);
-				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+			try {
+				dInitialEpsPrimeTol = HP.GetReal(0., HighParser::range_ge<doublereal>(0.));
+			} catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+				silent_cerr("ContContactCLR: invalid \"EpsPrimeTol\" " << e.Get() << " (must be non-negative) [" << e.what() << "] at line " << HP.GetLineData() << std::endl);
+				throw e;
 			}
 		}
 
@@ -679,44 +689,54 @@ struct ContContact3DCLR : public ConstitutiveLawRead<Vec3, Mat3x3> {
 				<< HP.GetLineData() << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
-		doublereal dRest = HP.GetReal();
-		if (dRest < 0.) {
-			silent_cerr("ContContact3DCLR: invalid \"restitution\" at line "
-				<< HP.GetLineData() << std::endl);
-			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+		doublereal dRest;
+		const char *mustbe;
+		try {
+			if (type == ContContact3DCL::CC_FLORES_ET_AL) {
+				mustbe = "positive";
+				dRest = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
 
-		} else if ((type == ContContact3DCL::CC_FLORES_ET_AL) && (dRest <= 0.)) {
-			silent_cerr("ContContact3DCLR: null \"restitution\" incompatible with \"Flores\" at line "
-				<< HP.GetLineData() << std::endl);
-			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+			} else {
+				mustbe = "non-negative";
+				dRest = HP.GetReal(0., HighParser::range_ge<doublereal>(0.));
+			}
+
+		} catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+			silent_cerr("ContContact3DCLR: invalid \"restitution\" " << e.Get() << " (must be " << mustbe << ") [" << e.what() << "] at line " << HP.GetLineData() << std::endl);
+			throw e;
 		}
 
 		if (!HP.IsKeyWord("kappa")) {
 			silent_cerr("ContContact3DCLR: \"kappa\" expected at line " << HP.GetLineData() << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
-		doublereal dK = HP.GetReal();
-		if (dK <= 0.) {
-			silent_cerr("ContContact3DCLR: invalid \"kappa\" at line " << HP.GetLineData() << std::endl);
-			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+		doublereal dK;
+		try {
+			dK = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+		} catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+			silent_cerr("ContContact3DCLR: invalid \"kappa\" " << e.Get() << " (must be positive) [" << e.what() << "] at line " << HP.GetLineData() << std::endl);
+			throw e;
 		}
 
 		if (!HP.IsKeyWord("exp")) {
 			silent_cerr("ContContact3DCLR: \"exp\" expected at line " << HP.GetLineData() << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
-		doublereal dExp = HP.GetReal();
-		if (dExp < 1.) {
-			silent_cerr("ContContact3DCLR: invalid \"exp\" at line " << HP.GetLineData() << std::endl);
-			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+		doublereal dExp;
+		try {
+			dExp = HP.GetReal(0., HighParser::range_ge<doublereal>(1.));
+		} catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+			silent_cerr("ContContact3DCLR: invalid \"exp\" " << e.Get() << " (must be >= 1.) [" << e.what() << "] at line " << HP.GetLineData() << std::endl);
+			throw e;
 		}
-		
+
 		doublereal dInitialEpsPrimeTol = 1.e-6;
 		if (HP.IsKeyWord("EpsPrimeTol")) {
-			dInitialEpsPrimeTol = HP.GetReal();
-			if (dInitialEpsPrimeTol < 0.) {
-				silent_cerr("ContContact3DCLR: invalid \"EpsPrimeTol\" at line " << HP.GetLineData() << std::endl);
-				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+			try {
+				dInitialEpsPrimeTol = HP.GetReal(0., HighParser::range_ge<doublereal>(0.));
+			} catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+				silent_cerr("ContContact3DCLR: invalid \"EpsPrimeTol\" " << e.Get() << " (must be non-negative) [" << e.what() << "] at line " << HP.GetLineData() << std::endl);
+				throw e;
 			}
 		}
 
