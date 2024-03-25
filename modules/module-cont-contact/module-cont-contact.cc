@@ -338,7 +338,7 @@ struct ContContactCLR : public ConstitutiveLawRead<doublereal, doublereal> {
 				if (d == 0.) {
 					silent_cerr("ContContactCLR: invalid sign " << d
 						<< " at line " << HP.GetLineData() << std::endl);
-					throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+					throw HighParser::ErrValueOutOfRange<doublereal>(MBDYN_EXCEPT_ARGS, 0.);
 				}
 				dSign = copysign(1., d);
 			}
@@ -660,7 +660,7 @@ struct ContContact3DCLR : public ConstitutiveLawRead<Vec3, Mat3x3> {
 				if (d == 0.) {
 					silent_cerr("ContContact3DCLR: invalid sign " << d
 						<< " at line " << HP.GetLineData() << std::endl);
-					throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+					throw HighParser::ErrValueOutOfRange<doublereal>(MBDYN_EXCEPT_ARGS, 0.);
 				}
 				dSign = copysign(1., d);
 			}
