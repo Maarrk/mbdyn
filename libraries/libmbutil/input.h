@@ -98,8 +98,9 @@ extern InputStream& operator >> (InputStream& in, double& i);
 inline char
 InputStream::get(void)
 {
-	char ch = iStrm.get();
-	if (ch == '\n') {
+	char ch('\0');
+	iStrm.get(ch);
+	if (!iStrm.eof() && ch == '\n') {
 		uLineNumber++;
 	}
 	return ch;
@@ -110,7 +111,7 @@ inline std::istream&
 InputStream::get(char& ch) 
 {
 	std::istream& i = iStrm.get(ch);
-	if (ch == '\n') {
+	if (!iStrm.eof() && ch == '\n') {
 		uLineNumber++;
 	}
 	return i;

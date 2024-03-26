@@ -2368,12 +2368,36 @@ ReadStructMappingExtForce(DataManager* pDM,
 					throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 				}
 
-				char c = in.get();
+				int i = in.get();
+				if (in.eof()) {
+					silent_cerr("StructMappingExtForce(" << uLabel << "): "
+						"unexpected eof at the beginning of the mapped labels file "
+						"\"" << sFileName << "\" "
+						"at line " << HP.GetLineData() << std::endl);
+					throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+				}
+				char c(i);
 				while (c == '#') {
 					do {
-						c = in.get();
+						i = in.get();
+						if (in.eof()) {
+							silent_cerr("StructMappingExtForce(" << uLabel << "): "
+								"unexpected eof in one-line comment in mapped labels file "
+								"\"" << sFileName << "\" "
+								"at line " << HP.GetLineData() << std::endl);
+							throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+						}
+						c = char(i);
 					} while (c != '\n');
-					c = in.get();
+					i = in.get();
+					if (in.eof()) {
+						silent_cerr("StructMappingExtForce(" << uLabel << "): "
+							"unexpected eof after one-line comment in mapped labels file "
+							"\"" << sFileName << "\" "
+							"at line " << HP.GetLineData() << std::endl);
+						throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+					}
+					c = char(i);
 				}
 				in.putback(c);
 
