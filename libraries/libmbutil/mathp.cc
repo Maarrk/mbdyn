@@ -48,7 +48,7 @@
 
 #ifndef DO_NOT_USE_EE
 #include "evaluator_impl.h"
-#endif // DO_NOT_USE_EE
+#endif // ! DO_NOT_USE_EE
 
 
 /* helper per le funzioni built-in */
@@ -3054,27 +3054,45 @@ MathParser::GetToken(void)
 		return currtoken;
 	}
 
-	int c = 0;
+	char cIn;
 
 start_parsing:;
 	/* skip spaces */
-	while ((c = in->get()), isspace(c)) {
-		NO_OP;
-	};
+	for (;;) {
+		in->get(cIn);
+		if (in->eof()) { 
+			return (currtoken = ENDOFFILE);
+		}
 
-	if (c == EOF || in->eof()) {
-		return (currtoken = ENDOFFILE);
+		if (!isspace(cIn)) {
+			break;
+		}
 	}
 
-	if (c == ONE_LINE_REMARK) {
-		for (c = in->get(); c != '\n'; c = in->get()) {
+	if (cIn == ONE_LINE_REMARK) {
+		for (;;) {
+			in->get(cIn);
+			if (in->eof()) {
+				return (currtoken = ENDOFFILE);
+			}
+
+			if (cIn == '\n') {
+				break;
+			}
+
 			/* a trailing '\' continues the one-line remark
 			 * on the following line
 			 * FIXME: are we sure we want this? */
-			if (c == '\\') {
-				c = in->get();
-				if (c == '\r') {
-					c = in->get();
+			if (cIn == '\\') {
+				in->get(cIn);
+				if (in->eof()) {
+					return (currtoken = ENDOFFILE);
+				}
+				if (cIn == '\r') {
+					in->get(cIn);
+					if (in->eof()) {
+						return (currtoken = ENDOFFILE);
+					}
 				}
 			}
 		}
@@ -3082,7 +3100,7 @@ start_parsing:;
 	}
 
 	/* number? */
-	if (c == '.' || isdigit(c)) {
+	if (cIn == '.' || isdigit(cIn)) {
 		// lot of space...
 		char s[BUFSIZ];
 		bool f = false;
@@ -3090,14 +3108,28 @@ start_parsing:;
 
 		// FIXME: need to check for overflow
 
-		s[i++] = char(c);
+		s[i++] = cIn;
 
-		if (c == '.') {
+		if (cIn == '.') {
 			f = true;
 		}
-		while ((c = in->get()) == '.' || isdigit(c)) {
-			s[i++] = char(c);
-			if (c == '.') {
+
+		// need to use an int because strchr() wants an int... 
+		int iIn;
+		for (;;) {
+			// need to read an int because strchr() wants an int... 
+			iIn = in->get();
+			if (in->eof()) {
+				currtoken = ENDOFFILE;
+				goto check_eof_num;
+			}
+			cIn = char(iIn);
+			if (cIn != '.' && !isdigit(cIn)) {
+				break;
+			}
+			s[i++] = cIn;
+			if (cIn == '.') {
+				// multiple '.' in float!
 				if (f) {
 					return (currtoken = UNKNOWNTOKEN);
 				}
@@ -3108,7 +3140,7 @@ start_parsing:;
 				throw ErrGeneric(this, MBDYN_EXCEPT_ARGS, "value too long");
 			}
 		}
-		if (std::strchr("efdgEFDG", c) != 0) {
+		if (std::strchr("efdgEFDG", iIn) != 0) {
 			f = true;
 			// use 'e' because strtod only understands 'e' or 'E'
 			s[i++] = 'e';
@@ -3116,16 +3148,25 @@ start_parsing:;
 				// buffer about to overflow
 				throw ErrGeneric(this, MBDYN_EXCEPT_ARGS, "value too long");
 			}
-			if ((c = in->get()) == '-' || c == '+') {
-				s[i++] = char(c);
+			in->get(cIn);
+			if (in->eof()) {
+				currtoken = ENDOFFILE;
+				goto check_eof_num;
+			}
+			if (cIn == '-' || cIn == '+') {
+				s[i++] = cIn;
 				if (i >= sizeof(s)) {
 					// buffer about to overflow
 					throw ErrGeneric(this, MBDYN_EXCEPT_ARGS, "value too long");
 				}
-				c = in->get();
+				in->get(cIn);
+				if (in->eof()) {
+					currtoken = ENDOFFILE;
+					goto check_eof_num;
+				}
 			}
-			if (isdigit(c)) {
-				s[i++] = char(c);
+			if (isdigit(cIn)) {
+				s[i++] = cIn;
 				if (i >= sizeof(s)) {
 					// buffer about to overflow
 					throw ErrGeneric(this, MBDYN_EXCEPT_ARGS, "value too long");
@@ -3134,22 +3175,32 @@ start_parsing:;
 			} else {
 				return (currtoken = UNKNOWNTOKEN);
 			}
-			while (isdigit((c = in->get()))) {
-				s[i++] = char(c);
+			for (;;) {
+				in->get(cIn);
+				if (in->eof()) {
+					currtoken = ENDOFFILE;
+					goto check_eof_num;
+				}
+				if (!isdigit(cIn)) {
+					break;
+				}
+				s[i++] = cIn;
 				if (i >= sizeof(s)) {
 					// buffer about to overflow
 					throw ErrGeneric(this, MBDYN_EXCEPT_ARGS, "value too long");
 				}
 			}
 		}
+
+check_eof_num:;
 		s[i] = '\0';
 		if (in->eof()) {
 			// force EOF because on some archs (e.g. arm) char is unsigned,
 			// thus putback won't restore EOF
-			in->putback(char(c));
+			in->putback(cIn);
 			in->GetStream().setstate(std::ios::eofbit);
 		} else {
-			in->putback(char(c));
+			in->putback(cIn);
 		}
 		char *endptr = 0;
 		if (!f) {
@@ -3235,24 +3286,32 @@ start_parsing:;
 	}
 
 	/* name? */
-	if (isalpha(c) || c == '_') {
+	if (isalpha(cIn) || cIn == '_') {
 		namebuf.clear();
-		namebuf.push_back(char(c));
-		while ((c = in->get())) {
-			if (!(c == '_'
-				|| isalnum(c)
-				|| ((currtoken == NAMESPACESEP) && c == ':')))
+		namebuf.push_back(cIn);
+		for (;;) {
+			in->get(cIn);
+			if (in->eof()) {
+				currtoken = ENDOFFILE;
+				goto check_eof_name;
+			}
+				
+			if (!(cIn == '_'
+				|| isalnum(cIn)
+				|| ((currtoken == NAMESPACESEP) && cIn == ':')))
 			{
 				break;
 			}
 
-			namebuf.push_back(char(c));
+			namebuf.push_back(cIn);
 		}
-		in->putback(char(c));
+
+		in->putback(cIn);
+check_eof_name:;
 		return (currtoken = NAME);
 	}
 
-	switch (c) {
+	switch (cIn) {
 	case '^':
 		return (currtoken = EXP);
 
@@ -3260,17 +3319,32 @@ start_parsing:;
 		return (currtoken = MULT);
 
 	case '/':
-		if ((c = in->get()) == '*') {
-			for (c = in->get();; c = in->get()) {
-				if (c == '*') {
+		in->get(cIn);
+		if (in->eof()) {
+			return (currtoken = ENDOFFILE);
+		}
+		if (cIn == '*') {
+			for (;;) {
+				in->get(cIn);
+				if (in->eof()) {
+					return (currtoken = ENDOFFILE);
+				}
+				if (cIn == '*') {
 end_of_comment:;
-					c = in->get();
-					if (c == '/') {
+					in->get(cIn);
+					if (in->eof()) {
+						return (currtoken = ENDOFFILE);
+					}
+					if (cIn == '/') {
 						goto start_parsing;
 					}
-				} else if (c == '/') {
-					c = in->get();
-					if (c == '*') {
+
+				} else if (cIn == '/') {
+					in->get(cIn);
+					if (in->eof()) {
+						return (currtoken = ENDOFFILE);
+					}
+					if (cIn == '*') {
 						silent_cerr("warning: '/*' "
 							"inside a comment at line "
 							<< GetLineNumber()
@@ -3281,7 +3355,7 @@ end_of_comment:;
 			}
 
 		} else {
-			in->putback(char(c));
+			in->putback(cIn);
 			return (currtoken = DIV);
 		}
 
@@ -3295,47 +3369,75 @@ end_of_comment:;
 		return (currtoken = PLUS);
 
 	case '>':
-		if ((c = in->get()), c == '=') {
+		in->get(cIn);
+		if (in->eof()) {
+			return (currtoken = ENDOFFILE);
+		}
+		if (cIn == '=') {
 			return (currtoken = GE);
 		}
-		in->putback(char(c));
+		in->putback(cIn);
 		return (currtoken = GT);
 
 	case '=':
-		if ((c = in->get()), c == '=') {
+		in->get(cIn);
+		if (in->eof()) {
+			return (currtoken = ENDOFFILE);
+		}
+		if (cIn == '=') {
 			return (currtoken = EQ);
 		}
-		in->putback(char(c));
+		in->putback(cIn);
 		return (currtoken = ASSIGN);
 
 	case '<':
-		if ((c = in->get()), c == '=') {
+		in->get(cIn);
+		if (in->eof()) {
+			return (currtoken = ENDOFFILE);
+		}
+		if (cIn == '=') {
 			return (currtoken = LE);
 		}
-		in->putback(char(c));
+		in->putback(cIn);
 		return (currtoken = LT);
 
 	case '!':
-		if ((c = in->get()), c == '=') {
+		in->get(cIn);
+		if (in->eof()) {
+			return (currtoken = ENDOFFILE);
+		}
+		if (cIn == '=') {
 			return (currtoken = NE);
 		}
-		in->putback(char(c));
+		in->putback(cIn);
 		return (currtoken = NOT);
 
 	case '&':
-		if ((c = in->get()), c != '&') {
+		in->get(cIn);
+		if (in->eof()) {
+			return (currtoken = ENDOFFILE);
+		}
+		if (cIn != '&') {
 			return (currtoken = UNKNOWNTOKEN);
 		}
 		return (currtoken = AND);
 
 	case '|':
-		if ((c = in->get()), c != '|') {
+		in->get(cIn);
+		if (in->eof()) {
+			return (currtoken = ENDOFFILE);
+		}
+		if (cIn != '|') {
 			return (currtoken = UNKNOWNTOKEN);
 		}
 		return (currtoken = OR);
 
 	case '~':
-		if ((c = in->get()), c != '|') {
+		in->get(cIn);
+		if (in->eof()) {
+			return (currtoken = ENDOFFILE);
+		}
+		if (cIn != '|') {
 			return (currtoken = UNKNOWNTOKEN);
 		}
 		return (currtoken = XOR);
@@ -3359,24 +3461,37 @@ end_of_comment:;
 		return (currtoken = ARGSEP);
 
 	case ':':
-		if ((c = in->get()), c != ':') {
+		in->get(cIn);
+		if (in->eof()) {
+			return (currtoken = ENDOFFILE);
+		}
+		if (cIn != ':') {
 			return (currtoken = UNKNOWNTOKEN);
 		}
 		return (currtoken = NAMESPACESEP);
 
 	case '"': {
 		namebuf.clear();
-		while ((c = in->get()) != '"') {
-			if (c == '\\') {
-				c = in->get();
-				if (c == '\0') {
-					return (currtoken = UNKNOWNTOKEN);
-				}
-				if (c == EOF || in->eof()) {
+		for (;;) {
+			in->get(cIn);
+			if (in->eof()) {
+				return (currtoken = ENDOFFILE);
+			}
+
+			if (cIn == '"') {
+				break;
+			}
+
+			if (cIn == '\\') {
+				in->get(cIn);
+				if (in->eof()) {
 					return (currtoken = ENDOFFILE);
 				}
+				if (cIn == '\0') {
+					return (currtoken = UNKNOWNTOKEN);
+				}
 			}
-			namebuf.push_back(char(c));
+			namebuf.push_back(cIn);
 		}
 		value.SetType(TypedValue::VAR_STRING);
 		value.Set(namebuf);
@@ -4272,7 +4387,8 @@ MathParser::readplugin(void)
 	 * 	- arg[2]->arg[n]: dati da passare al costrutture
 	 */
 	std::vector<char *> argv(1);
-	char c, buf[1024];
+	char cIn;
+	char buf[BUFSIZ];
 	int argc = 0;
 	unsigned int i = 0, in_quotes = 0;
 
@@ -4289,23 +4405,32 @@ MathParser::readplugin(void)
 	 * <list_of_args> ::= ',' <arg> <list_of_args> | ''
 	 * <arg> ::= <legal_string> (no unescaped ']' or ','!)
 	 */
-	while ((c = in->get()), !in->eof()) {
-		switch (c) {
+	for (;;) {
+		in->get(cIn);
+		if (in->eof()) {
+			silent_cerr("eof encountered while parsing plugin" << std::endl);
+			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+		switch (cIn) {
 		case '\\':
-			c = in->get();
+			in->get(cIn);
+			if (in->eof()) {
+				silent_cerr("eof encountered while parsing plugin" << std::endl);
+				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+			}
 			if (in_quotes) {
-				switch (c) {
+				switch (cIn) {
 				case 'n':
-					c = '\n';
+					cIn = '\n';
 					break;
 
 				default:
-					in->putback(c);
-					c = '\\';
+					in->putback(cIn);
+					cIn = '\\';
 					break;
 				}
 			}
-			buf[i++] = c;
+			buf[i++] = cIn;
 			break;
 
 		case '"':
@@ -4314,15 +4439,22 @@ MathParser::readplugin(void)
 				break;
 			}
 			in_quotes = 0;
-			while (isspace((c = in->get()))) {
-				NO_OP;
+			for (;;) {
+				in->get(cIn);
+				if (in->eof()) {
+					silent_cerr("eof encountered while parsing plugin" << std::endl);
+					throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+				}
+				if (!isspace(cIn)) {
+					break;
+				}
 			}
-			if (c != ',' && c != ']') {
+			if (cIn != ',' && cIn != ']') {
 				silent_cerr("need a separator "
 					"after closing quotes" << std::endl);
 				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 			}
-			in->putback(c);
+			in->putback(cIn);
 			break;
 
 		case ',':
@@ -4344,7 +4476,7 @@ MathParser::readplugin(void)
 			break;
 
 		default:
-			buf[i++] = c;
+			buf[i++] = cIn;
 			break;
 		}
 
@@ -4367,7 +4499,7 @@ last_arg:
 	/*
 	 * put the close plugin token back
 	 */
-	in->putback(c);
+	in->putback(cIn);
 	buf[i] = '\0';
 
 	/*
@@ -4414,7 +4546,7 @@ last_arg:
 			silent_cout("argv[" << i << "]=" << argv[i]
 					<< std::endl);
 		}
-#endif /* DEBUG */
+#endif // DEBUG
 
 		/*
 		 * costruisce il plugin e gli fa interpretare gli argomenti
@@ -4463,7 +4595,7 @@ MathParser::stmtlist(void)
 	return d;
 }
 
-#endif // ! USE_EE
+#endif // ! DO_NOT_USE_EE
 
 
 MathParser::MathParser(const InputStream& strm, Table& t, bool bRedefineVars)
@@ -4616,9 +4748,9 @@ MathParser::GetLastStmt(Real d, Token t)
 			std::cout << "GetLastStmt: \"", e->Output(std::cout) << "\" = " << d << std::endl;
 		}
 		delete e;
-#else // ! USE_EE
+#else // DO_NOT_USE_EE
 		d = stmtlist().GetReal();
-#endif // ! USE_EE
+#endif // DO_NOT_USE_EE
 		if (currtoken == ENDOFFILE || currtoken == t) {
 			break;
 		}
@@ -4693,7 +4825,7 @@ MathParser::GetExpr(const InputStream& strm)
 	// NOTE: caller must explicitly delete it
 	return e;
 }
-#endif // DO_NOT_USE_EE
+#endif // ! DO_NOT_USE_EE
 
 Real
 MathParser::Get(Real d)
@@ -4722,9 +4854,9 @@ MathParser::Get(const TypedValue& /* v */ )
 		std::cout << "Get: \"", e->Output(std::cout) << "\" = " << vv << std::endl;
 	}
 	delete e;
-#else // ! USE_EE
+#else // DO_NOT_USE_EE
 	TypedValue vv = stmt();
-#endif // ! USE_EE
+#endif // DO_NOT_USE_EE
 	if (currtoken != STMTSEP && currtoken != ENDOFFILE) {
 		throw ErrGeneric(this, MBDYN_EXCEPT_ARGS, "statement separator expected");
 	}
@@ -4746,9 +4878,9 @@ MathParser::Get(const InputStream& strm, const TypedValue& v)
 			std::cout << "Get: \"", e->Output(std::cout) << "\" = " << vv << std::endl;
 		}
 		delete e;
-#else // ! USE_EE
+#else // DO_NOT_USE_EE
 		vv = stmt();
-#endif // ! USE_EE
+#endif // DO_NOT_USE_EE
 	}
 	if (currtoken == STMTSEP) {
 		in->putback(';');
@@ -5624,7 +5756,8 @@ MathParser::readplugin(void)
 	 * 	- arg[2]->arg[n]: dati da passare al costrutture
 	 */
 	std::vector<char *> argv(1);
-	char c, buf[1024];
+	char cIn;
+	char buf[BUFSIZ];
 	int argc = 0;
 	unsigned int i = 0, in_quotes = 0;
 
@@ -5641,23 +5774,30 @@ MathParser::readplugin(void)
 	 * <list_of_args> ::= ',' <arg> <list_of_args> | ''
 	 * <arg> ::= <legal_string> (no unescaped ']' or ','!)
 	 */
-	while ((c = in->get()), !in->eof()) {
-		switch (c) {
+	for (;;) {
+		in->get(cIn);
+		if (in->eof()) {
+			goto last_arg;
+		}
+		switch (cIn) {
 		case '\\':
-			c = in->get();
+			in->get(cIn);
+			if (in->eof()) {
+				goto last_arg;
+			}
 			if (in_quotes) {
-				switch (c) {
+				switch (cIn) {
 				case 'n':
-					c = '\n';
+					cIn = '\n';
 					break;
 
 				default:
-					in->putback(c);
-					c = '\\';
+					in->putback(cIn);
+					cIn = '\\';
 					break;
 				}
 			}
-			buf[i++] = c;
+			buf[i++] = cIn;
 			break;
 
 		case '"':
@@ -5666,21 +5806,27 @@ MathParser::readplugin(void)
 				break;
 			}
 			in_quotes = 0;
-			while (isspace((c = in->get()))) {
-				NO_OP;
+			for (;;) {
+				in->get(cIn);
+				if (in->eof()) {
+					goto last_arg;
+				}
+				if (!isspace(cIn)) {
+					break;
+				}
 			}
-			if (c != ',' && c != ']') {
+			if (cIn != ',' && cIn != ']') {
 				silent_cerr("need a separator "
 					"after closing quotes" << std::endl);
 				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 			}
-			in->putback(c);
+			in->putback(cIn);
 			break;
 
 		case ',':
 		case ']':
 			if (in_quotes) {
-				buf[i++] = c;
+				buf[i++] = cIn;
 				break;
 			}
 			buf[i] = '\0';
@@ -5689,14 +5835,14 @@ MathParser::readplugin(void)
 			SAFESTRDUP(argv[argc], buf);
 			++argc;
 			argv[argc] = NULL;
-			if (c == ']') {
+			if (cIn == ']') {
 				goto last_arg;
 			}
 			i = 0;
 			break;
 
 		default:
-			buf[i++] = c;
+			buf[i++] = cIn;
 			break;
 		}
 
@@ -5719,7 +5865,7 @@ last_arg:
 	/*
 	 * put the close plugin token back
 	 */
-	in->putback(c);
+	in->putback(cIn);
 	buf[i] = '\0';
 
 	/*
@@ -5774,7 +5920,7 @@ last_arg:
 		silent_cout("argv[" << i << "]=" << argv[i]
 				<< std::endl);
 	}
-#endif /* DEBUG */
+#endif // DEBUG
 
 	/*
 	 * costruisce il plugin e gli fa interpretare gli argomenti

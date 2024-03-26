@@ -445,12 +445,30 @@ ReadSparseMappingMatrix(MBDynParser& HP, integer& nRows, integer& nCols)
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 	}
 
-	char c = in.get();
-	while (c == '#') {
-		do {
-			c = in.get();
-		} while (c != '\n');
-		c = in.get();
+	char c;
+	for (;;) {
+		in.get(c);
+		if (in.eof()) {
+			silent_cerr("unexpected eof while checking for one-line comment in mapping file "
+				"\"" << sFileName << "\" "
+				"at line " << HP.GetLineData() << std::endl);
+			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+		if (c != '#') {
+			break;
+		}
+		for (;;) {
+			in.get(c);
+			if (in.eof()) {
+				silent_cerr("unexpected eof while parsing one-line comment in mapping file "
+					"\"" << sFileName << "\" "
+					"at line " << HP.GetLineData() << std::endl);
+				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+			}
+			if (c == '\n') {
+				break;
+			}
+		}
 	}
 	in.putback(c);
 

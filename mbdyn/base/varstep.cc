@@ -67,16 +67,22 @@ bLinear(bl), bPadZeroes(pz), boWhen(bo), pd(0), pvd(0)
 	 * Mangia gli eventuali commenti iniziali
 	 */
 	char c = '\0';
-	while (in.get(c), c == '#') {
-		char buf[1024];
+	for (;;) {
+		in.get(c);
+		if (in.eof()) {
+			silent_cerr("unexpected eof while reading file \""
+				<< sFileName << "\"" << std::endl);
+			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+		if (c != '#') {
+			in.putback(c);
+			break;
+		}
 
+		char buf[BUFSIZ];
 		do {
 			in.getline(buf, sizeof(buf));
 		} while (strlen(buf) == STRLENOF(buf) && buf[STRLENOF(buf)] != '\n');
-	}
-
-	if (c != '#') {
-		in.putback(c);
 	}
 
 	if (iNumSteps == -1) {
@@ -84,7 +90,7 @@ bLinear(bl), bPadZeroes(pz), boWhen(bo), pd(0), pvd(0)
 
 		integer ins;
 		for (ins = 0; !in.eof(); ins++) {
-			char buf[1024];
+			char buf[BUFSIZ];
 
 			do {
 				in.getline(buf, sizeof(buf));
@@ -116,8 +122,17 @@ bLinear(bl), bPadZeroes(pz), boWhen(bo), pd(0), pvd(0)
 				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 			}
 
-			int c;
-			for (c = in.get(); isspace(c); c = in.get()) {
+			char c;
+			for (;;) {
+				in.get(c);
+				if (in.eof()) {
+					silent_cerr("unexpected eof while reading file \""
+						<< sFileName << "\"" << std::endl);
+					throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+				}
+				if (!isspace(c)) {
+					break;
+				}
 				if (c == '\n') {
 					if (i == 0) {
 						silent_cerr("unexpected end of line #" << j + 1 << " after time=" << pvd[0][j] << ", column #" << i + 1 << " of file '"
@@ -139,7 +154,7 @@ bLinear(bl), bPadZeroes(pz), boWhen(bo), pd(0), pvd(0)
 				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 			}
 
-			in.putback(c);
+			in.putback(char(c));
 		}
 
 		if (j > 0) {

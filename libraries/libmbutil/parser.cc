@@ -49,67 +49,73 @@ static int
 skip_remarks(HighParser& HP, InputStream& In, char &cIn)
 {
 skip_again:;
-        for (cIn = In.get(); isspace(cIn); cIn = In.get()) {
-                // this is here in case in some implementation isspace returns success for EOF
+	for (;;) {
+		In.get(cIn);
                 if (In.eof()) {
                         return -1;
                 }
-        }
-
-        if (In.eof()) {
-                return -1;
-        }
+		if (!isspace(cIn)) {
+			break;
+		}
+	}
 
         switch (cIn) {
-        case -1: // should be EOF!
-                return -1;
-
         case MathParser::ONE_LINE_REMARK:
-                for (cIn = In.get(); cIn != '\n'; cIn = In.get()) {
+		for (;;) {
+			In.get(cIn);
+			if (In.eof()) {
+				return -1;
+			}
+			if (cIn == '\n') {
+				break;
+			}
                         if (cIn == '\\') {
-                                cIn = In.get();
+                                In.get(cIn);
                                 if (In.eof()) {
                                         return -1;
                                 }
                                 if (cIn == '\r') {
-                                        /* if input file was prepared
-                                         * under DOS/Windows */
-                                        cIn = In.get();
+                                        // if input file was prepared
+					// under DOS/Windows
+                                        In.get(cIn);
                                         if (In.eof()) {
                                                 return -1;
                                         }
                                 }
                         }
-                        if (In.eof()) {
-                                return -1;
-                        }
                 }
                 goto skip_again;
 
         case '/':
-                cIn = In.get();
+                In.get(cIn);
                 if (In.eof()) {
                         return -1;
+		}
 
-                } else if (cIn == '*') {
-                        // ok, it's a comment
-                        for (cIn = In.get(); !In.eof(); cIn = In.get()) {
+                if (cIn == '*') {
+                        // ok, it's the beginning of a C-style comment, '/*'; eat until '*/'
+			for (;;) {
+				In.get(cIn);
+				if (In.eof()) {
+					return -1;
+				}
                                 if (cIn == '*') {
 end_of_comment:;
                                         // there may be more than just one '*'
                                         // before the end of a comment...
                                         while (cIn == '*') {
-                                                cIn = In.get();
+                                                In.get(cIn);
                                                 if (In.eof()) {
                                                         return -1;
                                                 }
                                                 if (cIn == '/') {
+							// C-style comment is over
                                                         goto skip_again;
                                                 }
                                         }
 
                                 } else if (cIn == '/') {
-                                        cIn = In.get();
+                                        In.get(cIn);
                                         if (In.eof()) {
                                                 return -1;
                                         }
@@ -120,9 +126,6 @@ end_of_comment:;
                                                 goto end_of_comment;
                                         }
                                 }
-                        }
-                        if (In.eof()) {
-                                return -1;
                         }
 
                 } else {
@@ -151,10 +154,14 @@ void
 LowParser::PackWords(InputStream& In)
 {
         unsigned iCur = 0;
-        char cIn;
+       	char cIn;
 
         /* note: no remarks allowed inside words */
-        for (cIn = In.get(); !In.eof(); cIn = In.get()) {
+        for (;;) {
+		In.get(cIn);
+		if (In.eof()) {
+			return;
+		}
                 switch (cIn) {
                 case COLON:
                 case COMMA:
@@ -169,7 +176,7 @@ LowParser::PackWords(InputStream& In)
                                          char *s = NULL;
                                          unsigned i = 2*iBufSize;
 
-                                         /* FIXME: no limit on max size? */
+                                         // FIXME: no limit on max size?
 
                                          SAFENEWARR(s, char, i);
                                          memcpy(s, sCurrWordBuf, iBufSize);
@@ -188,7 +195,6 @@ end_of_word:;
         sCurrWordBuf[iCur] = '\0';
         In.putback(cIn);
 }
-
 
 LowParser::Token
 LowParser::GetToken(InputStream& In)
@@ -882,7 +888,16 @@ HighParser::ParseWord(unsigned flags)
                 *sBuf++ = cIn;
         }
 
-        for (cIn = pIn->get(); isalnum(cIn) || cIn == '_' || isspace(cIn); cIn = pIn->get()) {
+	for (;;) {
+		pIn->get(cIn);
+		if (pIn->eof()) {
+			return -1;
+		}
+
+		if (!(isalnum(cIn) || cIn == '_' || isspace(cIn))) {
+			break;
+		}
+
                 *sBufWithSpaces++ = cIn;
                 if (sBufWithSpaces >= sStringBufWithSpaces + iDefaultBufSize - 1) {
                         break;
@@ -892,16 +907,17 @@ HighParser::ParseWord(unsigned flags)
                         continue;
                 }
 
+		char c = cIn;
                 if (flags & LOWER) {
-                        *sBuf++ = tolower(cIn);
+                        c = tolower(c);
 
                 } else if (flags & UPPER) {
-                        *sBuf++ = toupper(cIn);
+                        c = toupper(c);
+		}
 
-                } else {
-                        *sBuf++ = cIn;
-                }
+                *sBuf++ = c;
         }
+
         pIn->putback(cIn);
 
         *sBuf = '\0';
@@ -1143,35 +1159,42 @@ HighParser::GetString(unsigned flags)
         char* sTmp = s;
 
         char cIn = '\0';
+	for (;;) {
+		pIn->get(cIn);
+		if (pIn->eof()) {
+                	CurrToken = HighParser::ENDOFFILE;
+                	return NULL;
+		}
 
-        while (isspace(cIn = pIn->get())) {
-                NO_OP;
-        }
-
-        if (pIn->eof()) {
-                CurrToken = HighParser::ENDOFFILE;
-                return NULL;
-        }
+		if (!isspace(cIn)) {
+			break;
+		}
+	}
 
         pIn->putback(cIn);
-        for (cIn = pIn->get(); cIn != ',' && cIn != ';'; cIn = pIn->get()) {
-                /* Attenzione! cosi' la legge tutta,
-                 * ma ne tiene solo iBufSize-1 caratteri */
-                if (pIn->eof()) {
+	for (;;) {
+		pIn->get(cIn);
+		if (pIn->eof()) {
                         CurrToken = HighParser::ENDOFFILE;
                         *sTmp = '\0';
                         return s;
+		}
 
-                } else if (sTmp < s + iDefaultBufSize - 1) {
+		if (!(cIn != ',' && cIn != ';')) {
+			break;
+		}
+
+                if (sTmp < s + iDefaultBufSize - 1) {
                         if (!(flags & HighParser::EATSPACES) || !isspace(cIn)) {
+				char c = cIn;
                                 if (flags & HighParser::LOWER) {
-                                        cIn = tolower(cIn);
+                                        c = tolower(c);
 
                                 } else if (flags & HighParser::UPPER) {
-                                        cIn = toupper(cIn);
+                                        c = toupper(c);
                                 }
 
-                                *sTmp++ = cIn;
+                                *sTmp++ = c;
                         }
                 }
         }
@@ -1262,24 +1285,37 @@ HighParser::GetStringWithDelims(enum Delims Del, bool escape)
                 return NULL;
         }
 
-        /* Se trova il delimitatore sinistro, legge la stringa */
+        // Se trova il delimitatore sinistro, legge la stringa
         if (cIn == cLdelim) {
-                for (cIn = pIn->get(); cIn != cRdelim; cIn = pIn->get()) {
-                        /* Attenzione! cosi' la legge tutta,
-                         * ma ne tiene solo iBufSize-1 caratteri */
+                for (;;) {
+			pIn->get(cIn);
                         if (pIn->eof()) {
-                                /* FIXME: this should be an error ... */
+                                // FIXME: this should be an error ...
 				silent_cerr("End-of-file encountered in " << sFuncName << " while looking for right string delimiter '" << cRdelim << "' after " << unsigned(sTmp - s) << " characters at line " << GetLineData() << std::endl);
                                 sTmp[0] = '\0';
                 		throw EndOfFile(MBDYN_EXCEPT_ARGS);
+			}
 
-                        } else if (sTmp >= s + iDefaultBufSize - 1) {
+			if (cIn == cRdelim) {
+				break;
+			}
+
+                        // Attenzione! cosi' la legge tutta,
+                        // ma ne tiene solo iBufSize-1 caratteri
+                        if (sTmp >= s + iDefaultBufSize - 1) {
 				silent_cerr("End-of-buffer encountered in " << sFuncName << " while looking for right string delimiter '" << cRdelim << "' after " << unsigned(sTmp - s) << " characters at line " << GetLineData() << std::endl);
                 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 
 			} else {
                                 if (cIn == ESCAPE_CHAR) {
-                                        cIn = pIn->get();
+                                        pIn->get(cIn);
+                        		if (pIn->eof()) {
+                        		        // FIXME: this should be an error ...
+						silent_cerr("End-of-file encountered in " << sFuncName << " while escaping a char after " << unsigned(sTmp - s) << " characters at line " << GetLineData() << std::endl);
+                        		        sTmp[0] = '\0';
+                				throw EndOfFile(MBDYN_EXCEPT_ARGS);
+					}
+
                                         if (cIn == '\n') {
 
                                                 /*
@@ -1291,15 +1327,35 @@ HighParser::GetStringWithDelims(enum Delims Del, bool escape)
                                                  * actually results in "first linesecond line"
                                                  */
 
-                                                cIn = pIn->get();
+                                                pIn->get(cIn);
+                        			if (pIn->eof()) {
+                        		       		// FIXME: this should be an error ...
+							silent_cerr("End-of-file encountered in " << sFuncName << " while escaping a newline ('\\n') after " << unsigned(sTmp - s) << " characters at line " << GetLineData() << std::endl);
+                        		        	sTmp[0] = '\0';
+                					throw EndOfFile(MBDYN_EXCEPT_ARGS);
+						}
 
                                         } else if (cIn == '\r') {
-                                                cIn = pIn->get();
+                                                pIn->get(cIn);
+                        			if (pIn->eof()) {
+                        		       		// FIXME: this should be an error ...
+							silent_cerr("End-of-file encountered in " << sFuncName << " while escaping a 'carriage return' ('\\r') after " << unsigned(sTmp - s) << " characters at line " << GetLineData() << std::endl);
+                        		        	sTmp[0] = '\0';
+                					throw EndOfFile(MBDYN_EXCEPT_ARGS);
+						}
+
                                                 if (cIn != '\n') {
                                                         pIn->putback(cIn);
                                                         goto escaped_generic;
                                                 }
-                                                cIn = pIn->get();
+
+                                                pIn->get(cIn);
+                        			if (pIn->eof()) {
+                        		       		// FIXME: this should be an error ...
+							silent_cerr("End-of-file encountered in " << sFuncName << " after escaping a 'carriage return' ('\\r') after " << unsigned(sTmp - s) << " characters at line " << GetLineData() << std::endl);
+                        		        	sTmp[0] = '\0';
+                					throw EndOfFile(MBDYN_EXCEPT_ARGS);
+						}
 
                                         } else if ((cIn == ESCAPE_CHAR) || (cIn == cRdelim)) {
                                                 if (!escape) {
@@ -1320,7 +1376,14 @@ escaped_generic:;
                                                          */
 
                                                         hex[0] = cIn;
-                                                        hex[1] = pIn->get();
+							pIn->get(cIn);
+                        				if (pIn->eof()) {
+                        		       			// FIXME: this should be an error ...
+								silent_cerr("End-of-file encountered in " << sFuncName << " while escaping a hexpair char ('\\dd', where 'dd' are two hex digits) after " << unsigned(sTmp - s) << " characters at line " << GetLineData() << std::endl);
+                        		        		sTmp[0] = '\0';
+                						throw EndOfFile(MBDYN_EXCEPT_ARGS);
+							}
+                                                        hex[1] = cIn;
                                                         hex[2] = '\0';
 
                                                         for (i = 0; i < 2; i++) {
