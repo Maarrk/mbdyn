@@ -72,7 +72,18 @@ bLinear(bl), bPadZeroes(pz), boWhen(bo), pd(0), pvd(0)
 	 */
 	unsigned uLineNo = 0;
 	char cTmp = '\0';
-	while (in.get(cTmp), cTmp == '#') {
+	for (;;) {
+		in.get(cTmp);
+		if (in.eof()) {
+			silent_cerr("FixedStepFileDrive(" << uL << "): "
+				"eof while parsing header of file \"" << sFileName << "\""
+				<< std::endl);
+			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+		if (cTmp != '#') {
+			break;
+		}
+
 		// increase this to enlarge the size of the buffer
 #define FIXED_BUFSIZE (8192)
 		char tmpbuf[FIXED_BUFSIZE];
@@ -188,8 +199,17 @@ bLinear(bl), bPadZeroes(pz), boWhen(bo), pd(0), pvd(0)
 				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 			}
 
-			int c;
-			for (c = in.get(); isspace(c); c = in.get()) {
+			char c;
+			for (;;) {
+				in.get(c);
+				if (in.eof()) {
+					silent_cerr("unexpected end of file '"
+						<< sFileName << '\'' << std::endl);
+					throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+				}
+				if (!isspace(c)) {
+					break;
+				}
 				if (c == '\n') {
 					if (i != iNumDrives) {
 						silent_cerr("unexpected end of line #" << j + 1 << " (" << uLineNo << ") after channel #" << i << ", column #" << i << " of file '"
