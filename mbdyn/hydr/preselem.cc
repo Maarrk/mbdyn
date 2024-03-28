@@ -1353,38 +1353,46 @@ Elem* ReadHydraulicElem(DataManager* pDM,
        
        /* nodo 2 */
        const PressureNode* pNode2 = dynamic_cast<PressureNode *>(pDM->ReadNode(HP, Node::HYDRAULIC));
-       
-       doublereal diameter = HP.GetReal();
-       if (diameter <= 0.) {		  
+
+       if (pNode2 == pNode1) {
 	  silent_cerr("DynamicPipe(" << uLabel << "): "
-		  "null or negative diameter "
-		  "at line " << HP.GetLineData() << std::endl);
+		  "node 2 and 1 (" << pNode2->GetLabel() << ") "
+		  "must differ at line " << HP.GetLineData() << std::endl);
 	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       }
+       
+       doublereal diameter;
+       try {
+               diameter = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: invalid diameter " << e.Get() << " (must be positive) [" << e.what() << "] for DynamicPipe(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Diameter: " << diameter << std::endl);
        
        // Area      	   
        doublereal area = diameter*diameter*M_PI_4;
-       if (HP.IsKeyWord("area")) 
-	      {
-		 area = HP.GetReal();
-		 if (area <= 0.) {		  
-		    silent_cerr("DynamicPipe(" << uLabel << "): "
-			    "null or negative area "
-			    "at line " << HP.GetLineData() << std::endl);
-		    throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-		 }	
-	      }
+       if (HP.IsKeyWord("area")) {
+          try {
+               area = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+          } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: invalid area " << e.Get() << " (must be positive) [" << e.what() << "] for DynamicPipe(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+          }
+       }
        DEBUGCOUT("Area: " << area << std::endl);
        
        /* Lunghezza */
-       doublereal length = HP.GetReal();
-       if (length <= 0.) {		  
-	  silent_cerr("DynamicPipe(" << uLabel << "): "
-		  "null or negative length "
-		  "at line " << HP.GetLineData() << std::endl);
-	  throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-       }	     
+       doublereal length;
+       try {
+               length = HP.GetReal(0., HighParser::range_gt<doublereal>(0.));
+
+       } catch (HighParser::ErrValueOutOfRange<doublereal>& e) {
+               silent_cerr("error: invalid length " << e.Get() << " (must be positive) [" << e.what() << "] for DynamicPipe(" << uLabel << ") at line " << HP.GetLineData() << std::endl);
+               throw e;
+       }
        DEBUGCOUT("Length: " << length << std::endl); 
        
        /* Transizione se e' 0 parto da laminare se e' 1 parto da turbolento */
