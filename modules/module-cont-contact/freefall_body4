@@ -68,7 +68,8 @@ end: control data;
 
 set: const real MASS  	= 1.; 
 set: const real HEIGHT 	= 0.1;		# Contact distance from zero
-set: const real L = 0.2;
+set: const real LENGTH = 0.2;
+set: const real WIDTH = 0.1;
 
 #	LABELS
 set: const integer NODE_MASS	= 10;
@@ -132,7 +133,7 @@ begin: elements;
 	NODE_GROUND,
 		position, reference, NODE, null,
 	NODE_MASS,
-		position, reference, NODE, -L, -L, 0.,
+		position, reference, NODE, -LENGTH, -WIDTH, 0.,
 	reference, 99;
 	# continuous contact, sign, negative, formulation, flores, restitution, 0.8, kappa, 2.4e10, exp, 1.5;
 
@@ -141,7 +142,7 @@ begin: elements;
 	NODE_GROUND,
 		position, reference, NODE, null,
 	NODE_MASS,
-		position, reference, NODE, L, -L, 0.,
+		position, reference, NODE, LENGTH, -WIDTH, 0.,
 	reference, 99;
 	# continuous contact, sign, negative, formulation, flores, restitution, 0.8, kappa, 2.4e10, exp, 1.5;
 
@@ -150,7 +151,7 @@ begin: elements;
 	NODE_GROUND,
 		position, reference, NODE, null,
 	NODE_MASS,
-		position, reference, NODE, L, L, 0.,
+		position, reference, NODE, LENGTH, WIDTH, 0.,
 	reference, 99;
 	# continuous contact, sign, negative, formulation, flores, restitution, 0.8, kappa, 2.4e10, exp, 1.5;
 
@@ -159,7 +160,7 @@ begin: elements;
 	NODE_GROUND,
 		position, reference, NODE, null,
 	NODE_MASS,
-		position, reference, NODE, -L, L, 0.,
+		position, reference, NODE, -LENGTH, WIDTH, 0.,
 	reference, 99;
 	# continuous contact, sign, negative, formulation, flores, restitution, 0.8, kappa, 2.4e10, exp, 1.5;
 
