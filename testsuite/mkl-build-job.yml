@@ -64,6 +64,10 @@ mkl-build-job:       # This job runs in the build stage, which runs first.
           echo "MKL was already installed in ${MKL_PKG_CONFIG_PATH}"
           exit 0
         fi
+       - |
+         if test "${MBD_CLEAN_ALL}" = "yes"; then
+           rm -rf "${MKL_BUILD_DIR}"
+         fi
        - mkdir -p ${MKL_BUILD_DIR}
        - cd ${MKL_BUILD_DIR}
        - |

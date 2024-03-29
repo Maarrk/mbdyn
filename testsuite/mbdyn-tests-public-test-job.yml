@@ -50,6 +50,8 @@ mbdyn-tests-public-test-job:   # This job runs in the test stage.
     MBD_TESTS_PUBLIC_LOG_FILE: "mbdyn-tests-public-test-job.log"
   stage: test    # It only starts when the job in the build stage completes successfully.
   needs:
+    - job: siconos-build-job
+      artifacts: true
     - job: netcdf-c-build-job
       artifacts: true
     - job: netcdf-cxx4-build-job
@@ -106,6 +108,8 @@ mbdyn-tests-public-test-job-gcov:   # This job runs in the test stage.
     MBD_TESTS_PUBLIC_LOG_FILE: "mbdyn-tests-public-test-job.log"
   stage: test    # It only starts when the job in the build stage completes successfully.
   needs:
+    - job: siconos-build-job
+      artifacts: true
     - job: netcdf-c-build-job
       artifacts: true
     - job: netcdf-cxx4-build-job

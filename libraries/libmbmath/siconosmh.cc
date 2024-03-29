@@ -101,7 +101,7 @@ SiconosVectorHandler& SiconosVectorHandler::operator=(const VectorHandler& VH)
      ASSERT(iGetSize() == VH.iGetSize());
 
      const integer iSize = iGetSize();
-     
+
      for (integer i = 1; i <= iSize; ++i) {
           (*this)(i) = VH(i);
      }
@@ -336,23 +336,30 @@ SiconosMatrixHandler::IncCoef(integer iRow, integer iCol, const doublereal& dCoe
      ASSERT(iCol >= 1);
      ASSERT(iRow <= iGetNumRows());
      ASSERT(iCol <= iGetNumCols());
-     
-     ASSERT(pIndexMap->iGetIndex(iRow) >= 1);
-     ASSERT(pIndexMap->iGetIndex(iRow) <= iGetNumRows());
-     ASSERT(pIndexMap->iGetIndex(iCol) >= 1);
-     ASSERT(pIndexMap->iGetIndex(iCol) <= iGetNumCols());
-     
+
+     const integer iRowIndex = pIndexMap->iGetIndex(iRow);
+     const integer iColIndex = pIndexMap->iGetIndex(iCol);
+
+     ASSERT(iRowIndex >= 1);
+     ASSERT(iRowIndex <= iGetNumRows());
+     ASSERT(iColIndex >= 1);
+     ASSERT(iColIndex <= iGetNumCols());
+
      DEBUGCERR("IncCoef(" << iRow << ", " << iCol << ", " << dCoef
-               << ") -> (" << pIndexMap->iGetIndex(iRow) << "," << pIndexMap->iGetIndex(iCol) << ")\n") ;
+               << ") -> (" << iRowIndex << "," << iColIndex << ")\n");
 
      switch (pMatrix->storageType) {
      case NM_SPARSE:
-          NM_entry(pMatrix, pIndexMap->iGetIndex(iRow) - 1, pIndexMap->iGetIndex(iCol) - 1, dCoef);
+          if (dCoef) {
+               NM_entry(pMatrix, iRowIndex - 1, iColIndex - 1, dCoef);
+          } else {
+               DEBUGCERR("Warning: Zero entries will not be added to the triplet matrix because the default workspace size will be underestimated!\n");
+          }
           break;
 
      case NM_DENSE:
           // FIXME: NM_entry is equivalent to PutCoef in case dense matrices
-          pMatrix->matrix0[pIndexMap->iGetIndex(iRow) - 1 + (pIndexMap->iGetIndex(iCol) - 1) * pMatrix->size0] += dCoef;
+          pMatrix->matrix0[iRowIndex - 1 + (iColIndex - 1) * pMatrix->size0] += dCoef;
           break;
 
      default:
@@ -377,17 +384,17 @@ SiconosMatrixHandler::operator()(integer iRow, integer iCol) const
 #ifdef DEBUG
      IsValid();
 #endif
-     
+
      ASSERT(iRow >= 1);
      ASSERT(iCol >= 1);
      ASSERT(iRow <= iGetNumRows());
      ASSERT(iCol <= iGetNumCols());
-     
+
      ASSERT(pIndexMap->iGetIndex(iRow) >= 1);
      ASSERT(pIndexMap->iGetIndex(iRow) <= iGetNumRows());
      ASSERT(pIndexMap->iGetIndex(iCol) >= 1);
      ASSERT(pIndexMap->iGetIndex(iCol) <= iGetNumCols());
-     
+
      if (pMatrix->storageType != NM_DENSE) {
           throw ErrNotImplementedYet(MBDYN_EXCEPT_ARGS);
      }
@@ -401,17 +408,17 @@ SiconosMatrixHandler::operator()(integer iRow, integer iCol)
 #ifdef DEBUG
      IsValid();
 #endif
-     
+
      ASSERT(iRow >= 1);
      ASSERT(iCol >= 1);
      ASSERT(iRow <= iGetNumRows());
      ASSERT(iCol <= iGetNumCols());
-     
+
      ASSERT(pIndexMap->iGetIndex(iRow) >= 1);
      ASSERT(pIndexMap->iGetIndex(iRow) <= iGetNumRows());
      ASSERT(pIndexMap->iGetIndex(iCol) >= 1);
      ASSERT(pIndexMap->iGetIndex(iCol) <= iGetNumCols());
-     
+
      if (pMatrix->storageType != NM_DENSE) {
           throw ErrNotImplementedYet(MBDYN_EXCEPT_ARGS);
      }

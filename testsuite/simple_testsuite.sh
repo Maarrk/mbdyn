@@ -239,7 +239,7 @@ fi
 
 declare -i idx_test=0
 
-MBD_INPUT_FILES_FOUND=`find ${mbdyn_testsuite_prefix_input} '(' -type f ${mbdyn_input_filter} -and -not -name '*_simple_testsuite_patched_input.mbd' ')' -print0 | xargs -0 awk -v exclude_initial_value=$((mbdyn_exclude_initial_value)) -v exclude_inverse_dynamics=$((mbdyn_exclude_inverse_dynamics)) -f mbdyn_input_file_format.awk`
+MBD_INPUT_FILES_FOUND=`find ${mbdyn_testsuite_prefix_input} '(' -type f ${mbdyn_input_filter} -and -not -name '*_patched_*.mbd' ')' -print0 | xargs -0 awk -v exclude_initial_value=$((mbdyn_exclude_initial_value)) -v exclude_inverse_dynamics=$((mbdyn_exclude_inverse_dynamics)) -f mbdyn_input_file_format.awk`
 
 function simple_testsuite_run_test()
 {
@@ -336,7 +336,7 @@ function simple_testsuite_run_test()
             ## FIXME: actually ${mbd_filename_patched} should be created inside the output directory.
             ## FIXME: However, MBDyn is not able to located additional input files, if ${mbd_filename_patched}
             ## FIXME: would be created inside a different directory than the original input file.
-            mbd_filename_patched=$(mktemp -p "${mbd_dir_name}" "${mbd_basename}_XXXXXXXXXX_simple_testsuite_patched_input_$((idx_test)).mbd")
+            mbd_filename_patched=$(mktemp -p "${mbd_dir_name}" "${mbd_basename}_XXXXXXXXXX_patched_$((idx_test)).mbd")
             mbd_filename_patched_copy="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_input_file_patched_$((idx_test)).mbd"
 
             if ! sed -E -f "${mbdyn_sed_prefix}mbdyn_testsuite_patch.sed" "${mbd_filename}" | tee "${mbd_filename_patched}" > "${mbd_filename_patched_copy}"; then

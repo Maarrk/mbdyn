@@ -50,6 +50,10 @@ nlopt-build-job:       # This job runs in the build stage, which runs first.
           exit 0
         fi
       - |
+        if test "${MBD_CLEAN_ALL}" = "yes"; then
+          rm -rf "${NL_BUILD_DIR}"
+        fi
+      - |
         if ! test -d ${NL_BUILD_DIR}; then
           git clone -b master https://github.com/stevengj/nlopt.git ${NL_BUILD_DIR}
         fi

@@ -45,6 +45,8 @@ variables:
 mbdyn-build-job:       # This job runs in the build stage, which runs first.
   stage: build
   needs:
+    - job: siconos-build-job
+      artifacts: true
     - job: netcdf-c-build-job
       artifacts: true
     - job: netcdf-cxx4-build-job
@@ -56,6 +58,7 @@ mbdyn-build-job:       # This job runs in the build stage, which runs first.
     - job: mbdyn-checkout-job
   script:
     - export MBD_INSTALL_PREFIX=${CI_PROJECT_DIR}/${MBD_INSTALL_PREFIX}
+    - export SICONOS_INSTALL_PREFIX=${CI_PROJECT_DIR}/${SICONOS_INSTALL_PREFIX}
     - export NC_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NC_INSTALL_PREFIX}
     - export NC_CXX4_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NC_CXX4_INSTALL_PREFIX}
     - export NL_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NL_INSTALL_PREFIX}
@@ -138,6 +141,8 @@ mbdyn-build-job:       # This job runs in the build stage, which runs first.
 mbdyn-build-job-gcov:       # This job runs in the build stage, which runs first.
   stage: build
   needs:
+    - job: siconos-build-job
+      artifacts: true
     - job: netcdf-c-build-job
       artifacts: true
     - job: netcdf-cxx4-build-job
@@ -150,6 +155,7 @@ mbdyn-build-job-gcov:       # This job runs in the build stage, which runs first
   rules:
     - if: $MBD_TEST_COVERAGE_ENABLED == "yes"
   script:
+    - export SICONOS_INSTALL_PREFIX=${CI_PROJECT_DIR}/${SICONOS_INSTALL_PREFIX}
     - export NC_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NC_INSTALL_PREFIX}
     - export NC_CXX4_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NC_CXX4_INSTALL_PREFIX}
     - export NL_INSTALL_PREFIX=${CI_PROJECT_DIR}/${NL_INSTALL_PREFIX}
@@ -191,7 +197,7 @@ mbdyn-build-job-gcov:       # This job runs in the build stage, which runs first
      junit: $MBD_TEST_PROGS_OUTPUT_DIR/**/*.xml
   cache:
    key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
-   when: always   
+   when: always
    paths:
     - $MBD_BUILD_DIR_GCOV
     - Makefile.in
@@ -304,7 +310,7 @@ mbdyn-build-job-manuals:       # This job runs in the build stage, which runs fi
     - manual/install/mbdyn-install-*.pdf
   cache:
    key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
-   when: always   
+   when: always
    paths:
     - Makefile.in
     - aclocal.m4

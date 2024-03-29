@@ -218,7 +218,7 @@ const LinSol::solver_t solver[] = {
          -1, -1},
         {"Siconos" "sparse", NULL,
          LinSol::SICONOS_SPARSE_SOLVER,
-         0u,
+         LinSol::SOLVER_FLAGS_ALLOWS_PRECOND_UMFPACK | LinSol::SOLVER_FLAGS_ALLOWS_PRECOND_SUPERLU | LinSol::SOLVER_FLAGS_ALLOWS_PRECOND_MUMPS | LinSol::SOLVER_FLAGS_ALLOWS_PRECOND_PARDISO | LinSol::SOLVER_FLAGS_ALLOWS_PRECOND_CSPARSE,
          0u,
          -1, -1},
         {"Siconos" "dense", NULL,
@@ -1043,9 +1043,9 @@ LinSol::GetSolutionManager(integer iNLD,
         case LinSol::SICONOS_SPARSE_SOLVER:
              SAFENEWWITHCONSTRUCTOR(pCurrSM,
                                     SiconosSparseSolutionManager,
-                                    SiconosSparseSolutionManager(iNLD, iLWS));
-             break;
+                                    SiconosSparseSolutionManager(iNLD, iLWS, solverFlags));
 
+             break;
         case LinSol::SICONOS_DENSE_SOLVER:
              SAFENEWWITHCONSTRUCTOR(pCurrSM,
                                     SiconosDenseSolutionManager,

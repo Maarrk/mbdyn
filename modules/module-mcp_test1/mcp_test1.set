@@ -38,40 +38,16 @@
         in the GNU Public License version 2.1
 */
 
-include: "mcp_test1.set";
+set: real omega = 2 * pi;
+set: real m1 = 1.;
+set: real g = 9.81;
+set: real omega1 = 2 * pi;
+set: real k1 = omega1^2 * m1;
+set: real q1_0 = 1.;
+set: real qdot1_0 = 1.;
 
-begin: data;
-        problem: initial value;	# the default
-end: data;
-
-begin: initial value;
-    initial time: 0.;
-    final time: 10;
-    time step: 1e-3;
-
-    max iterations: 100;
-    tolerance: 1e-4, test, norm, 1e-4, test, none;
-    method: implicit euler;
-
-    linear solver: siconos dense;
-    nonlinear solver: siconos mcp newton min fb, lambda min, 1e-6;
-
-    derivatives tolerance: 1e-5;
-    derivatives max iterations: 10;
-    derivatives coefficient: 1e-6;
-    threads: assembly, 1;
-    threads: solver, 1;
-    output: iterations;
-end: initial value;
-
-begin: control data;
-    include: "mcp_test1.con";    
-end: control data;
-
-begin: nodes;
-    include: "mcp_test1.nod";    
-end: nodes;
-
-begin: elements;
-    include: "mcp_test1.elm";
-end: elements;
+set: real m2 = 1.;
+set: real omega2 = 120 * pi;
+set: real k2 = omega2^2 * m2;
+set: real q2_0 = 1.;
+set: real qdot2_0 = 1.;

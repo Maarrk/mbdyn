@@ -55,6 +55,8 @@ mbdyn-modules-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
   needs:
       - job: mkl-build-job
+      - job: siconos-build-job
+        artifacts: true
       - job: netcdf-c-build-job
         artifacts: true
       - job: netcdf-cxx4-build-job
@@ -109,6 +111,8 @@ mbdyn-modules-test-job-gcov:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
   needs:
       - job: mkl-build-job
+      - job: siconos-build-job
+        artifacts: true
       - job: netcdf-c-build-job
         artifacts: true
       - job: netcdf-cxx4-build-job

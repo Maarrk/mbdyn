@@ -74,6 +74,8 @@ octave-pkg-build-job:       # This job runs in the build stage, which runs first
 octave-pkg-build-job-gcov:       # This job runs in the build stage, which runs first.
   stage: build
   needs:
+      - job: siconos-build-job
+        artifacts: true
       - job: mkl-build-job
       - job: netcdf-c-build-job
         artifacts: true

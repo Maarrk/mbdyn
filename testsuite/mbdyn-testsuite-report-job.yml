@@ -50,6 +50,8 @@ mbdyn-testsuite-report-job-coverage:
     MBD_GCOVR_EXTRA_ARGS_XML: "${MBD_GCOVR_EXTRA_ARGS} --xml-pretty"
   stage: test
   needs:
+    - job: siconos-build-job
+      artifacts: true
     - job: netcdf-c-build-job
       artifacts: true
     - job: netcdf-cxx4-build-job

@@ -62,6 +62,8 @@ variables:
 mbdyn-tests-private-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
   needs:
+     - job: siconos-build-job
+       artifacts: true
      - job: mkl-build-job
        artifacts: true
      - job: netcdf-c-build-job
@@ -125,6 +127,8 @@ mbdyn-tests-private-test-job-gcov:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
   needs:
      - job: mkl-build-job
+       artifacts: true
+     - job: siconos-build-job
        artifacts: true
      - job: netcdf-c-build-job
        artifacts: true

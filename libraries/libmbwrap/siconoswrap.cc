@@ -102,13 +102,12 @@ void SiconosSolutionManager::Solve()
 #ifdef DEBUG
      MyVectorHandler f(x);
 #endif
+     integer info = NM_gesv(A.pGetMatrix(), x.pdGetVec(), true);
 
-     integer ierr = NM_gesv(A.pGetMatrix(), x.pdGetVec(), true);
-
-     if (0 != ierr) {
+     if (info) {
+          silent_cerr("NM_gesv failed with status " << info << "\n");
           throw LinearSolver::ErrFactor(-1, MBDYN_EXCEPT_ARGS);
      }
-
 #ifdef DEBUG
      A.MatVecDecMul(f, x);
      DEBUGCERR("||A*x-b||=" << f.Norm() << "\n");
@@ -124,12 +123,37 @@ SiconosDenseSolutionManager::~SiconosDenseSolutionManager()
 {
 }
 
-SiconosSparseSolutionManager::SiconosSparseSolutionManager(integer iDim, integer iNumNz)
-     :SiconosSolutionManager(NM_SPARSE, iDim, iNumNz)
+SiconosSparseSolutionManager::SiconosSparseSolutionManager(integer iDim, integer iNumNz, unsigned solverFlags)
+     :SiconosSolutionManager(NM_SPARSE, iDim, iNumNz),
+      solverId(NSM_linearSolverParams(A.pGetMatrix())->solver)
 {
+     switch (solverFlags & LinSol::SOLVER_FLAGS_PRECOND_MASK) {
+     case LinSol::SOLVER_FLAGS_ALLOWS_PRECOND_UMFPACK:
+          solverId = NSM_UMFPACK;
+          break;
+     case LinSol::SOLVER_FLAGS_ALLOWS_PRECOND_SUPERLU:
+          solverId = NSM_SUPERLU;
+          break;
+     case LinSol::SOLVER_FLAGS_ALLOWS_PRECOND_MUMPS:
+          solverId = NSM_MUMPS;
+          break;
+     case LinSol::SOLVER_FLAGS_ALLOWS_PRECOND_PARDISO:
+          solverId = NSM_MKL_PARDISO;
+          break;
+     case LinSol::SOLVER_FLAGS_ALLOWS_PRECOND_CSPARSE:
+          solverId = NSM_CSPARSE;
+          break;
+     }
 }
 
 SiconosSparseSolutionManager::~SiconosSparseSolutionManager()
 {
+}
+
+void SiconosSparseSolutionManager::Solve()
+{
+     NM_setSparseSolver(A.pGetMatrix(), solverId);
+
+     SiconosSolutionManager::Solve();
 }
 #endif

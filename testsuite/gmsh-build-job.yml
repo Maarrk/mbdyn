@@ -54,6 +54,10 @@ gmsh-build-job:       # This job runs in the build stage, which runs first.
            echo "Gmsh was already installed ..."
            exit 0
          fi
+       - |
+         if test "${MBD_CLEAN_ALL}" = "yes"; then
+           rm -rf "${GMSH_BUILD_DIR}"
+         fi
        - GMSH_TAR=`basename ${GMSH_URL}`
        - |
          if ! test -d ${GMSH_BUILD_DIR}; then

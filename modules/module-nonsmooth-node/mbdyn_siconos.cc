@@ -34,151 +34,62 @@
  * uses SICONOS <http://siconos.gforge.inria.fr/>
  */
 
-#include "SiconosNumerics.h"
+#include "mbconfig.h"           /* This goes first in every *.c,*.cc file */
+
 #include <iostream>
+#include <myassert.h>
+
 #include "mbdyn_siconos.h"
 
+#include <numerics/SolverOptions.h>
+#include <numerics/LCP_Solvers.h>
+#include <numerics/NumericsMatrix.h>
+#include <numerics/NonSmoothDrivers.h>
+#include <numerics/LinearComplementarityProblem.h>
+#include <numerics/SiconosNumerics.h>
 
 void
 mbdyn_siconos_LCP_call(int sizep, double W_NN[], double bLCP[], double Pkp1[], double wlem[], solver_parameters& solparam)
 {
-	solparam.info = 0;
+        solparam.info = 0;
 
-	LCPsolver lcpsol = solparam.solver;
-	double tolerance = solparam.solvertol;
-	int maxiternum = solparam.solveritermax;
+        LCPsolver lcpsol = solparam.solver;
+        double tolerance = solparam.solvertol;
+        int maxiternum = solparam.solveritermax;
 
-	// LCP problem description:
-	LinearComplementarityProblem OSNSProblem;
-	OSNSProblem.size = sizep;
-	OSNSProblem.q = bLCP;
+        // LCP problem description:
+        LinearComplementarityProblem OSNSProblem{};
+        OSNSProblem.size = sizep;
+        OSNSProblem.q = bLCP;
 
-	NumericsMatrix MM;
-	MM.storageType = 0;
-	MM.matrix0 = W_NN; 		// W_delassus
-	MM.size0 = sizep;
-	MM.size1 = sizep;
-	OSNSProblem.M = &MM;
+        NumericsMatrix MM{};
 
-	SolverOptions numerics_solver_options = { 0 };
+        MM.storageType = NM_DENSE;
+        MM.matrix0 = W_NN;              // W_delassus
+        MM.size0 = sizep;
+        MM.size1 = sizep;
+        OSNSProblem.M = &MM;
 
-	solparam.resulting_error = 0.;
+        SolverOptions* numerics_solver_options = solver_options_create(lcpsol);
 
-  	// Solving LCP problem
-	// FIXME: initialize once, keep alive?
-	switch (lcpsol) {
-	case LEXICO_LEMKE:
-		linearComplementarity_lexicolemke_setDefaultSolverOptions(&numerics_solver_options);
-		numerics_solver_options.iparam[0] = maxiternum;
-		lcp_lexicolemke(&OSNSProblem, Pkp1, wlem, &solparam.info, &numerics_solver_options);
-		solparam.processed_iterations = numerics_solver_options.iparam[1];
-		break;
+        if (!numerics_solver_options) {
+                silent_cerr("Unable to get default solver options for Siconos solver\n");
+                throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+        }
 
-	case RPGS:
-		linearComplementarity_rpgs_setDefaultSolverOptions(&numerics_solver_options);
-		numerics_solver_options.iparam[0] = maxiternum;
-		numerics_solver_options.dparam[0] = tolerance;
-		lcp_rpgs(&OSNSProblem, Pkp1, wlem, &solparam.info, &numerics_solver_options);
-		solparam.processed_iterations = numerics_solver_options.iparam[1];
-		solparam.resulting_error = numerics_solver_options.dparam[1];
-		break;
+        numerics_solver_options->iparam[0] = maxiternum;
+        numerics_solver_options->dparam[0] = tolerance;
 
-	case QP:
-		linearComplementarity_qp_setDefaultSolverOptions(&numerics_solver_options);
-		numerics_solver_options.dparam[0] = tolerance;
-		lcp_qp(&OSNSProblem, Pkp1, wlem, &solparam.info, &numerics_solver_options);
-		break;
+        solparam.info = linearComplementarity_driver(&OSNSProblem, Pkp1, wlem, numerics_solver_options);
 
-	case CPG:
-		linearComplementarity_cpg_setDefaultSolverOptions(&numerics_solver_options);
-		numerics_solver_options.iparam[0] = maxiternum;
-		numerics_solver_options.dparam[0] = tolerance;
-		lcp_cpg(&OSNSProblem, Pkp1, wlem, &solparam.info, &numerics_solver_options);
-		solparam.processed_iterations = numerics_solver_options.iparam[1];
-		solparam.resulting_error = numerics_solver_options.dparam[1];
-		break;
+        if (solparam.info) {
+                silent_cerr("Siconos solver failed with status " << solparam.info << "\n");
+                throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+        }
 
-	case PGS:
-		linearComplementarity_pgs_setDefaultSolverOptions(&numerics_solver_options);
-		numerics_solver_options.iparam[0] = maxiternum;
-		numerics_solver_options.dparam[0] = tolerance;
-		lcp_pgs(&OSNSProblem, Pkp1, wlem, &solparam.info, &numerics_solver_options);
-		solparam.processed_iterations = numerics_solver_options.iparam[1];
-		solparam.resulting_error = numerics_solver_options.dparam[1];
-		break;
+        solparam.processed_iterations = numerics_solver_options->iparam[1];
+        solparam.resulting_error = numerics_solver_options->dparam[1];
 
-	case PSOR:
-		linearComplementarity_psor_setDefaultSolverOptions(&numerics_solver_options);
-		numerics_solver_options.iparam[0] = maxiternum;
-		numerics_solver_options.dparam[0] = tolerance;
-		lcp_psor(&OSNSProblem, Pkp1, wlem, &solparam.info, &numerics_solver_options);
-		solparam.processed_iterations = numerics_solver_options.iparam[1];
-		solparam.resulting_error = numerics_solver_options.dparam[1];
-		break;
-
-	case NSQP:
-		linearComplementarity_nsqp_setDefaultSolverOptions(&numerics_solver_options);
-		numerics_solver_options.dparam[0] = tolerance;
-		lcp_nsqp(&OSNSProblem, Pkp1, wlem, &solparam.info, &numerics_solver_options);
-		break;
-
-	case LATIN:
-		linearComplementarity_latin_setDefaultSolverOptions(&numerics_solver_options);
-		numerics_solver_options.iparam[0] = maxiternum;
-		numerics_solver_options.dparam[0] = tolerance;
-		lcp_latin(&OSNSProblem, Pkp1, wlem, &solparam.info, &numerics_solver_options);
-		break;
-
-	case LATIN_W:
-		linearComplementarity_latin_w_setDefaultSolverOptions(&numerics_solver_options);
-		numerics_solver_options.iparam[0] = maxiternum;
-		numerics_solver_options.dparam[0] = tolerance;
-		lcp_latin_w(&OSNSProblem, Pkp1, wlem, &solparam.info, &numerics_solver_options);
-		break;
-
-	case NEWTON_MIN:
-		linearComplementarity_newton_min_setDefaultSolverOptions(&numerics_solver_options);
-		numerics_solver_options.iparam[0] = maxiternum;
-		numerics_solver_options.dparam[0] = tolerance;
-		lcp_newton_min(&OSNSProblem, Pkp1, wlem, &solparam.info, &numerics_solver_options);
-		solparam.processed_iterations = numerics_solver_options.iparam[1];
-		solparam.resulting_error = numerics_solver_options.dparam[1];
-		break;
-
-	case NEWTON_FB:
-		linearComplementarity_newton_FB_setDefaultSolverOptions(&numerics_solver_options);
-		numerics_solver_options.iparam[0] = maxiternum;
-		numerics_solver_options.dparam[0] = tolerance;
-		lcp_newton_FB(&OSNSProblem, Pkp1, wlem, &solparam.info, &numerics_solver_options);
-		solparam.processed_iterations = numerics_solver_options.iparam[1];
-		solparam.resulting_error = numerics_solver_options.dparam[1];
-		break;
-	}
-
-#if 0
-	// analyzing the LCP solver final status
-	switch (solparam.info) {
-	case 0:	// convergence
-		break;
-
-	case 1: // iter=itermax
-		std::cout << std::endl
-			<< "loadable element nonsmooth node: max iterations reached in LCP solver "
-			<< std::endl;
-		std::cout << "processed_iterations "<< solparam.processed_iterations
-			<< " resulting_error " << solparam.resulting_error <<std::endl;
-		break;
-
-	default: // other problem
-		std::cout << std::endl
-			<<"loadable element nonsmooth node: problem in solution of LCP"
-			<< std::endl;
-		std::cout << "processed_iterations "<< solparam.processed_iterations
-			<< " resulting_error " << solparam.resulting_error <<std::endl;
-		break;
-	}
-#endif
-
-	deleteSolverOptions(&numerics_solver_options);
+        solver_options_delete(numerics_solver_options);
+        free(numerics_solver_options);
 }
-

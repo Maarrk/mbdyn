@@ -50,6 +50,10 @@ gtest-build-job:       # This job runs in the build stage, which runs first.
           exit 0
         fi
       - |
+        if test "${MBD_CLEAN_ALL}" = "yes"; then
+          rm -rf "${GTEST_BUILD_DIR}"
+        fi
+      - |
         if ! test -d ${GTEST_BUILD_DIR}; then
           git clone -b main https://github.com/google/googletest.git ${GTEST_BUILD_DIR}
         fi
