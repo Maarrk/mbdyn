@@ -51,11 +51,11 @@ mbdyn_testsuite_prefix_output=""
 mbdyn_keep_output="unexpected"
 ## FIXME: fourbar_int will fail with aztecoo and amesos
 ## mbdyn_linear_solvers="aztecoo amesos naive umfpack klu pardiso pardiso_64 y12 spqr qr lapack"
-mbdyn_linear_solvers="naive umfpack klu pardiso pardiso_64 y12 spqr qr lapack"
+mbdyn_linear_solvers="naive umfpack klu pardiso pardiso_64 y12 spqr qr lapack siconossparse siconosdense"
 mbdyn_matrix_handlers="map cc dir grad"
 mbdyn_matrix_scale_methods="rowmaxcolumnmax iterative lapack rowmax columnmax rowsum columnsum"
 mbdyn_matrix_scale_when="never always once"
-mbdyn_nonlinear_solvers="newtonraphson linesearch linesearch-modified nox nox-newton-krylov nox-direct nox-broyden-linesearch nox-broyden-trust-region nox-broyden-inexact-trust-region mcpnewtonminfb mcpnewtonfb bfgs"
+mbdyn_nonlinear_solvers="newtonraphson linesearch linesearch-modified nox nox-newton-krylov nox-direct nox-broyden-linesearch nox-broyden-trust-region nox-broyden-inexact-trust-region mcpnewtonminfb mcpnewtonfb bfgs siconosmcpnewtonminfb siconosmcpnewtonfb"
 mbdyn_autodiff_options="autodiff noautodiff"
 mbdyn_method="impliciteuler cranknicolson ms2,0.6 ms3,0.6 ms4,0.6 ss2,0.6 ss3,0.6 ss4,0.6 hope,0.6 Bathe,0.6 msstc3,0.6 msstc4,0.6 msstc5,0.6 mssth3,0.6 mssth4,0.6 mssth5,0.6 DIRK33 DIRK43 DIRK54 hybrid,ms,0.6"
 mbdyn_output="netcdf-text"
@@ -130,7 +130,7 @@ while ! test -z "$1"; do
         --help)
             printf "%s\n  --prefix-output <output_dir>\n" "${program_name}"
             printf "  --prefix-input <input_dir>\n"
-            printf "  --linear-solvers \"{naive|umfpack|klu|pardiso|pardiso_64|y12|spqr|qr|lapack} {...}\"\n"
+            printf "  --linear-solvers \"{naive|umfpack|klu|pardiso|pardiso_64|y12|spqr|qr|lapack|siconosdense|siconossparse} {...}\"\n"
             printf "  --matrix-handlers \"{map|cc|dir|grad} {...}\"\n"
             printf "  --scale-methods \"{rowmaxcolumnmax|iterative|lapack|rowmax|columnmax|rowsum|columnsum} {...}\"\n"
             printf "  --scale-when \"{never|always|once} {...}\"\n"
@@ -185,7 +185,7 @@ failed_tests=""
 for mbd_linear_solver in ${mbdyn_linear_solvers}; do
     for mbd_mh_type in ${mbdyn_matrix_handlers}; do
         case "${mbd_linear_solver}" in
-            naive|lapack|qr|aztecoo|amesos)
+            naive|lapack|qr|aztecoo|amesos|siconosdense|siconossparse)
                 case "${mbd_mh_type}" in
                     map)
                     ;;
@@ -227,7 +227,7 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
                         ;;
                 esac
                 case "${mbd_linear_solver}" in
-                    aztecoo|amesos)
+                    aztecoo|amesos|siconosdense|siconossparse)
                         case "${mbd_mat_scale_when}" in
                             never)
                             ;;
@@ -236,7 +236,7 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
                                 ;;
                         esac
                         ;;
-                    pardiso|pardiso_64|qr|spqr|y12)
+                    pardiso|pardiso_64|qr|spqr|y12|siconosdense|siconossparse)
                         case "${mbd_mat_scale_when}" in
                             never)
                             ;;
@@ -264,9 +264,28 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
                                         ;;
                                 esac
                                 ;;
+                            mcpnewtonfb)
+                                case "${mbd_linear_solver}" in
+                                    siconosdense|siconossparse)
+                                        ## FIXME: Scaling the Jacobian is not yet implemented for those solvers.
+                                        continue
+                                        ;;
+                                    *)
+                                        ;;
+                                esac
+                                ;;
+                            siconosmcpnewton*)
+                                case "${mbd_linear_solver}" in
+                                    siconosdense)
+                                        ;;
+                                    *)
+                                        continue
+                                        ;;
+                                esac
+                                ;;
                             nox|nox-direct|nox-broyden*)
                                 case "${mbd_linear_solver}" in
-                                    naive|qr|lapack)
+                                    naive|qr|lapack|siconosdense)
                                         continue
                                         ;;
                                 esac

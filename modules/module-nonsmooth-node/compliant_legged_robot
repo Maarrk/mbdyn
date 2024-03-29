@@ -42,20 +42,22 @@ end: data;
 begin: initial value;
 	initial time: 0;
 	final time: 1.;
-	time step: 1e-6;
+	time step: 2e-5;
 
-	method: ms, .6;
+	method: ms, 0.6;
 
-	tolerance: 1e-6;
+	tolerance: 1e-4, 1e-4;
 	max iterations: 100;
 
-	derivatives tolerance: 1e+9;
+	derivatives tolerance: 1e-3;
+        derivatives coefficient: auto;
 	derivatives max iterations: 100;
 
 	# linear solver: naive, colamd;
 	linear solver: umfpack, cc;
-
-	# output: iterations;
+        nonlinear solver: linesearch, default solver options, heavy nonlinear, lambda min, 0., tolerance x, 1e-10;
+        #nonlinear solver: nox;
+	output: iterations;
 end: initial value;
 
 set: const integer NBEAMS = 5;
@@ -345,8 +347,9 @@ begin: elements;
 			position, reference, 0, null,
 			rotation orientation, eye,
 			restitution, 0.8,
-			friction coefficient, 0.48,
+			# friction coefficient, 0.48, ## FIXME: If we enable friction, then we get a singular matrix!
 		LCP solver, lexico lemke,
 		# LCP solver, rpgs,
+                # LCP solver, newton_FB,
 		output, yes;
 end: elements;

@@ -69,7 +69,7 @@ public:
 
      virtual void MatrReset() override final;
      virtual void MatrInitialize() override final;
-     virtual void Solve() override final;
+     virtual void Solve() override;
 
      SiconosIndexMap* pGetIndexMap() { return &oRowMap; }
 protected:
@@ -86,8 +86,11 @@ public:
 
 class SiconosSparseSolutionManager: public SiconosSolutionManager {
 public:
-     SiconosSparseSolutionManager(integer iDim, integer iNumNz);
+     SiconosSparseSolutionManager(integer iDim, integer iNumNz, unsigned uFlags);
      virtual ~SiconosSparseSolutionManager();
+     virtual void Solve() override final;
+private:
+     NSM_linear_solver solverId;
 };
 
 #endif

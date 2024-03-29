@@ -48,6 +48,10 @@ netcdf-c-build-job:       # This job runs in the build stage, which runs first.
           exit 0
         fi
       - |
+        if test "${MBD_CLEAN_ALL}" = "yes"; then
+          rm -rf "${NC_C_BUILD_DIR}"
+        fi
+      - |
         if ! test -d ${NC_C_BUILD_DIR}; then
           git clone -b main https://github.com/Unidata/netcdf-c.git ${NC_C_BUILD_DIR}
         fi
@@ -89,6 +93,10 @@ netcdf-cxx4-build-job:       # This job runs in the build stage, which runs firs
         if "${NC_CXX4_INSTALL_PREFIX}/bin/ncxx4-config" --version >& /dev/null && test "${MBD_CLEAN_ALL}" = "no"; then
           echo "netcdf-cxx4 was already installed"
           exit 0
+        fi
+      - |
+        if test "${MBD_CLEAN_ALL}" = "yes"; then
+          rm -rf "${NC_CXX4_BUILD_DIR}"
         fi
       - |
         if ! test -d ${NC_CXX4_BUILD_DIR}; then

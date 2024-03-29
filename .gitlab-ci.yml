@@ -74,6 +74,9 @@ variables:
   ## FIMXE: So, $MKL_INSTALL_PREFIX is relative to $HOME instead of CI_PROJECT_DIR
   MKL_INSTALL_PREFIX: $TESTSUITE_PREFIX_CACHE/mkl
 
+  ## Local installation directory for Siconos
+  SICONOS_INSTALL_PREFIX: $TESTSUITE_PREFIX_CACHE/siconos
+
   ## Local installation directory for NetCDF
   NC_INSTALL_PREFIX: $TESTSUITE_PREFIX_CACHE/netcdf
 
@@ -95,6 +98,8 @@ variables:
   MBD_BUILD_DIR: $TESTSUITE_PREFIX_BUILD/mbdyn
   MBD_BUILD_DIR_GCOV: $TESTSUITE_PREFIX_BUILD/mbdyn-gcov
   MBD_BUILD_DIR_MANUALS: $TESTSUITE_PREFIX_BUILD/mbdyn-manuals
+
+  SICONOS_BUILD_DIR: $TESTSUITE_PREFIX_BUILD/siconos
 
   NC_C_BUILD_DIR: $TESTSUITE_PREFIX_BUILD/netcdf-c
   NC_CXX4_BUILD_DIR: $TESTSUITE_PREFIX_BUILD/netcdf-cxx4
@@ -132,7 +137,7 @@ variables:
       - "yes"
       - "no"
     description: "Clean up the build directory of MBDyn"
-    
+
   MBD_TEST_COVERAGE_ENABLED:
     value: "no"
     options:
@@ -358,6 +363,21 @@ variables:
 
   OCTAVE_EXEC: "octave"
 
+  SICONOS_REPOSITORY:
+    value: "https://github.com/octave-user/siconos.git" ## FIXME: Should be changed to the main repository
+    options:
+      - "https://github.com/siconos/siconos.git" ## Main repository
+      - "https://github.com/octave-user/siconos.git" ## Forked from https://github.com/siconos/siconos.git
+      - "https://gricad-gitlab.univ-grenoble-alpes.fr/nonsmooth/siconos.git" ## Development repository
+    description: "Repository of the Siconos library (http://siconos.gforge.inria.fr) which should be cloned"
+
+  SICONOS_BRANCH:
+    value: "master"
+    options:
+      - "master"
+      - "4.4.0"
+    description: "Branch of the Siconos library (http://siconos.gforge.inria.fr) which should be cloned"
+
   ## Temorary directory for all Octave package tests (e.g. TMPDIR will be redirected)
   ## This makes it easier to clean up temporary files and ther is no need to use /tmp which may reside in memory on some systems.
   ## Paths must be relative to CI_PROJECT_PATH
@@ -410,6 +430,7 @@ include:
     - local: '/testsuite/mbdyn-bootloader-job.yml'
     - local: '/testsuite/mbdyn-checkout-job.yml'
     - local: '/testsuite/mkl-build-job.yml'
+    - local: '/testsuite/siconos-build-job.yml'
     - local: '/testsuite/netcdf-build-job.yml'
     - local: '/testsuite/nlopt-build-job.yml'
     - local: '/testsuite/gtest-build-job.yml'

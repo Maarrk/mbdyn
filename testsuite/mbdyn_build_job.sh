@@ -44,30 +44,36 @@ if ! test -f "${program_dir}/mbdyn_build_job.sh"; then
     program_dir=$(realpath $(which "${program_name}"))
 fi
 
+LIBDIR64="${LIBDIR64:-lib64}" ## FIXME: On some systems it is called "lib64" whereas it is called "lib" on other systems.
 MBD_SOURCE_DIR=${MBD_SOURCE_DIR:-`dirname ${program_dir}`}
 MBD_SKIP_BUILD="${MBD_SKIP_BUILD:-no}"
 MBD_INSTALL_PREFIX="${MBD_INSTALL_PREFIX:-${program_dir}/var/cache/mbdyn}"
 MBD_BUILD_DIR="${MBD_BUILD_DIR:-${program_dir}/var/tmp/build/mbdyn}"
 MBD_TEST_PROGS_OUTPUT_DIR="${MBD_TEST_PROGS_OUTPUT_DIR:-${program_dir}/var/tmp/tests/mbdyn-test-progs}"
 MBD_COMPILER_FLAGS="${MBD_COMPILER_FLAGS:--Ofast -Wall -march=native -mtune=native -Wno-unused-variable}"
+SICONOS_INSTALL_PREFIX="${SICONOS_INSTALL_PREFIX:-${program_dir}/var/cache/siconos}"
 NC_INSTALL_PREFIX="${NC_INSTALL_PREFIX:-${program_dir}/var/cache/netcdf}"
 NC_CXX4_INSTALL_PREFIX="${NC_CXX4_INSTALL_PREFIX:-${program_dir}/var/cache/netcdf-cxx4}"
 GTEST_INSTALL_PREFIX="${GTEST_INSTALL_PREFIX:-${program_dir}/var/cache/gtest}"
 MKL_INSTALL_PREFIX="${MKL_INSTALL_PREFIX:-/usr/lib}"
 MKL_PKG_CONFIG="${MKL_PKG_CONFIG:-mkl-dynamic-lp64-gomp}"
 OCT_PKG_INSTALL_PREFIX="${OCT_PKG_INSTALL_PREFIX:-${program_dir}/var/cache/share/octave}"
-MBD_WITH_MODULE="${MBD_WITH_MODULE:-fabricate damper-gandhi pid hfelem fab-electric template2 cont-contact wheel4 mds indvel mcp_test1 scalarfunc muscles minmaxdrive drive-test loadinc cudatest randdrive imu convtest md autodiff_test rotor-loose-coupling namespace drive controller constlaw fab-sbearings rotor_disc hunt-crossley diff damper-hydraulic cyclocopter fab-motion flightgear hid ns damper-graall}"
+MBD_WITH_MODULE="${MBD_WITH_MODULE:-fabricate damper-gandhi pid hfelem fab-electric template2 cont-contact wheel4 mds indvel mcp_test1 scalarfunc muscles minmaxdrive drive-test loadinc cudatest randdrive imu convtest md autodiff_test rotor-loose-coupling namespace drive controller constlaw fab-sbearings rotor_disc hunt-crossley diff damper-hydraulic cyclocopter fab-motion flightgear hid ns damper-graall nonsmooth-node}"
 MBD_NUM_BUILD_JOBS="${MBD_NUM_BUILD_JOBS:-$(($(lscpu | awk '/^Socket\(s\)/{ print $2 }') * $(lscpu | awk '/^Core\(s\) per socket/{ print $4 }')))}"
-MBD_CONFIGURE_FLAGS="${MBD_CONFIGURE_FLAGS:---enable-python --enable-octave --enable-install_test_progs --enable-netcdf --with-umfpack --with-klu --with-suitesparseqr --with-static-modules --without-mpi --enable-runtime-loading --enable-Werror --with-trilinos --with-gtest}"
+MBD_CONFIGURE_FLAGS="${MBD_CONFIGURE_FLAGS:---enable-python --enable-octave --enable-install_test_progs --enable-netcdf --with-lapack --with-arpack --with-umfpack --with-klu --with-suitesparseqr --with-static-modules --without-mpi --enable-runtime-loading --enable-Werror --with-trilinos --with-siconos --with-gtest}"
 OCTAVE_MKOCTFILE="${MKOCTFILE:-mkoctfile}"
 OCTAVE_CLI="${OCTAVE_CLI:-octave-cli}"
 TRILINOS_INSTALL_PREFIX="${TRILINOS_INSTALL_PREFIX:-/usr}"
 TRILINOS_INC_DIR="${TRILINOS_INC_DIR:-${TRILINOS_INSTALL_PREFIX}/include/trilinos}"
 SUITESPARSE_INC_DIR="${SUITESPARSE_INC_DIR:-/usr/include/suitesparse}"
-NUMPY_INC_DIR="${NUMPY_INC_DIR:-/usr/lib64/python3.11/site-packages/numpy/core/include}"
-PYTHON_INC_DIR="${PYTHON_INC_DIR:-/usr/include/python3.11}"
+NUMPY_INC_DIR="${NUMPY_INC_DIR:-/usr/${LIBDIR64}/python3.11/site-packages/numpy/core/include}"
+PYTHON_INC_DIR="${PYTHON_INC_DIR:-`python3-config --includes`}"
+PYTHON_LDFLAGS="${PYTHON_LDFLAGS:-`python3-config --ldflags`}"
+PYTHON_INC_DIR="${PYTHON_INC_DIR:-`python-config --includes`}" ## Just in case "python3-config" is called "python-config"
+PYTHON_LDFLAGS="${PYTHON_LDFLAGS:-`python-config --ldflags`}"
 #CXXFLAGS="${CXXFLAGS:--Wno-unknown-pragmas}"
 MBD_CLEAN_BUILD="${MBD_CLEAN_BUILD:-no}"
+MBD_FORCE_CONFIGURE="${MBD_FORCE_CONFIGURE:-no}"
 MBD_CLEAN_ALL="${MBD_CLEAN_ALL:-no}"
 
 while ! test -z "$1"; do
@@ -94,6 +100,14 @@ while ! test -z "$1"; do
             ;;
         --mbdyn-clean-build)
             MBD_CLEAN_BUILD="$2"
+            shift
+            ;;
+        --mbdyn-force-configure)
+            MBD_FORCE_CONFIGURE="$2"
+            shift
+            ;;
+        --siconos-install-prefix)
+            SICONOS_INSTALL_PREFIX="$2"
             shift
             ;;
         --netcdf-install-prefix)
@@ -150,6 +164,7 @@ while ! test -z "$1"; do
             echo "${program_name} --mbdyn-install-prefix <MBD_INSTALL_PREFIX>"
             echo "                --mbdyn-build-dir <MBD_BUILD_DIR>"
             echo "                --mbdyn-compiler-flags <MBD_COMPILER_FLAGS>"
+            echo "                --siconos-install-prefix <SICONOS_INSTALL_PREFIX>"
             echo "                --netcdf-install-prefix <NC_INSTALL_PREFIX>"
             echo "                --netcdf-cxx4-install-prefix <NC_CXX4_INSTALL_PREFIX>"
             echo "                --mkl-install-prefix <MKL_INSTALL_PREFIX>"
@@ -172,6 +187,11 @@ fi
 
 if test -z "${MBD_BUILD_DIR}"; then
     echo "${program_name} missing argument --mbdyn-build-dir"
+    exit 1
+fi
+
+if test -z "${SICONOS_INSTALL_PREFIX}"; then
+    echo "${program_name} missing argument --siconos-install-prefix"
     exit 1
 fi
 
@@ -264,7 +284,15 @@ if test -d "${NUMPY_INC_DIR}"; then
 fi
 
 if test -d "${PYTHON_INC_DIR}"; then
-    CPPFLAGS="-I${PYTHON_INC_DIR} ${CPPFLAGS}"
+    CPPFLAGS="${PYTHON_INC_DIR} ${CPPFLAGS}"
+    LDFLAGS="${PYTHON_LDFLAGS} ${LDFLAGS}"
+fi
+
+if test -d "${SICONOS_INSTALL_PREFIX}"; then
+    SICONOS_INC_DIR="${SICONOS_INC_DIR:-${SICONOS_INSTALL_PREFIX}/include/siconos}"
+    SICONOS_LIB_DIR="${SICONOS_LIB_DIR:-${SICONOS_INSTALL_PREFIX}/${LIBDIR64}}"
+    CPPFLAGS="-I${SICONOS_INC_DIR} ${CPPFLAGS}"
+    LDFLAGS="-L${SICONOS_LIB_DIR} -Wl,-rpath=${SICONOS_LIB_DIR} ${LDFLAGS}"
 fi
 
 echo "Detecting NetCDF ..."
@@ -336,7 +364,7 @@ echo CXXFLAGS="${MBD_COMPILER_FLAGS}"
 echo CPPFLAGS="${CPPFLAGS}"
 echo LDFLAGS="${LDFLAGS}"
 printf "configure ...\n"
-if ! test -f Makefile || test "${program_dir}/mbdyn_build_job.sh" -nt Makefile || test "${MBD_SOURCE_DIR}/configure.ac" -nt Makefile; then
+if test "${MBD_FORCE_CONFIGURE}" != "no" || ! test -f Makefile || test "${program_dir}/mbdyn_build_job.sh" -nt Makefile || test "${MBD_SOURCE_DIR}/configure.ac" -nt Makefile; then
     echo "${MBD_BUILD_DIR}/Makefile does not exist or it might be out of date!"
     echo "Run configure step ..."
     if ! "${MBD_SOURCE_DIR}/configure" \

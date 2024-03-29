@@ -30,7 +30,7 @@
 
 /*
  AUTHOR: Reinhard Resch <mbdyn-user@a1.net>
-        Copyright (C) 2022(-2024) all rights reserved.
+        Copyright (C) 2022(-2023) all rights reserved.
 
         The copyright of this code is transferred
         to Pierangelo Masarati and Paolo Mantegazza
@@ -54,7 +54,7 @@ begin: initial value;
     method: implicit euler;
 
     linear solver: siconos dense;
-    nonlinear solver: siconos mcp newton min fb, lambda min, 1e-6;
+    nonlinear solver: siconos mcp newton fb, lambda min, 1e-6;
 
     derivatives tolerance: 1e-5;
     derivatives max iterations: 10;
@@ -65,7 +65,7 @@ begin: initial value;
 end: initial value;
 
 begin: control data;
-    include: "mcp_test1.con";    
+    include: "mcp_test1.con";
 end: control data;
 
 begin: nodes;

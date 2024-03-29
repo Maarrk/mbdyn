@@ -30,7 +30,7 @@
 
 /*
  AUTHOR: Reinhard Resch <mbdyn-user@a1.net>
-        Copyright (C) 2022(-2024) all rights reserved.
+        Copyright (C) 2022(-2023) all rights reserved.
 
         The copyright of this code is transferred
         to Pierangelo Masarati and Paolo Mantegazza
@@ -53,8 +53,8 @@ begin: initial value;
     tolerance: 1e-4, test, norm, 1e-4, test, none;
     method: implicit euler;
 
-    linear solver: siconos dense;
-    nonlinear solver: siconos mcp newton min fb, lambda min, 1e-6;
+    linear solver: umfpack, grad, scale, row max column max, always, max iterations, 3;
+    nonlinear solver: mcp newton min fb, lambda min, 1e-6, tolerance x, 1e-10;
 
     derivatives tolerance: 1e-5;
     derivatives max iterations: 10;
@@ -73,5 +73,5 @@ begin: nodes;
 end: nodes;
 
 begin: elements;
-    include: "mcp_test1.elm";
+    include: "mcp_test1.elm";           
 end: elements;

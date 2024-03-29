@@ -3,6 +3,6 @@
 #MODULE_DEPENDENCIES=
 #
 # modify accordingly
-MODULE_INCLUDE=-I/usr/local/include/Siconos/Numerics
+MODULE_INCLUDE=-I/usr/local/include/siconos/numerics
 #
-MODULE_LINK=-lSiconosNumerics
+MODULE_LINK=-lsiconos_numerics

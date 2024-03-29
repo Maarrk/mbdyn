@@ -38,40 +38,4 @@
         in the GNU Public License version 2.1
 */
 
-include: "mcp_test1.set";
-
-begin: data;
-        problem: initial value;	# the default
-end: data;
-
-begin: initial value;
-    initial time: 0.;
-    final time: 10;
-    time step: 1e-3;
-
-    max iterations: 100;
-    tolerance: 1e-4, test, norm, 1e-4, test, none;
-    method: implicit euler;
-
-    linear solver: siconos dense;
-    nonlinear solver: siconos mcp newton min fb, lambda min, 1e-6;
-
-    derivatives tolerance: 1e-5;
-    derivatives max iterations: 10;
-    derivatives coefficient: 1e-6;
-    threads: assembly, 1;
-    threads: solver, 1;
-    output: iterations;
-end: initial value;
-
-begin: control data;
-    include: "mcp_test1.con";    
-end: control data;
-
-begin: nodes;
-    include: "mcp_test1.nod";    
-end: nodes;
-
-begin: elements;
-    include: "mcp_test1.elm";
-end: elements;
+abstract: 1;
