@@ -342,7 +342,7 @@ Also accelerations $\ddot{\hat{\T{u}}}$ and virtual displacements $\delta\hat{\T
 In MBDyn, body loads due to gravity $\T{g}$ and rigid body kinematics are considered. See also section~\ref{sec:nodes:structural nodes:relative frame dynamics}.
 As a consequence, solid elements may be used also for typical rotor-dynamic analysis.
 \begin{eqnarray}
-\T{b} & = & \T{g} - \ddot{\overline{\T{x}}}_0 - \overline{\T{\omega}}_0 \times \left(\overline{\T{\omega}}_0 \times \T{x} \right) - \dot{\overline{\T{\omega}}}_0 \times \T{x} - 2 \, \overline{\T{\omega}}_0 \dot{\T{u}}
+\T{b} & = & \T{g} - \ddot{\overline{\T{x}}}_0 - \overline{\T{\omega}}_0 \times \left(\overline{\T{\omega}}_0 \times \T{x} \right) - \dot{\overline{\T{\omega}}}_0 \times \T{x} \underbrace{- 2 \, \overline{\T{\omega}}_0 \times \dot{\T{u}}}_{a_c}
 \end{eqnarray}
 
 \begin{description}
@@ -350,6 +350,7 @@ As a consequence, solid elements may be used also for typical rotor-dynamic anal
 \item[$\ddot{\overline{\T{x}}}_0$] Acceleration of the global reference frame.
 \item[$\overline{\T{\omega}}_0$]  Angular velocity of the global reference frame.
 \item[$\dot{\overline{\T{\omega}}}_0$]  Angular acceleration of the global reference frame.
+\item[$\boldsymbol{a}_c$] Acceleration of Coriolis (contributed by the ``AutomaticStructDispElem'' element)
 \end{description}
 
 \paragraph{Mass matrix and body load vector}
