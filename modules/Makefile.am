@@ -494,4 +494,9 @@ module-flightgear/module-flightgear.h \
 module-flightgear/sendToFlightgear.cc \
 module-flightgear/recFromFlightgear.cc
 
+EXTRA_DIST += \
+module-chrono-interface/Makefile.inc \
+module-chrono-interface/module-chrono-interface.cc \
+module-chrono-interface/module-chrono-interface.h 
+
 include $(top_srcdir)/build/bot.mk
