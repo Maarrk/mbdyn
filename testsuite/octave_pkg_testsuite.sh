@@ -50,7 +50,7 @@ OCT_PKG_TESTS_VERBOSE="${OCT_PKG_TESTS_VERBOSE:-no}"
 OCT_PKG_PRINT_RES="${OCT_PKG_PRINT_RES:-no}"
 OCT_PKG_TEST_MODE="${OCT_PKG_TEST_MODE:-pkg}"
 OCT_PKG_INSTALL_PREFIX="${OCT_PKG_INSTALL_PREFIX:-}"
-OCTAVE_CMD_ARGS="-qfH"
+OCTAVE_CMD_ARGS="${OCTAVE_CMD_ARGS:--qfH}"
 OCT_PKG_FUNCTION_FILTER='/.+\.(tst|m)\>/'
 ## Do not print any output from Octave which does not pass through this filter, even if "--verbose yes" is used!
 ## This is strictly required because the amount of output is limited to 4194304 bytes by GitLab
@@ -272,6 +272,7 @@ function octave_pkg_testsuite_run()
 
     pkg_test_output_file="${TMPDIR}/fntests.out"
     pkg_test_log_file="${TMPDIR}/fntests.log" ## created by __run_test_suite__
+    junit_xml_report_file="${TMPDIR}/junit_xml_report_octave_$$_%03d.xml"
 
     ## Make sure that we do not read any old stuff ...
     rm -f "${pkg_test_output_file}"
@@ -290,6 +291,8 @@ function octave_pkg_testsuite_run()
         echo "Invalid directory ${TMPDIR}"
         return 1
     fi
+
+    export MBOCT_MBDYN_PKG_MBDYN_SOLVER_COMMAND="${MBOCT_MBDYN_PKG_MBDYN_SOLVER_COMMAND:-mbdyn -CG --gtest_output=xml:${junit_xml_report_file}}"
 
     case "${OCT_PKG_TESTS_VERBOSE}" in
         yes)
@@ -375,6 +378,8 @@ function octave_pkg_testsuite_run()
     ## "oct-" is the default prefix of Octave's tempname() function
     export -n TMPDIR
     find "${TMPDIR}" '(' -type f -and '(' -name 'oct-*' -or -name 'fntests.*' ')' ')' -delete
+    ## FIXME: JUnit xml files should not be deleted, but there are too many files to be displayed by GitLab-CI
+    find "${TMPDIR}" -name "junit_xml_report_octave_$$_*.xml" -print0 | xargs -0 awk -F ' ' 'BEGINFILE{failures=1;} $3~/\<failures="0"/ {failures=0;} ENDFILE{ if(!failures) printf("%s\0", FILENAME);}' | xargs -0 rm -f
 }
 
 for pkgname_and_flags in ${OCT_PKG_LIST}; do

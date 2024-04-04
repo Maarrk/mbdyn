@@ -71,7 +71,8 @@ PYTHON_INC_DIR="${PYTHON_INC_DIR:-`python3-config --includes`}"
 PYTHON_LDFLAGS="${PYTHON_LDFLAGS:-`python3-config --ldflags`}"
 PYTHON_INC_DIR="${PYTHON_INC_DIR:-`python-config --includes`}" ## Just in case "python3-config" is called "python-config"
 PYTHON_LDFLAGS="${PYTHON_LDFLAGS:-`python-config --ldflags`}"
-#CXXFLAGS="${CXXFLAGS:--Wno-unknown-pragmas}"
+## CXXFLAGS="${CXXFLAGS:--Wno-alloc-size-larger-than}" ## FIXME: Needed with link time optimization enabled
+## CFLAGS="${CFLAGS:--Wno-error=lto-type-mismatch}" ## FIXME: Needed for utils/femgen_f.f and utils/test_strext_socket_f.f
 MBD_CLEAN_BUILD="${MBD_CLEAN_BUILD:-no}"
 MBD_FORCE_CONFIGURE="${MBD_FORCE_CONFIGURE:-no}"
 MBD_CLEAN_ALL="${MBD_CLEAN_ALL:-no}"
@@ -360,7 +361,7 @@ if ! test -z "${MBD_WITH_MODULE}"; then
     MBD_COMPILER_FLAGS="${MBD_COMPILER_FLAGS} -rdynamic" ## Needed for --enable-runtime-loading
 fi
 
-echo CXXFLAGS="${MBD_COMPILER_FLAGS}"
+echo CXXFLAGS="${MBD_COMPILER_FLAGS} ${CXXFLAGS}"
 echo CPPFLAGS="${CPPFLAGS}"
 echo LDFLAGS="${LDFLAGS}"
 printf "configure ...\n"

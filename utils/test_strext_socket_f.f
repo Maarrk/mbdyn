@@ -32,10 +32,9 @@ C to be configuration-independent.
 C
 C #include "mbc.h"
 
-      FUNCTION MAINF()
+      SUBROUTINE MAINF()
 
       IMPLICIT NONE
-      INTEGER*4 MAINF
       INTEGER*4 REFNODE, NODES, ROT, ITERS, VERB
       INTEGER*4 STEPS, KEEPGOING, ITER, RC, I, J, N, CONVERGED
       REAL*4 RF(3), RM(3), NF(3, 100), NM(3, 100)
@@ -45,7 +44,6 @@ C #include "mbc.h"
 
       EQUIVALENCE(RR(1, 1), RTHETA(1))
       EQUIVALENCE(NR(1, 1, 1), NTHETA(1, 1))
-      MAINF = 1
 
       CALL TDATA(REFNODE, NODES, ROT, ITERS, VERB, RC)
       IF (NODES .GT. 100) THEN
@@ -107,5 +105,4 @@ C #include "mbc.h"
           ENDIF
         ENDDO
       ENDDO
-      MAINF = 0
-      END FUNCTION
+      END SUBROUTINE
