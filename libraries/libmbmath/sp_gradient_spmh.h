@@ -310,6 +310,7 @@ bool SpGradientSparseMatrixHandler::const_iterator::operator!=(const const_itera
 class SpGradientSparseMatrixWrapper: public MatrixHandler
 {
 public:
+     using MatrixHandler::operator=;
      explicit SpGradientSparseMatrixWrapper(SpGradientSparseMatrixHandler* pMH = nullptr);
      ~SpGradientSparseMatrixWrapper();
 
