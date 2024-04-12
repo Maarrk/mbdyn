@@ -189,6 +189,9 @@ The number of iterations that are allowed during the initial assembly.
 The alternate statement \kw{max initial iterations} is tolerated
 for backwards compatibility.
 
+Note: by default, \nt{max\_iterations} is zero, i.e., the analysis fails if at least one iteration is required.
+Users must explicitly set this parameter to a value greater than zero if they want the solver to try and fix an inconsistent model.
+
 
 
 \section{General-Purpose Cards}

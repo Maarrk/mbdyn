@@ -81,7 +81,7 @@ const bool bDefaultSkipInitialJointAssembly(false);
 const doublereal dDefaultInitialStiffness = 1.;
 const bool bDefaultOmegaRotates(false);
 const doublereal dDefaultInitialAssemblyTol = 1.e-6;
-const integer iDefaultMaxInitialIterations = 1;
+const integer iDefaultMaxInitialIterations = 0; // fail if at least one iteration is required
 
 /*
  * costruttore: inizializza l'oggetto, legge i dati e crea le strutture di
