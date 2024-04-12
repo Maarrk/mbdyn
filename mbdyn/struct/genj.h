@@ -139,9 +139,16 @@ class DistanceJoint : virtual public Elem, public Joint, public DriveOwner {
 	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
 
    /* describes the dimension of components of equation */
+   virtual std::ostream& DescribeDof(std::ostream& out,
+		   const char *prefix = "",
+		   bool bInitial = false) const;
+   virtual void DescribeDof(std::vector<std::string>& desc,
+		   bool bInitial = false, int i = -1) const;
    virtual std::ostream& DescribeEq(std::ostream& out,
-		  const char *prefix = "",
-		  bool bInitial = false) const;
+		   const char *prefix = "",
+		   bool bInitial = false) const;
+   virtual void DescribeEq(std::vector<std::string>& desc,
+		   bool bInitial = false, int i = -1) const;
 };
 
 /* DistanceJoint - end */
@@ -253,9 +260,16 @@ virtual public Elem, public Joint, public DriveOwner {
 	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
 
    /* describes the dimension of components of equation */
+   virtual std::ostream& DescribeDof(std::ostream& out,
+		   const char *prefix = "",
+		   bool bInitial = false) const;
+   virtual void DescribeDof(std::vector<std::string>& desc,
+		   bool bInitial = false, int i = -1) const;
    virtual std::ostream& DescribeEq(std::ostream& out,
-		  const char *prefix = "",
-		  bool bInitial = false) const;
+		   const char *prefix = "",
+		   bool bInitial = false) const;
+   virtual void DescribeEq(std::vector<std::string>& desc,
+		   bool bInitial = false, int i = -1) const;
 };
 
 /* DistanceJointWithOffset - end */

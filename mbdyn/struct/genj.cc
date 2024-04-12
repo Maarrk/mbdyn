@@ -659,20 +659,187 @@ DistanceJoint::GetEquationDimension(integer index) const {
 }
 
 std::ostream&
-DistanceJoint::DescribeEq(std::ostream& out, const char *prefix, bool bInitial) const
+DistanceJoint::DescribeDof(std::ostream& out, const char *prefix, bool bInitial) const
 {
-
 	integer iIndex = iGetFirstIndex();
 
 	out
-		<< prefix << iIndex + 1 << "->" << iIndex + 3 << ": " <<
-			"distance error components" << std::endl
+		<< prefix << iIndex + 1 << "->" << iIndex + 3 << ": "
+			"components of distance unit vector [vx,vy,vz]" << std::endl
+		<< prefix << iIndex + 4 << ": "
+			"reaction force f" << std::endl;
 
-		<< prefix << iIndex + 4 << ": " <<
-			"direction normalization" << std::endl;
+	if (bInitial) {
+		iIndex += 4;
+		out
+			<< prefix << iIndex + 1 << "->" << iIndex + 3 << ": "
+				"components of distance unit vector derivative [vPx,vPy,vPz]" << std::endl
+			<< prefix << iIndex + 4 << ": "
+				"reaction force derivative fP" << std::endl;
+	}
 
 	return out;
 }
+
+static const char xyz[] = "xyz";
+
+void
+DistanceJoint::DescribeDof(std::vector<std::string>& desc, bool bInitial, int i) const
+{
+	int iend = 1;
+	if (i == -1) {
+		if (bInitial) {
+			iend = 8;
+
+		} else {
+			iend = 4;
+		}
+	}
+	desc.resize(iend);
+
+	std::ostringstream os;
+	os << "DistanceJoint(" << GetLabel() << ")";
+
+	if (i == -1) {
+		std::string name = os.str();
+		for (i = 0; i < 3; i++) {
+			os.str(name);
+			os.seekp(0, std::ios_base::end);
+			os << ": distance unit vector component " << xyz[i];
+			desc[i] = os.str();
+		}
+		
+		os.str(name);
+		os.seekp(0, std::ios_base::end);
+		os << ": force f";
+		desc[i] = os.str();
+
+		if (bInitial) {
+			for (i = 0; i < 3; i++) {
+				os.str(name);
+				os.seekp(0, std::ios_base::end);
+				os << ": distance unit vector derivative component " << xyz[i];
+				desc[4 + i] = os.str();
+			}
+		
+			os.str(name);
+			os.seekp(0, std::ios_base::end);
+			os << ": force derivative fP";
+			desc[4 + i] = os.str();
+		}
+
+	} else {
+		if (bInitial) {
+			if ((i%4) == 3) {
+				os << ": force derivative fP";
+
+			} else {
+				os << ": distance unit vector derivative component "<< xyz[i%4];
+			}
+
+		} else {
+			if ((i%4) == 3) {
+				os << ": force f";
+
+			} else {
+				os << ": distance unit vector component "<< xyz[i%4];
+			}
+		}
+
+		desc[0] = os.str();
+	}
+}
+
+std::ostream&
+DistanceJoint::DescribeEq(std::ostream& out, const char *prefix, bool bInitial) const
+{
+	integer iIndex = iGetFirstIndex();
+
+	out
+		<< prefix << iIndex + 1 << "->" << iIndex + 3 << ": "
+			"normalization of distance vector [vx=Deltapx/d,vy=Deltapy/d,vz=Deltapz/d]" << std::endl
+		<< prefix << iIndex + 4 << ": "
+			"distance constraint" << std::endl;
+
+	if (bInitial) {
+		iIndex += 4;
+		out
+			<< prefix << iIndex + 1 << "->" << iIndex + 3 << ": "
+				"normalization of distance vector derivative [vPx=DeltapPx/d,vPy=DeltapPy/d,vPz=DeltapaPz/d]" << std::endl
+			<< prefix << iIndex + 4 << ": "
+				"distance derivative constraint" << std::endl;
+	}
+
+	return out;
+}
+
+void
+DistanceJoint::DescribeEq(std::vector<std::string>& desc, bool bInitial, int i) const
+{
+	int iend = 1;
+	if (i == -1) {
+		if (bInitial) {
+			iend = 8;
+
+		} else {
+			iend = 4;
+		}
+	}
+	desc.resize(iend);
+
+	std::ostringstream os;
+	os << "DistanceJoint(" << GetLabel() << ")";
+
+	if (i == -1) {
+		std::string name = os.str();
+		for (i = 0; i < 3; i++) {
+			os.str(name);
+			os.seekp(0, std::ios_base::end);
+			os << ": normalization of distance unit vector component " << xyz[i];
+			desc[i] = os.str();
+		}
+		
+		os.str(name);
+		os.seekp(0, std::ios_base::end);
+		os << ": distance constraint";
+		desc[i] = os.str();
+
+		if (bInitial) {
+			for (i = 0; i < 3; i++) {
+				os.str(name);
+				os.seekp(0, std::ios_base::end);
+				os << ": normalization of distance unit vector derivative component " << xyz[i];
+				desc[4 + i] = os.str();
+			}
+		
+			os.str(name);
+			os.seekp(0, std::ios_base::end);
+			os << ": distance constraint derivative";
+			desc[4 + i] = os.str();
+		}
+
+	} else {
+		if (bInitial) {
+			if ((i%4) == 3) {
+				os << ": distance constraint derivative";
+
+			} else {
+				os << ": normalization of distance unit vector derivative component "<< xyz[i%4];
+			}
+
+		} else {
+			if ((i%4) == 3) {
+				os << ": distance constraint";
+
+			} else {
+				os << ": normalization of distance unit vector component "<< xyz[i%4];
+			}
+		}
+
+		desc[0] = os.str();
+	}
+}
+
 /* DistanceJoint - end */
 
 
@@ -1329,19 +1496,183 @@ DistanceJointWithOffset::GetEquationDimension(integer index) const {
 }
 
 std::ostream&
-DistanceJointWithOffset::DescribeEq(std::ostream& out, const char *prefix, bool bInitial) const
+DistanceJointWithOffset::DescribeDof(std::ostream& out, const char *prefix, bool bInitial) const
 {
-
 	integer iIndex = iGetFirstIndex();
 
 	out
-		<< prefix << iIndex + 1 << "->" << iIndex + 3 << ": " <<
-			"distance error components" << std::endl
+		<< prefix << iIndex + 1 << "->" << iIndex + 3 << ": "
+			"components of distance unit vector [vx,vy,vz]" << std::endl
+		<< prefix << iIndex + 4 << ": "
+			"reaction force f" << std::endl;
 
-		<< prefix << iIndex + 4 << ": " <<
-			"direction normalization" << std::endl;
+	if (bInitial) {
+		iIndex += 4;
+		out
+			<< prefix << iIndex + 1 << "->" << iIndex + 3 << ": "
+				"components of distance unit vector derivative [vPx,vPy,vPz]" << std::endl
+			<< prefix << iIndex + 4 << ": "
+				"reaction force derivative fP" << std::endl;
+	}
 
 	return out;
+}
+
+void
+DistanceJointWithOffset::DescribeDof(std::vector<std::string>& desc, bool bInitial, int i) const
+{
+	int iend = 1;
+	if (i == -1) {
+		if (bInitial) {
+			iend = 8;
+
+		} else {
+			iend = 4;
+		}
+	}
+	desc.resize(iend);
+
+	std::ostringstream os;
+	os << "DistanceJoint(" << GetLabel() << ")";
+
+	if (i == -1) {
+		std::string name = os.str();
+		for (i = 0; i < 3; i++) {
+			os.str(name);
+			os.seekp(0, std::ios_base::end);
+			os << ": distance unit vector component " << xyz[i];
+			desc[i] = os.str();
+		}
+		
+		os.str(name);
+		os.seekp(0, std::ios_base::end);
+		os << ": force f";
+		desc[i] = os.str();
+
+		if (bInitial) {
+			for (i = 0; i < 3; i++) {
+				os.str(name);
+				os.seekp(0, std::ios_base::end);
+				os << ": distance unit vector derivative component " << xyz[i];
+				desc[4 + i] = os.str();
+			}
+		
+			os.str(name);
+			os.seekp(0, std::ios_base::end);
+			os << ": force derivative fP";
+			desc[4 + i] = os.str();
+		}
+
+	} else {
+		if (bInitial) {
+			if ((i%4) == 3) {
+				os << ": force derivative fP";
+
+			} else {
+				os << ": distance unit vector derivative component "<< xyz[i%4];
+			}
+
+		} else {
+			if ((i%4) == 3) {
+				os << ": force f";
+
+			} else {
+				os << ": distance unit vector component "<< xyz[i%4];
+			}
+		}
+
+		desc[0] = os.str();
+	}
+}
+
+std::ostream&
+DistanceJointWithOffset::DescribeEq(std::ostream& out, const char *prefix, bool bInitial) const
+{
+	integer iIndex = iGetFirstIndex();
+
+	out
+		<< prefix << iIndex + 1 << "->" << iIndex + 3 << ": "
+			"normalization of distance vector [vx=Deltapx/d,vy=Deltapy/d,vz=Deltapz/d]" << std::endl
+		<< prefix << iIndex + 4 << ": "
+			"distance constraint" << std::endl;
+
+	if (bInitial) {
+		iIndex += 4;
+		out
+			<< prefix << iIndex + 1 << "->" << iIndex + 3 << ": "
+				"normalization of distance vector derivative [vPx=DeltapPx/d,vPy=DeltapPy/d,vPz=DeltapaPz/d]" << std::endl
+			<< prefix << iIndex + 4 << ": "
+				"distance derivative constraint" << std::endl;
+	}
+
+	return out;
+}
+
+void
+DistanceJointWithOffset::DescribeEq(std::vector<std::string>& desc, bool bInitial, int i) const
+{
+	int iend = 1;
+	if (i == -1) {
+		if (bInitial) {
+			iend = 8;
+
+		} else {
+			iend = 4;
+		}
+	}
+	desc.resize(iend);
+
+	std::ostringstream os;
+	os << "DistanceJoint(" << GetLabel() << ")";
+
+	if (i == -1) {
+		std::string name = os.str();
+		for (i = 0; i < 3; i++) {
+			os.str(name);
+			os.seekp(0, std::ios_base::end);
+			os << ": normalization of distance unit vector component " << xyz[i];
+			desc[i] = os.str();
+		}
+		
+		os.str(name);
+		os.seekp(0, std::ios_base::end);
+		os << ": distance constraint";
+		desc[i] = os.str();
+
+		if (bInitial) {
+			for (i = 0; i < 3; i++) {
+				os.str(name);
+				os.seekp(0, std::ios_base::end);
+				os << ": normalization of distance unit vector derivative component " << xyz[i];
+				desc[4 + i] = os.str();
+			}
+		
+			os.str(name);
+			os.seekp(0, std::ios_base::end);
+			os << ": distance constraint derivative";
+			desc[4 + i] = os.str();
+		}
+
+	} else {
+		if (bInitial) {
+			if ((i%4) == 3) {
+				os << ": distance constraint derivative";
+
+			} else {
+				os << ": normalization of distance unit vector derivative component "<< xyz[i%4];
+			}
+
+		} else {
+			if ((i%4) == 3) {
+				os << ": distance constraint";
+
+			} else {
+				os << ": normalization of distance unit vector component "<< xyz[i%4];
+			}
+		}
+
+		desc[0] = os.str();
+	}
 }
 
 /* DistanceJointWithOffset - end */
@@ -1393,7 +1724,6 @@ ClampJoint::DescribeDof(std::ostream& out, const char *prefix, bool bInitial) co
 	return out;
 }
 
-static const char xyz[] = "xyz";
 static const char *dof[] = {
 	"reaction force f",
 	"reaction couple m",
