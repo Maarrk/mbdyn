@@ -82,13 +82,15 @@ SocketStreamElem::SocketStreamElem(unsigned int uL,
 	StreamContent *pSC,
 	int flags, bool bSendFirst, bool bAbortIfBroken,
 	StreamOutEcho *pSOE,
-	bool bMsgDontWait)
+	bool bMsgDontWait,
+	bool bSendAfterPredict)
 : Elem(uL, flag(0)),
 StreamOutElem(uL, name, oe),
 pUS(pUS), pSC(pSC), send_flags(flags),
 bSendFirst(bSendFirst), bAbortIfBroken(bAbortIfBroken),
 bMsgDontWait(bMsgDontWait),
-pSOE(pSOE)
+pSOE(pSOE),
+bSendAfterPredict(bSendAfterPredict)
 {
 	if (pSOE) {
 		pSOE->Init("SocketStreamElem", uLabel, pSC->GetNumChannels());
@@ -134,8 +136,7 @@ SocketStreamElem::SetValue(DataManager *pDM,
 }
 
 void
-SocketStreamElem::AfterConvergence(const VectorHandler& X, 
-		const VectorHandler& XP)
+SocketStreamElem::Send_(void)
 {
 	/* by now, an abandoned element does not write any more;
 	 * should we retry or what? */
@@ -188,10 +189,29 @@ SocketStreamElem::AfterConvergence(const VectorHandler& X,
 }
 
 void
+SocketStreamElem::AfterPredict(VectorHandler& X, VectorHandler& XP)
+{
+	if (bSendAfterPredict) {
+		Send_();
+	}
+}
+
+void
+SocketStreamElem::AfterConvergence(const VectorHandler& X, 
+		const VectorHandler& XP)
+{
+	if (!bSendAfterPredict) {
+		Send_();
+	}
+}
+
+void
 SocketStreamElem::AfterConvergence(const VectorHandler& X, 
 		const VectorHandler& XP, const VectorHandler& XPP)
 {
-	AfterConvergence(X, XP);
+	if (!bSendAfterPredict) {
+		Send_();
+	}
 }
 
 #endif // USE_SOCKET
@@ -212,6 +232,7 @@ Edited in order to apply the same mechanism with 'readers' and 'maps' (std::map)
 SocketStreamElemRead)*/
 struct SocketStreamOutputDataTmp {
 	bool bIsRTAI;
+	bool bSendAfterPredict;
 	StreamOutEcho *pSOE;
 	StreamContent *pSC;
 	#if defined(HAVE_GETADDRINFO)
@@ -307,6 +328,19 @@ void SocketStreamOutputElemCreator::getSocketStreamOutParam(DataManager *pDM, MB
 			"missing stream name "
 			"at line " << HP.GetLineData() << std::endl);
 		if (socketStreamOutputDataTmp.bIsRTAI) {
+			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+	}
+
+	if (HP.IsKeyWord("send" "after")) {
+		if (HP.IsKeyWord("predict")) {
+			socketStreamOutputDataTmp.bSendAfterPredict = true;
+		} else if (HP.IsKeyWord("convergence")) {
+			socketStreamOutputDataTmp.bSendAfterPredict = false;
+		} else {
+			silent_cerr("SocketStreamElem(" << uLabel << "): "
+				"unknown \"send after\" value "
+				"at line " << HP.GetLineData() << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
 	}
@@ -650,7 +684,7 @@ Elem* SocketStreamOutputElemCreator::createSocketStreamOutElem(DataManager *pDM,
 			SocketStreamElem(uLabel, socketStreamOutputDataTmp.name, socketStreamOutputDataTmp.OutputEvery,
 				pUS, socketStreamOutputDataTmp.pSC, socketStreamOutputDataTmp.flags,
 				socketStreamOutputDataTmp.bSendFirst, socketStreamOutputDataTmp.bAbortIfBroken,
-				socketStreamOutputDataTmp.pSOE, bMsgDontWait));
+				socketStreamOutputDataTmp.pSOE, bMsgDontWait, socketStreamOutputDataTmp.bSendAfterPredict));
 
 		out 
 			<< " " << (!socketStreamOutputDataTmp.bNoSignal)

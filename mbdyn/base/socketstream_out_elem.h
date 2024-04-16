@@ -53,13 +53,17 @@ protected:
 	bool bMsgDontWait;
 
 	StreamOutEcho *pSOE;
+
+	// called by AfterPredict, AfterConvergence
+	bool bSendAfterPredict;
+	void Send_(void);
 	
 public:
    	SocketStreamElem(unsigned int uL, const std::string& name,
 		unsigned int oe,
 		UseSocket *pUS, StreamContent *pSC,
 		int flags, bool bSendFirst, bool bAbortIfBroken,
-		StreamOutEcho *pSOE, bool bMsgDontWait);
+		StreamOutEcho *pSOE, bool bMsgDontWait, bool bSendAfterPredict);
 
    	virtual ~SocketStreamElem(void);
 
@@ -68,6 +72,7 @@ public:
 	virtual void SetValue(DataManager *pDM,
 		VectorHandler& X, VectorHandler& XP,
 		SimulationEntity::Hints *ph = 0);
+	virtual void AfterPredict(VectorHandler& X, VectorHandler& XP);
 	virtual void AfterConvergence(const VectorHandler& X, 
 		const VectorHandler& XP);
 
