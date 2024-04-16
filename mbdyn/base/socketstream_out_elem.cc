@@ -332,6 +332,7 @@ void SocketStreamOutputElemCreator::getSocketStreamOutParam(DataManager *pDM, MB
 		}
 	}
 
+	socketStreamOutputDataTmp.bSendAfterPredict = false;
 	if (HP.IsKeyWord("send" "after")) {
 		if (HP.IsKeyWord("predict")) {
 			socketStreamOutputDataTmp.bSendAfterPredict = true;
