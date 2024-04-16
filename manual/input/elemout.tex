@@ -18,6 +18,7 @@ The syntax is:
 
     \bnt{arglist} ::=
         \kw{stream name} , " \bnt{stream_name} " ,
+            [ \kw{send after} , \{ \kw{convergence} | \kw{predict} \} , ]
         \kw{create} , \{ \kw{yes} | \kw{no} \} ,
         [ \{ \kw{local} , " \bnt{socket_name} " , |
             [ \kw{port} , \bnt{port_number} , ]
@@ -45,6 +46,10 @@ are used instead.
 the output is written  (a unique string no more than six characters long);
 it is basically ignored by the \kw{stream output} element
 except when using RTAI;
+
+\item \kw{send after} specifies when the output is sent.
+By default, it is sent after \kw{convergence}; as an alternative, after \kw{predict} can be used
+to send the predicted values instead.
 
 \item the \kw{create} keyword determines whether the socket
 must be created or looked-up as already existing on the system;
