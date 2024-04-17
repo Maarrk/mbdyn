@@ -100,7 +100,7 @@ siconos-build-job:       # This job runs in the build stage, which runs first.
       - cd build_dir
       - |
         if ! test -f Makefile || test ${CI_PROJECT_DIR}/testsuite/siconos-build-job.yml -nt Makefile; then
-          cmake -S .. -DUSER_OPTIONS_FILE=../config_samples/siconos_lite.cmake -DSICONOS_CUSTOM_INSTALL="${SICONOS_INSTALL_PREFIX}" -DISOLATED_INSTALL=true -DSuiteSparse_UMFPACK_INCLUDE_DIR="${UMFPACK_INCLUDE_DIR}" -DSuiteSparse_UMFPACK_LIBRARY="${UMFPACK_LIBRARY}" -DWITH_UMFPACK=ON # -DBLAS_NAME=mkl -DBLAS_INCLUDE_DIR="${PARDISO_INC}" -DLAPACK_INCLUDE_DIR="${PARDISO_INC}" -DLAPACK_LIBRARIES="${PARDISO_LIBS}"
+          cmake -S .. -DWITH_TESTING=OFF -DUSER_OPTIONS_FILE=../config_samples/siconos_lite.cmake -DSICONOS_CUSTOM_INSTALL="${SICONOS_INSTALL_PREFIX}" -DISOLATED_INSTALL=true -DSuiteSparse_UMFPACK_INCLUDE_DIR="${UMFPACK_INCLUDE_DIR}" -DSuiteSparse_UMFPACK_LIBRARY="${UMFPACK_LIBRARY}" -DWITH_UMFPACK=ON # -DBLAS_NAME=mkl -DBLAS_INCLUDE_DIR="${PARDISO_INC}" -DLAPACK_INCLUDE_DIR="${PARDISO_INC}" -DLAPACK_LIBRARIES="${PARDISO_LIBS}"
         fi
       - make -j${MBD_NUM_BUILD_JOBS}
       - rm -rf "${SICONOS_INSTALL_PREFIX}"
