@@ -28,11 +28,12 @@ end: initial value;
 
 
 begin: control data;
-   default orientation: orientation matrix;
+	default orientation: orientation matrix;
 	loadable elements: 1;
-   structural nodes: 3;
-   rigid bodies: 2;
-   joints: 3;
+	structural nodes: 3;
+	rigid bodies: 2;
+	joints: 3;
+	max iterations: 20;
 end: control data;
 
 

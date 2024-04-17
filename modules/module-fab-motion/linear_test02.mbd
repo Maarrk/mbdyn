@@ -22,6 +22,7 @@ begin: initial value;
 
 	output: iterations;
 #	output: residual;
+	max iterations: 20;
 end: initial value;
 
 

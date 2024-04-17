@@ -26,9 +26,10 @@ end: initial value;
 
 begin: control data;
 	loadable elements: 1;
-   structural nodes: 3;
-   rigid bodies: 2;
-   joints: 3;
+	structural nodes: 3;
+	rigid bodies: 2;
+	joints: 3;
+	max iterations: 10;
 end: control data;
 
 

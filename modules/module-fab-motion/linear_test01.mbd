@@ -30,6 +30,7 @@ begin: control data;
 	structural nodes: 3;
 	rigid bodies: 2;
 	joints: 3;
+	max iterations: 20;
 end: control data;
 
 
