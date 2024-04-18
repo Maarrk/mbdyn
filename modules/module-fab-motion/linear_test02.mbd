@@ -20,7 +20,7 @@ begin: initial value;
 	tolerance: 1.e-9;
 	max iterations: 20;
 
-	output: iterations;
+#	output: iterations;
 #	output: residual;
 	max iterations: 20;
 end: initial value;
@@ -28,9 +28,10 @@ end: initial value;
 
 begin: control data;
 	loadable elements: 1;
-   structural nodes: 2;
-   rigid bodies: 1;
-   joints: 2;
+	structural nodes: 2;
+	rigid bodies: 1;
+	joints: 2;
+	max iterations: 20;
 end: control data;
 
 
