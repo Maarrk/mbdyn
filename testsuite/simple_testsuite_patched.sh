@@ -601,7 +601,7 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
 
                                             printf '    %s%s\n' "${mbd_init_ass_prefix}" "initial assembly of deformable and force elements;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
                                             printf '    %s%s\n' "${mbd_init_ass_prefix}" "initial stiffness: 1e6, 1e6;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
-                                            printf '    %s%s\n' "${mbd_init_ass_prefix}" "max iterations: 10;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
+                                            printf '    %s%s\n' "" "max iterations: 10;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
 
                                             case "${mbd_skip_initial_joint_assembly}" in
                                                 skip)
