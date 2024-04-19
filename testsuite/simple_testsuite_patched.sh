@@ -599,7 +599,7 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
                                                     ;;
                                             esac
 
-                                            printf '    %s%s\n' "${mbd_init_ass_prefix}" "initial assembly of deformable and force elements;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
+                                            printf '    %s%s\n' "##" "initial assembly of deformable and force elements;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
                                             printf '    %s%s\n' "${mbd_init_ass_prefix}" "initial stiffness: 1e6, 1e6;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
                                             printf '    %s%s\n' "" "max iterations: 10;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
 
