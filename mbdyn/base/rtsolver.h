@@ -32,6 +32,8 @@
 #ifndef RTSOLVER_H
 #define RTSOLVER_H  
 
+#include <atomic>
+
 /* RTSolverBase - begin */
 
 class Solver;
@@ -74,7 +76,7 @@ protected:
 		return (eRTMode == MBRT_IO);
 	};
 
-	volatile int RTSteps;
+        volatile std::atomic<int> RTSteps;
 
 public:
 	RTSolverBase(Solver *pS,

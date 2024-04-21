@@ -107,6 +107,15 @@ private:
 
 class DynamicStructDispNodeAd: virtual public DynamicStructDispNode, public StructDispNodeAd {
 public:
+     using StructDispNodeAd::Output;
+     using StructDispNodeAd::OutputPrepare;
+     using StructDispNodeAd::Update;
+     using StructDispNodeAd::AfterConvergence;
+     using StructDispNodeAd::DescribeEq;     
+     using StructDispNodeAd::GetXCurr;
+     using StructDispNodeAd::GetVCurr;
+     using StructDispNodeAd::UpdateJac;
+
      DynamicStructDispNodeAd(unsigned int uL,
                              const DofOwner* pDO,
                              const Vec3& X0,
@@ -162,6 +171,13 @@ protected:
      virtual ~StructNodeAd();
 
 public:
+     using StructNode::Output;
+     using StructNode::OutputPrepare;
+     using StructNode::AfterConvergence;
+     using StructNode::DescribeEq;     
+     using StructDispNodeAd::GetXCurr;
+     using StructDispNodeAd::GetVCurr;
+     using StructNode::UpdateJac;
      using StructNode::GetgCurr;
      using StructNode::GetgPCurr;
      using StructNode::GetRCurr;
@@ -241,6 +257,15 @@ private:
 class DynamicStructNodeAd: public DynamicStructNode, public StructNodeAd
 {
 public:
+     using StructNodeAd::Output;
+     using StructNodeAd::OutputPrepare;
+     using StructNodeAd::Update;
+     using StructNodeAd::AfterConvergence;
+     using StructNodeAd::DescribeEq;     
+     using StructNodeAd::GetXCurr;
+     using StructNodeAd::GetVCurr;
+     using StructNodeAd::UpdateJac;
+
      DynamicStructNodeAd(unsigned int uL,
                          const DofOwner* pDO,
                          const Vec3& X0,
@@ -265,6 +290,15 @@ protected:
 class StaticStructNodeAd: public StaticStructNode, public StructNodeAd
 {
 public:
+     using StructNodeAd::Output;
+     using StructNodeAd::OutputPrepare;
+     using StructNodeAd::Update;
+     using StructNodeAd::AfterConvergence;
+     using StructNodeAd::DescribeEq;     
+     using StructNodeAd::GetXCurr;
+     using StructNodeAd::GetVCurr;
+     using StructNodeAd::UpdateJac;
+     
      StaticStructNodeAd(unsigned int uL,
                         const DofOwner* pDO,
                         const Vec3& X0,
@@ -288,6 +322,15 @@ protected:
 
 class ModalNodeAd: public ModalNode, public StructNodeAd {
 public:
+     using StructNodeAd::Output;
+     using StructNodeAd::OutputPrepare;
+     using StructNodeAd::Update;
+     using StructNodeAd::AfterConvergence;
+     using StructNodeAd::DescribeEq;     
+     using StructNodeAd::GetXCurr;
+     using StructNodeAd::GetVCurr;
+     using StructNodeAd::UpdateJac;
+     
      ModalNodeAd(unsigned int uL,
                  const DofOwner* pDO,
                  const Vec3& X0,
@@ -307,7 +350,6 @@ public:
 
      virtual void DerivativesUpdate(const VectorHandler& X, const VectorHandler& XP) override;
 
-     using StructNodeAd::AfterConvergence;
      virtual void AfterConvergence(const VectorHandler& X, const VectorHandler& XP) override;
 
      using StructNode::GetXPPCurr;
