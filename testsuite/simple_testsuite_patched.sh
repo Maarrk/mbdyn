@@ -51,7 +51,7 @@ mbdyn_testsuite_prefix_output=""
 mbdyn_keep_output="unexpected"
 ## FIXME: fourbar_int will fail with aztecoo and amesos
 ## mbdyn_linear_solvers="aztecoo amesos naive umfpack klu pardiso pardiso_64 y12 spqr qr lapack"
-mbdyn_linear_solvers="naive umfpack klu pardiso pardiso_64 y12 spqr qr lapack siconossparse siconosdense"
+mbdyn_linear_solvers="naive umfpack klu pardiso pardiso_64 y12 qr lapack siconossparse siconosdense" ## FIXME: Disable spqr until MBDyn's wrapper is adapted to the new API
 mbdyn_matrix_handlers="map cc dir grad"
 mbdyn_matrix_scale_methods="rowmaxcolumnmax iterative lapack rowmax columnmax rowsum columnsum"
 mbdyn_matrix_scale_when="never always once"
@@ -595,13 +595,13 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
                                                     mbd_init_ass_prefix=""
                                                     ;;
                                                 *)
-                                                    mbd_init_ass_prefix="##"
+                                                    mbd_init_ass_prefix="## "
                                                     ;;
                                             esac
 
-                                            printf '    %s%s\n' "##" "initial assembly of deformable and force elements;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
+                                            printf '    %s%s\n' "${mbd_init_ass_prefix}" "initial assembly of deformable and force elements;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
                                             printf '    %s%s\n' "${mbd_init_ass_prefix}" "initial stiffness: 1e6, 1e6;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
-                                            printf '    %s%s\n' "" "max iterations: 10;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
+                                            printf '    %s\n' "max iterations: 10;" >> "${MBD_TESTSUITE_CONTROL_DATA_END}"
 
                                             case "${mbd_skip_initial_joint_assembly}" in
                                                 skip)

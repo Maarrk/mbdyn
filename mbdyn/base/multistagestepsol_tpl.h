@@ -35,6 +35,7 @@
 #define MULTISTAGESTEPSOL_TPL_H
 
 #include <unistd.h>
+#include <array>
 #include <cfloat>
 #include <cmath>
 #include <deque>
@@ -105,16 +106,16 @@ public:
 	};
 
 protected:
-	VectorHandler *m_pX[N];		// state vectors
-	VectorHandler *m_pXP[N];	// state derivative vectors
+        std::array<VectorHandler*, N> m_pX;		// state vectors
+        std::array<VectorHandler*, N> m_pXP;	// state derivative vectors
 
 	std::deque<VectorHandler*> m_qXPr, m_qXPPr;	// queues for prediction
 
-	doublereal m_a[N][2];
-	doublereal m_b[N + 1][2];
+	std::array<std::array<doublereal, 2>, N> m_a;
+	std::array<std::array<doublereal, 2>, N + 1> m_b;
 
-	doublereal m_mp[N];
-	doublereal m_np[N];
+	std::array<doublereal, N> m_mp;
+	std::array<doublereal, N> m_np;
 
 public:
 	tplStageNIntegrator(const integer MaxIt,
@@ -138,32 +139,32 @@ public:
 		doublereal& SolErr);
 
 protected:
-	template <unsigned S>
 	void PredictDofForStageS(const int DCount,
-		const DofOrder::Order Order,
-		const VectorHandler* const pSol = 0) const;
+                                 const DofOrder::Order Order,
+                                 const VectorHandler* const pSol,
+                                 const unsigned S) const;
 
 	void PredictForStageS(unsigned S);
-
+        
 	virtual doublereal
      	dPredDerForStageS(unsigned uStage,
-		const doublereal dXm1mN[N],
-		const doublereal dXP0mN[N + 1]) const = 0;
+                          const std::array<doublereal, N>& dXm1mN,
+                          const std::array<doublereal, N + 1>& dXP0mN) const = 0;
 
    	virtual doublereal
      	dPredStateForStageS(unsigned uStage,
-		const doublereal dXm1mN[N],
-		const doublereal dXP0mN[N + 1]) const = 0;
+                            const std::array<doublereal, N>& dXm1mN,
+                            const std::array<doublereal, N + 1>& dXP0mN) const = 0;
 
    	virtual doublereal
      	dPredDerAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[N],
-		const doublereal dXP0mN[N + 1]) const = 0;
+                             const std::array<doublereal, N>& dXm1mN,
+                             const std::array<doublereal, N + 1>& dXP0mN) const = 0;
 
    	virtual doublereal
      	dPredStateAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[N],
-		const doublereal dXP0mN[N + 1]) const = 0;
+                               const std::array<doublereal, N>& dXm1mN,
+                               const std::array<doublereal, N + 1>& dXP0mN) const = 0;
 
 	virtual void SetCoefForStageS(unsigned uStage,
 		doublereal dT,
@@ -174,6 +175,22 @@ protected:
 	virtual void SetCoef(doublereal dT, 
 			doublereal dAlpha,
 			enum StepChange NewStep);
+private:
+        friend struct PredictForStageHelper;
+        struct PredictForStageHelper {
+                PredictForStageHelper(const tplStageNIntegrator& parent, unsigned S)
+                       :parent(parent), S(S) {
+                }
+
+                void PredictDofForStageS(const int DCount,
+                                         const DofOrder::Order Order,
+                                         const VectorHandler* const pSol) const {
+                        parent.PredictDofForStageS(DCount, Order, pSol, S);
+                }
+
+                const tplStageNIntegrator& parent;
+                const unsigned S;
+        };
 };
 
 
@@ -210,16 +227,19 @@ tplStageNIntegrator<N>::~tplStageNIntegrator(void)
 	}
 }
 
-template <unsigned N> template <unsigned S>
+template <unsigned N>
 void
 tplStageNIntegrator<N>::PredictDofForStageS(
-	const int DCount,
-	const DofOrder::Order Order,
-	const VectorHandler* const pSol) const
+        const int DCount,
+        const DofOrder::Order Order,
+        const VectorHandler* const pSol,
+        const unsigned S) const
 {
-	if (Order == DofOrder::DIFFERENTIAL) {
-		doublereal dXm1mN[N];
-		doublereal dXP0mN[N + 1];
+        ASSERT(S <= N);
+
+        if (Order == DofOrder::DIFFERENTIAL) {
+                std::array<doublereal, N> dXm1mN{};
+                std::array<doublereal, N + 1> dXP0mN{};
 
 		for (unsigned i = 0; i < S; i++) {
 			dXm1mN[i] = m_pX[i]->operator()(DCount);
@@ -250,8 +270,8 @@ tplStageNIntegrator<N>::PredictDofForStageS(
 	}
 	else if (Order == DofOrder::ALGEBRAIC)
 	{
-		doublereal dXIm1mN[N];
-		doublereal dX0mN[N + 1];
+                std::array<doublereal, N> dXIm1mN{};
+                std::array<doublereal, N + 1> dX0mN{};
 
 		for (unsigned i = 0; i < S; i++) {
 			dXIm1mN[i] = m_pXP[i]->operator()(DCount);
@@ -284,36 +304,12 @@ template <unsigned N>
 void
 tplStageNIntegrator<N>::PredictForStageS(unsigned S)
 {
-   	DEBUGCOUTFNAME("tplStageNIntegrator::PredictForStageS");
-   	ASSERT(pDM != 0);
+        DEBUGCOUTFNAME("tplStageNIntegrator::PredictForStageS");
+        ASSERT(pDM != 0);
 
-	switch (S) {
-	case 1:
-		UpdateLoop(this, &tplStageNIntegrator<N>::PredictDofForStageS<1>);
-		break;
+        const PredictForStageHelper currStage(*this, S);
 
-	case 2:
-		UpdateLoop(this, &tplStageNIntegrator<N>::PredictDofForStageS<2>);
-		break;
-
-	case 3:
-		UpdateLoop(this, &tplStageNIntegrator<N>::PredictDofForStageS<3>);
-		break;
-
-	case 4:
-		UpdateLoop(this, &tplStageNIntegrator<N>::PredictDofForStageS<4>);
-		break;
-
-	case 5:
-		UpdateLoop(this, &tplStageNIntegrator<N>::PredictDofForStageS<5>);
-		break;
-
-	// add more as needed
-
-	default:
-		silent_cerr("Multistage integrators with " << S << "stages not supported" << std::endl);
-		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
-	}
+        UpdateLoop(&currStage, &PredictForStageHelper::PredictDofForStageS);
 }
 
 template <unsigned N>

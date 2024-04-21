@@ -484,11 +484,8 @@ expand_environment(const char *in)
 				}
 
 				namepos++;
-				unsigned l = end - &in[namepos];
-				char buf[l + 1];
-				memcpy(buf, &in[namepos], l);
-				buf[l] = '\0';
-				subst[cnt].value = getenv(buf);
+                                std::string buf(in + namepos, end);
+				subst[cnt].value = getenv(buf.c_str());
 				if (subst[cnt].value == NULL) {
 					silent_cerr("unable to find "
 							"environment "
@@ -516,12 +513,8 @@ expand_environment(const char *in)
 					}
 				}
 
-				unsigned l = &in[c] - &in[namepos];
-				char buf[l + 1];
-				memcpy(buf, &in[namepos], l);
-				buf[l] = '\0';
-
-				subst[cnt].value = getenv(buf);
+                                std::string buf(in + namepos, in + c);
+				subst[cnt].value = getenv(buf.c_str());
 				if (subst[cnt].value == NULL) {
 					silent_cerr("unable to find "
 							"environment "
@@ -618,29 +611,25 @@ resolve_filename(const char *filename_in)
 
 #if defined(HAVE_PWD_H)
                 } else {
-                        const char *p;
+                        char *p;
 
                         p = std::strchr(filename + 1, DIR_SEP);
                         if (p == NULL) {
                                 goto error_return;
                         }
 
-                        int l = p - (filename + 1);
-
-                        char buf[l + 1];
-                        memcpy(buf, filename + 1, l);
-                        buf[l] = '\0';
+                        std::string buf(filename + 1, p);
 
                         /* do passwd stuff */
                         struct passwd *pw;
 
-                        pw = getpwnam(buf);
+                        pw = getpwnam(buf.c_str());
 
                         if (pw == NULL ) {
                                 goto error_return;
                         }
 
-                        l = strlen(pw->pw_dir);
+                        size_t l = strlen(pw->pw_dir);
                         int ll = l + strlen(p) + 1;
                         char *s = NULL;
                         SAFENEWARR(s, char, ll);

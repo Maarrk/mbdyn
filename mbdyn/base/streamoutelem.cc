@@ -634,7 +634,7 @@ StreamContent* ReadStreamContent(DataManager *pDM, MBDynParser& HP, StreamConten
 StreamContent* MotionContentTypeReader::Read(DataManager* pDM, MBDynParser& HP) {
 		// instructions executed for 'motion' case content type
 
-			StreamContent* pSC;
+			StreamContent* pSC = nullptr;
 
 			unsigned uFlags = GeometryData::X;
 			if (HP.IsKeyWord("output" "flags")) {
@@ -718,7 +718,7 @@ StreamContent* MotionContentTypeReader::Read(DataManager* pDM, MBDynParser& HP) 
 StreamContent* ValuesContentTypeReader::Read(DataManager* pDM, MBDynParser& HP) {
 		/* instructions executed for 'values' case content type */
 
-			StreamContent* pSC;
+			StreamContent* pSC = nullptr;
 
 			int nch = HP.GetInt();
 			if (nch <= 0) {

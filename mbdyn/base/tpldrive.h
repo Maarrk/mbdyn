@@ -162,7 +162,7 @@ ReadDCVecAbs(const DataManager* pDM, MBDynParser& HP, const ReferenceFrame& rf);
 /* prototype of the template functional object: reads a template drive caller */
 template <class T>
 struct TplDriveCallerRead {
-     virtual ~TplDriveCallerRead<T>( void ) { NO_OP; };
+     virtual ~TplDriveCallerRead( void ) { NO_OP; };
      virtual TplDriveCaller<T> *
      Read(const DataManager* pDM, MBDynParser& HP) = 0;
 };

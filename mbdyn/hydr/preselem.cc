@@ -1326,7 +1326,7 @@ Elem* ReadHydraulicElem(DataManager* pDM,
        if (HP.IsKeyWord("turbulent")) {
 	  turbulent = 1;
        }
-       DEBUGCOUT("Turbulent: " (Turbulent == 0 ? "false" : "true") << std::endl); 
+       DEBUGCOUT("Turbulent: " << (turbulent == 0 ? "false" : "true") << std::endl); 
        doublereal q0(0.);
        if (HP.IsKeyWord("initial" "value")) {
 	  q0 = HP.GetReal();

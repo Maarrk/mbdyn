@@ -1048,6 +1048,7 @@ class StaticStructNode: virtual public StaticStructDispNode,
                         virtual public StructNode
 {
 public:
+        using StructNode::Update;
 	/* Costruttore definitivo */
 	StaticStructNode(unsigned int uL,
 		const DofOwner* pDO,

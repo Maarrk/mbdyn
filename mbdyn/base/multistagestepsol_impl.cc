@@ -173,8 +173,8 @@ TunableBatheSolver::SetCoefForStageS(unsigned uStage,
 
 doublereal
 TunableBatheSolver::dPredDerForStageS(unsigned uStage,
-	const doublereal dXm1mN[2],
-	const doublereal dXP0mN[3]) const
+                                      const std::array<doublereal, 2>& dXm1mN,
+                                      const std::array<doublereal, 3>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -193,8 +193,8 @@ TunableBatheSolver::dPredDerForStageS(unsigned uStage,
 
 doublereal
 TunableBatheSolver::dPredStateForStageS(unsigned uStage,
-	const doublereal dXm1mN[2],
-	const doublereal dXP0mN[3]) const
+                                        const std::array<doublereal, 2>& dXm1mN,
+                                        const std::array<doublereal, 3>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -216,8 +216,8 @@ TunableBatheSolver::dPredStateForStageS(unsigned uStage,
 
 doublereal
 TunableBatheSolver::dPredDerAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[2],
-	const doublereal dXP0mN[3]) const
+                                         const std::array<doublereal, 2>& dXm1mN,
+                                         const std::array<doublereal, 3>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -233,8 +233,8 @@ TunableBatheSolver::dPredDerAlgForStageS(unsigned uStage,
 
 doublereal
 TunableBatheSolver::dPredStateAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[2],
-	const doublereal dXP0mN[3]) const
+                                           const std::array<doublereal, 2>& dXm1mN,
+                                           const std::array<doublereal, 3>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -486,8 +486,8 @@ Msstc3Solver::SetCoefForStageS(unsigned uStage,
 
 doublereal
 Msstc3Solver::dPredDerForStageS(unsigned uStage,
-	const doublereal dXm1mN[3],
-	const doublereal dXP0mN[4]) const
+                                const std::array<doublereal, 3>& dXm1mN,
+                                const std::array<doublereal, 4>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -514,8 +514,8 @@ Msstc3Solver::dPredDerForStageS(unsigned uStage,
 
 doublereal
 Msstc3Solver::dPredStateForStageS(unsigned uStage,
-	const doublereal dXm1mN[3],
-	const doublereal dXP0mN[4]) const
+                                  const std::array<doublereal, 3>& dXm1mN,
+                                  const std::array<doublereal, 4>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -546,8 +546,8 @@ Msstc3Solver::dPredStateForStageS(unsigned uStage,
 
 doublereal
 Msstc3Solver::dPredDerAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[3],
-	const doublereal dXP0mN[4]) const
+                                   const std::array<doublereal, 3>& dXm1mN,
+                                   const std::array<doublereal, 4>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -566,8 +566,8 @@ Msstc3Solver::dPredDerAlgForStageS(unsigned uStage,
 
 doublereal
 Msstc3Solver::dPredStateAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[3],
-	const doublereal dXP0mN[4]) const
+                                     const std::array<doublereal, 3>& dXm1mN,
+                                     const std::array<doublereal, 4>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -857,8 +857,8 @@ Mssth3Solver::SetCoefForStageS(unsigned uStage,
 
 doublereal
 Mssth3Solver::dPredDerForStageS(unsigned uStage,
-	const doublereal dXm1mN[3],
-	const doublereal dXP0mN[4]) const
+                                const std::array<doublereal, 3>& dXm1mN,
+                                const std::array<doublereal, 4>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -885,8 +885,8 @@ Mssth3Solver::dPredDerForStageS(unsigned uStage,
 
 doublereal
 Mssth3Solver::dPredStateForStageS(unsigned uStage,
-	const doublereal dXm1mN[3],
-	const doublereal dXP0mN[4]) const
+                                  const std::array<doublereal, 3>& dXm1mN,
+                                  const std::array<doublereal, 4>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -917,8 +917,8 @@ Mssth3Solver::dPredStateForStageS(unsigned uStage,
 
 doublereal
 Mssth3Solver::dPredDerAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[3],
-	const doublereal dXP0mN[4]) const
+                                   const std::array<doublereal, 3>& dXm1mN,
+                                   const std::array<doublereal, 4>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -937,8 +937,8 @@ Mssth3Solver::dPredDerAlgForStageS(unsigned uStage,
 
 doublereal
 Mssth3Solver::dPredStateAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[3],
-	const doublereal dXP0mN[4]) const
+                                     const std::array<doublereal, 3>& dXm1mN,
+                                     const std::array<doublereal, 4>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -1290,8 +1290,8 @@ Msstc4Solver::SetCoefForStageS(unsigned uStage,
 
 doublereal
 Msstc4Solver::dPredDerForStageS(unsigned uStage,
-	const doublereal dXm1mN[4],
-	const doublereal dXP0mN[5]) const
+                                const std::array<doublereal, 4>& dXm1mN,
+                                const std::array<doublereal, 5>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -1328,8 +1328,8 @@ Msstc4Solver::dPredDerForStageS(unsigned uStage,
 
 doublereal
 Msstc4Solver::dPredStateForStageS(unsigned uStage,
-	const doublereal dXm1mN[4],
-	const doublereal dXP0mN[5]) const
+                                  const std::array<doublereal, 4>& dXm1mN,
+                                  const std::array<doublereal, 5>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -1371,8 +1371,8 @@ Msstc4Solver::dPredStateForStageS(unsigned uStage,
 
 doublereal
 Msstc4Solver::dPredDerAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[4],
-	const doublereal dXP0mN[5]) const
+                                   const std::array<doublereal, 4>& dXm1mN,
+                                   const std::array<doublereal, 5>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -1394,8 +1394,8 @@ Msstc4Solver::dPredDerAlgForStageS(unsigned uStage,
 
 doublereal
 Msstc4Solver::dPredStateAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[4],
-	const doublereal dXP0mN[5]) const
+                                     const std::array<doublereal, 4>& dXm1mN,
+                                     const std::array<doublereal, 5>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -1844,8 +1844,8 @@ Mssth4Solver::SetCoefForStageS(unsigned uStage,
 
 doublereal
 Mssth4Solver::dPredDerForStageS(unsigned uStage,
-	const doublereal dXm1mN[4],
-	const doublereal dXP0mN[5]) const
+                                const std::array<doublereal, 4>& dXm1mN,
+                                const std::array<doublereal, 5>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -1882,8 +1882,8 @@ Mssth4Solver::dPredDerForStageS(unsigned uStage,
 
 doublereal
 Mssth4Solver::dPredStateForStageS(unsigned uStage,
-	const doublereal dXm1mN[4],
-	const doublereal dXP0mN[5]) const
+                                  const std::array<doublereal, 4>& dXm1mN,
+                                  const std::array<doublereal, 5>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -1925,8 +1925,8 @@ Mssth4Solver::dPredStateForStageS(unsigned uStage,
 
 doublereal
 Mssth4Solver::dPredDerAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[4],
-	const doublereal dXP0mN[5]) const
+                                   const std::array<doublereal, 4>& dXm1mN,
+                                   const std::array<doublereal, 5>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -1948,8 +1948,8 @@ Mssth4Solver::dPredDerAlgForStageS(unsigned uStage,
 
 doublereal
 Mssth4Solver::dPredStateAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[4],
-	const doublereal dXP0mN[5]) const
+                                     const std::array<doublereal, 4>& dXm1mN,
+                                     const std::array<doublereal, 5>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -2419,8 +2419,8 @@ Msstc5Solver::SetCoefForStageS(unsigned uStage,
 
 doublereal
 Msstc5Solver::dPredDerForStageS(unsigned uStage,
-	const doublereal dXm1mN[5],
-	const doublereal dXP0mN[6]) const
+                                const std::array<doublereal, 5>& dXm1mN,
+                                const std::array<doublereal, 6>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -2469,8 +2469,8 @@ Msstc5Solver::dPredDerForStageS(unsigned uStage,
 
 doublereal
 Msstc5Solver::dPredStateForStageS(unsigned uStage,
-	const doublereal dXm1mN[5],
-	const doublereal dXP0mN[6]) const
+                                  const std::array<doublereal, 5>& dXm1mN,
+                                  const std::array<doublereal, 6>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -2525,8 +2525,8 @@ Msstc5Solver::dPredStateForStageS(unsigned uStage,
 
 doublereal
 Msstc5Solver::dPredDerAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[5],
-	const doublereal dXP0mN[6]) const
+                                   const std::array<doublereal, 5>& dXm1mN,
+                                   const std::array<doublereal, 6>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -2551,8 +2551,8 @@ Msstc5Solver::dPredDerAlgForStageS(unsigned uStage,
 
 doublereal
 Msstc5Solver::dPredStateAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[5],
-	const doublereal dXP0mN[6]) const
+                                     const std::array<doublereal, 5>& dXm1mN,
+                                     const std::array<doublereal, 6>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -3172,8 +3172,8 @@ Mssth5Solver::SetCoefForStageS(unsigned uStage,
 
 doublereal
 Mssth5Solver::dPredDerForStageS(unsigned uStage,
-	const doublereal dXm1mN[5],
-	const doublereal dXP0mN[6]) const
+                                const std::array<doublereal, 5>& dXm1mN,
+                                const std::array<doublereal, 6>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -3222,8 +3222,8 @@ Mssth5Solver::dPredDerForStageS(unsigned uStage,
 
 doublereal
 Mssth5Solver::dPredStateForStageS(unsigned uStage,
-	const doublereal dXm1mN[5],
-	const doublereal dXP0mN[6]) const
+                                  const std::array<doublereal, 5>& dXm1mN,
+                                  const std::array<doublereal, 6>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -3278,8 +3278,8 @@ Mssth5Solver::dPredStateForStageS(unsigned uStage,
 
 doublereal
 Mssth5Solver::dPredDerAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[5],
-	const doublereal dXP0mN[6]) const
+                                   const std::array<doublereal, 5>& dXm1mN,
+                                   const std::array<doublereal, 6>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -3304,8 +3304,8 @@ Mssth5Solver::dPredDerAlgForStageS(unsigned uStage,
 
 doublereal
 Mssth5Solver::dPredStateAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[5],
-	const doublereal dXP0mN[6]) const
+                                     const std::array<doublereal, 5>& dXm1mN,
+                                     const std::array<doublereal, 6>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -3560,8 +3560,8 @@ DIRK33Solver::SetCoefForStageS(unsigned uStage,
 
 doublereal
 DIRK33Solver::dPredDerForStageS(unsigned uStage,
-	const doublereal dXm1mN[3],
-	const doublereal dXP0mN[4]) const
+                                const std::array<doublereal, 3>& dXm1mN,
+                                const std::array<doublereal, 4>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -3588,8 +3588,8 @@ DIRK33Solver::dPredDerForStageS(unsigned uStage,
 
 doublereal
 DIRK33Solver::dPredStateForStageS(unsigned uStage,
-	const doublereal dXm1mN[3],
-	const doublereal dXP0mN[4]) const
+                                  const std::array<doublereal, 3>& dXm1mN,
+                                  const std::array<doublereal, 4>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -3620,8 +3620,8 @@ DIRK33Solver::dPredStateForStageS(unsigned uStage,
 
 doublereal
 DIRK33Solver::dPredDerAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[3],
-	const doublereal dXP0mN[4]) const
+                                   const std::array<doublereal, 3>& dXm1mN,
+                                   const std::array<doublereal, 4>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -3640,8 +3640,8 @@ DIRK33Solver::dPredDerAlgForStageS(unsigned uStage,
 
 doublereal
 DIRK33Solver::dPredStateAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[3],
-	const doublereal dXP0mN[4]) const
+                                     const std::array<doublereal, 3>& dXm1mN,
+                                     const std::array<doublereal, 4>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -4001,8 +4001,8 @@ DIRK43Solver::SetCoefForStageS(unsigned uStage,
 
 doublereal
 DIRK43Solver::dPredDerForStageS(unsigned uStage,
-	const doublereal dXm1mN[4],
-	const doublereal dXP0mN[5]) const
+                                const std::array<doublereal, 4>& dXm1mN,
+                                const std::array<doublereal, 5>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -4039,8 +4039,8 @@ DIRK43Solver::dPredDerForStageS(unsigned uStage,
 
 doublereal
 DIRK43Solver::dPredStateForStageS(unsigned uStage,
-	const doublereal dXm1mN[4],
-	const doublereal dXP0mN[5]) const
+                                  const std::array<doublereal, 4>& dXm1mN,
+                                  const std::array<doublereal, 5>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -4082,8 +4082,8 @@ DIRK43Solver::dPredStateForStageS(unsigned uStage,
 
 doublereal
 DIRK43Solver::dPredDerAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[4],
-	const doublereal dXP0mN[5]) const
+                                   const std::array<doublereal, 4>& dXm1mN,
+                                   const std::array<doublereal, 5>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -4105,8 +4105,8 @@ DIRK43Solver::dPredDerAlgForStageS(unsigned uStage,
 
 doublereal
 DIRK43Solver::dPredStateAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[4],
-	const doublereal dXP0mN[5]) const
+                                     const std::array<doublereal, 4>& dXm1mN,
+                                     const std::array<doublereal, 5>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -4575,8 +4575,8 @@ DIRK54Solver::SetCoefForStageS(unsigned uStage,
 
 doublereal
 DIRK54Solver::dPredDerForStageS(unsigned uStage,
-	const doublereal dXm1mN[5],
-	const doublereal dXP0mN[6]) const
+                                const std::array<doublereal, 5>& dXm1mN,
+                                const std::array<doublereal, 6>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -4625,8 +4625,8 @@ DIRK54Solver::dPredDerForStageS(unsigned uStage,
 
 doublereal
 DIRK54Solver::dPredStateForStageS(unsigned uStage,
-	const doublereal dXm1mN[5],
-	const doublereal dXP0mN[6]) const
+                                  const std::array<doublereal, 5>& dXm1mN,
+                                  const std::array<doublereal, 6>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -4681,8 +4681,8 @@ DIRK54Solver::dPredStateForStageS(unsigned uStage,
 
 doublereal
 DIRK54Solver::dPredDerAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[5],
-	const doublereal dXP0mN[6]) const
+                                   const std::array<doublereal, 5>& dXm1mN,
+                                   const std::array<doublereal, 6>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:
@@ -4707,8 +4707,8 @@ DIRK54Solver::dPredDerAlgForStageS(unsigned uStage,
 
 doublereal
 DIRK54Solver::dPredStateAlgForStageS(unsigned uStage,
-	const doublereal dXm1mN[5],
-	const doublereal dXP0mN[6]) const
+                                     const std::array<doublereal, 5>& dXm1mN,
+                                     const std::array<doublereal, 6>& dXP0mN) const
 {
 	switch (uStage) {
 	case 1:

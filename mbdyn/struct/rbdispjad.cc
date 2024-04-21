@@ -341,10 +341,10 @@ void RigidBodyDispJointAd::AssRes(sp_grad::SpGradientAssVec<T>& WorkVec,
           Mm += Cross(Rm_oj, lambdat + Cross(DeltaXj, lambdar)) * wj;
      }
 
-     ASSERT(Phit.iGetMaxSize() <= rgNodesSlave.size() * 5);
-     ASSERT(Phir.iGetMaxSize() <= rgNodesSlave.size() * 10);
-     ASSERT(Fm.iGetMaxSize() <= rgNodesSlave.size() * 9);
-     ASSERT(Mm.iGetMaxSize() <= rgNodesSlave.size() * 30);
+     ASSERT(static_cast<size_t>(Phit.iGetMaxSize()) <= rgNodesSlave.size() * 5);
+     ASSERT(static_cast<size_t>(Phir.iGetMaxSize()) <= rgNodesSlave.size() * 10);
+     ASSERT(static_cast<size_t>(Fm.iGetMaxSize()) <= rgNodesSlave.size() * 9);
+     ASSERT(static_cast<size_t>(Mm.iGetMaxSize()) <= rgNodesSlave.size() * 30);
 
      DEBUGCERR("Phit.iGetMaxSize() / N = " << Phit.iGetMaxSize() / rgNodesSlave.size() << "\n");
      DEBUGCERR("Phir.iGetMaxSize() / N = " << Phir.iGetMaxSize() / rgNodesSlave.size() << "\n");
@@ -427,14 +427,14 @@ void RigidBodyDispJointAd::InitialAssRes(sp_grad::SpGradientAssVec<T>& WorkVec,
                   - Cross(lambdat + Cross(DeltaXj, lambdar), WmRm_oj)) * wj;
      }
 
-     ASSERT(Phit.iGetMaxSize() <= rgNodesSlave.size() * 5);
-     ASSERT(Phir.iGetMaxSize() <= rgNodesSlave.size() * 10);
-     ASSERT(PhiPt.iGetMaxSize() <= rgNodesSlave.size() * 10);
-     ASSERT(PhiPr.iGetMaxSize() <= rgNodesSlave.size() * 30);
-     ASSERT(Fm.iGetMaxSize() <= rgNodesSlave.size() * 9);
-     ASSERT(Mm.iGetMaxSize() <= rgNodesSlave.size() * 30);
-     ASSERT(FPm.iGetMaxSize() <= rgNodesSlave.size() * 27);
-     ASSERT(MPm.iGetMaxSize() <= rgNodesSlave.size() * 88);
+     ASSERT(static_cast<size_t>(Phit.iGetMaxSize()) <= rgNodesSlave.size() * 5);
+     ASSERT(static_cast<size_t>(Phir.iGetMaxSize()) <= rgNodesSlave.size() * 10);
+     ASSERT(static_cast<size_t>(PhiPt.iGetMaxSize()) <= rgNodesSlave.size() * 10);
+     ASSERT(static_cast<size_t>(PhiPr.iGetMaxSize()) <= rgNodesSlave.size() * 30);
+     ASSERT(static_cast<size_t>(Fm.iGetMaxSize()) <= rgNodesSlave.size() * 9);
+     ASSERT(static_cast<size_t>(Mm.iGetMaxSize()) <= rgNodesSlave.size() * 30);
+     ASSERT(static_cast<size_t>(FPm.iGetMaxSize()) <= rgNodesSlave.size() * 27);
+     ASSERT(static_cast<size_t>(MPm.iGetMaxSize()) <= rgNodesSlave.size() * 88);
 
      DEBUGCERR("Phit.iGetMaxSize() / N = " << Phit.iGetMaxSize() / rgNodesSlave.size() << "\n");
      DEBUGCERR("Phir.iGetMaxSize() / N = " << Phir.iGetMaxSize() / rgNodesSlave.size() << "\n");

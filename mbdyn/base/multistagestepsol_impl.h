@@ -87,23 +87,23 @@ protected:
 
 	doublereal
 	dPredDerForStageS(unsigned uStage,
-		const doublereal dXm1mN[2],
-		const doublereal dXP0mN[3]) const;
+                          const std::array<doublereal, 2>& dXm1mN,
+                          const std::array<doublereal, 3>& dXP0mN) const;
 
 	doublereal
 	dPredStateForStageS(unsigned uStage,
-		const doublereal dXm1mN[2],
-		const doublereal dXP0mN[3]) const;
+                            const std::array<doublereal, 2>& dXm1mN,
+                            const std::array<doublereal, 3>& dXP0mN) const;
 
 	doublereal
 	dPredDerAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[2],
-		const doublereal dXP0mN[3]) const;
+                             const std::array<doublereal, 2>& dXm1mN,
+                             const std::array<doublereal, 3>& dXP0mN) const;
 
 	doublereal
 	dPredStateAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[2],
-		const doublereal dXP0mN[3]) const;
+                               const std::array<doublereal, 2>& dXm1mN,
+                               const std::array<doublereal, 3>& dXP0mN) const;
 };
 
 /* TunableBatheSolver - end */
@@ -141,23 +141,23 @@ protected:
 
 	doublereal
 	dPredDerForStageS(unsigned uStage,
-		const doublereal dXm1mN[3],
-		const doublereal dXP0mN[4]) const;
+                          const std::array<doublereal, 3>& dXm1mN,
+                          const std::array<doublereal, 4>& dXP0mN) const;
 
 	doublereal
 	dPredStateForStageS(unsigned uStage,
-		const doublereal dXm1mN[3],
-		const doublereal dXP0mN[4]) const;
+                            const std::array<doublereal, 3>& dXm1mN,
+                            const std::array<doublereal, 4>& dXP0mN) const;
 
 	doublereal
 	dPredDerAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[3],
-		const doublereal dXP0mN[4]) const;
+                             const std::array<doublereal, 3>& dXm1mN,
+                             const std::array<doublereal, 4>& dXP0mN) const;
 
 	doublereal
 	dPredStateAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[3],
-		const doublereal dXP0mN[4]) const;
+                               const std::array<doublereal, 3>& dXm1mN,
+                               const std::array<doublereal, 4>& dXP0mN) const;
 };
 
 /* Msstc3Solver - end */
@@ -196,23 +196,23 @@ protected:
 
 	doublereal
 	dPredDerForStageS(unsigned uStage,
-		const doublereal dXm1mN[3],
-		const doublereal dXP0mN[4]) const;
+                          const std::array<doublereal, 3>& dXm1mN,
+                          const std::array<doublereal, 4>& dXP0mN) const;
 
 	doublereal
 	dPredStateForStageS(unsigned uStage,
-		const doublereal dXm1mN[3],
-		const doublereal dXP0mN[4]) const;
+                            const std::array<doublereal, 3>& dXm1mN,
+                            const std::array<doublereal, 4>& dXP0mN) const;
 
 	doublereal
 	dPredDerAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[3],
-		const doublereal dXP0mN[4]) const;
+                             const std::array<doublereal, 3>& dXm1mN,
+                             const std::array<doublereal, 4>& dXP0mN) const;
 
 	doublereal
 	dPredStateAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[3],
-		const doublereal dXP0mN[4]) const;
+                               const std::array<doublereal, 3>& dXm1mN,
+                               const std::array<doublereal, 4>& dXP0mN) const;
 };
 
 /* Mssth3Solver - end */
@@ -250,23 +250,23 @@ protected:
 
 	doublereal
 	dPredDerForStageS(unsigned uStage,
-		const doublereal dXm1mN[4],
-		const doublereal dXP0mN[5]) const;
+		const std::array<doublereal, 4>& dXm1mN,
+		const std::array<doublereal, 5>& dXP0mN) const;
 
 	doublereal
 	dPredStateForStageS(unsigned uStage,
-		const doublereal dXm1mN[4],
-		const doublereal dXP0mN[5]) const;
+		const std::array<doublereal, 4>& dXm1mN,
+		const std::array<doublereal, 5>& dXP0mN) const;
 
 	doublereal
 	dPredDerAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[4],
-		const doublereal dXP0mN[5]) const;
+		const std::array<doublereal, 4>& dXm1mN,
+		const std::array<doublereal, 5>& dXP0mN) const;
 
 	doublereal
 	dPredStateAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[4],
-		const doublereal dXP0mN[5]) const;
+		const std::array<doublereal, 4>& dXm1mN,
+		const std::array<doublereal, 5>& dXP0mN) const;
 };
 
 /* Msstc4Solver - end */
@@ -306,23 +306,23 @@ protected:
 
 	doublereal
 	dPredDerForStageS(unsigned uStage,
-		const doublereal dXm1mN[4],
-		const doublereal dXP0mN[5]) const;
+		const std::array<doublereal, 4>& dXm1mN,
+		const std::array<doublereal, 5>& dXP0mN) const;
 
 	doublereal
 	dPredStateForStageS(unsigned uStage,
-		const doublereal dXm1mN[4],
-		const doublereal dXP0mN[5]) const;
+		const std::array<doublereal, 4>& dXm1mN,
+		const std::array<doublereal, 5>& dXP0mN) const;
 
 	doublereal
 	dPredDerAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[4],
-		const doublereal dXP0mN[5]) const;
+		const std::array<doublereal, 4>& dXm1mN,
+		const std::array<doublereal, 5>& dXP0mN) const;
 
 	doublereal
 	dPredStateAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[4],
-		const doublereal dXP0mN[5]) const;
+		const std::array<doublereal, 4>& dXm1mN,
+		const std::array<doublereal, 5>& dXP0mN) const;
 };
 
 /* Mssth4Solver - end */
@@ -360,23 +360,23 @@ protected:
 
 	doublereal
 	dPredDerForStageS(unsigned uStage,
-		const doublereal dXm1mN[5],
-		const doublereal dXP0mN[6]) const;
+		const std::array<doublereal, 5>& dXm1mN,
+		const std::array<doublereal, 6>& dXP0mN) const;
 
 	doublereal
 	dPredStateForStageS(unsigned uStage,
-		const doublereal dXm1mN[5],
-		const doublereal dXP0mN[6]) const;
+		const std::array<doublereal, 5>& dXm1mN,
+		const std::array<doublereal, 6>& dXP0mN) const;
 
 	doublereal
 	dPredDerAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[5],
-		const doublereal dXP0mN[6]) const;
+		const std::array<doublereal, 5>& dXm1mN,
+		const std::array<doublereal, 6>& dXP0mN) const;
 
 	doublereal
 	dPredStateAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[5],
-		const doublereal dXP0mN[6]) const;
+		const std::array<doublereal, 5>& dXm1mN,
+		const std::array<doublereal, 6>& dXP0mN) const;
 };
 
 /* Msstc5Solver - end */
@@ -417,23 +417,23 @@ protected:
 
 	doublereal
 	dPredDerForStageS(unsigned uStage,
-		const doublereal dXm1mN[5],
-		const doublereal dXP0mN[6]) const;
+		const std::array<doublereal, 5>& dXm1mN,
+		const std::array<doublereal, 6>& dXP0mN) const;
 
 	doublereal
 	dPredStateForStageS(unsigned uStage,
-		const doublereal dXm1mN[5],
-		const doublereal dXP0mN[6]) const;
+		const std::array<doublereal, 5>& dXm1mN,
+		const std::array<doublereal, 6>& dXP0mN) const;
 
 	doublereal
 	dPredDerAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[5],
-		const doublereal dXP0mN[6]) const;
+		const std::array<doublereal, 5>& dXm1mN,
+		const std::array<doublereal, 6>& dXP0mN) const;
 
 	doublereal
 	dPredStateAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[5],
-		const doublereal dXP0mN[6]) const;
+		const std::array<doublereal, 5>& dXm1mN,
+		const std::array<doublereal, 6>& dXP0mN) const;
 };
 
 /* Mssth5Solver - end */
@@ -472,23 +472,23 @@ protected:
 
 	doublereal
 	dPredDerForStageS(unsigned uStage,
-		const doublereal dXm1mN[3],
-		const doublereal dXP0mN[4]) const;
+		const std::array<doublereal, 3>& dXm1mN,
+		const std::array<doublereal, 4>& dXP0mN) const;
 
 	doublereal
 	dPredStateForStageS(unsigned uStage,
-		const doublereal dXm1mN[3],
-		const doublereal dXP0mN[4]) const;
+		const std::array<doublereal, 3>& dXm1mN,
+		const std::array<doublereal, 4>& dXP0mN) const;
 
 	doublereal
 	dPredDerAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[3],
-		const doublereal dXP0mN[4]) const;
+		const std::array<doublereal, 3>& dXm1mN,
+		const std::array<doublereal, 4>& dXP0mN) const;
 
 	doublereal
 	dPredStateAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[3],
-		const doublereal dXP0mN[4]) const;
+		const std::array<doublereal, 3>& dXm1mN,
+		const std::array<doublereal, 4>& dXP0mN) const;
 };
 
 /* DIRK33Solver - end */
@@ -528,23 +528,23 @@ protected:
 
 	doublereal
 	dPredDerForStageS(unsigned uStage,
-		const doublereal dXm1mN[4],
-		const doublereal dXP0mN[5]) const;
+		const std::array<doublereal, 4>& dXm1mN,
+		const std::array<doublereal, 5>& dXP0mN) const;
 
 	doublereal
 	dPredStateForStageS(unsigned uStage,
-		const doublereal dXm1mN[4],
-		const doublereal dXP0mN[5]) const;
+		const std::array<doublereal, 4>& dXm1mN,
+		const std::array<doublereal, 5>& dXP0mN) const;
 
 	doublereal
 	dPredDerAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[4],
-		const doublereal dXP0mN[5]) const;
+		const std::array<doublereal, 4>& dXm1mN,
+		const std::array<doublereal, 5>& dXP0mN) const;
 
 	doublereal
 	dPredStateAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[4],
-		const doublereal dXP0mN[5]) const;
+		const std::array<doublereal, 4>& dXm1mN,
+		const std::array<doublereal, 5>& dXP0mN) const;
 };
 
 /* DIRK43Solver - end */
@@ -585,23 +585,23 @@ protected:
 
 	doublereal
 	dPredDerForStageS(unsigned uStage,
-		const doublereal dXm1mN[5],
-		const doublereal dXP0mN[6]) const;
+                          const std::array<doublereal, 5>& dXm1mN,
+                          const std::array<doublereal, 6>& dXP0mN) const;
 
 	doublereal
 	dPredStateForStageS(unsigned uStage,
-		const doublereal dXm1mN[5],
-		const doublereal dXP0mN[6]) const;
+                            const std::array<doublereal, 5>& dXm1mN,
+                            const std::array<doublereal, 6>& dXP0mN) const;
 
 	doublereal
 	dPredDerAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[5],
-		const doublereal dXP0mN[6]) const;
+                             const std::array<doublereal, 5>& dXm1mN,
+                             const std::array<doublereal, 6>& dXP0mN) const;
 
 	doublereal
 	dPredStateAlgForStageS(unsigned uStage,
-		const doublereal dXm1mN[5],
-		const doublereal dXP0mN[6]) const;
+                               const std::array<doublereal, 5>& dXm1mN,
+                               const std::array<doublereal, 6>& dXP0mN) const;
 };
 
 /* DIRK54Solver - end */
