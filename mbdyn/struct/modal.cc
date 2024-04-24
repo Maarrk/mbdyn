@@ -1259,7 +1259,8 @@ Modal::AssRes(SubVectorHandler& WorkVec,
 		 * d1tot = R*[d1 + PHIt*a], R1tot = R*[I + (PHIr*a)/\]
 		 */
 		SND[iStrNodem1].d1tot = R*(SND[iStrNodem1].OffsetFEM + PHIt*a);
-		SND[iStrNodem1].R1tot = R*Mat3x3(1., PHIr*a);
+		//SND[iStrNodem1].R1tot = R*Mat3x3(1., PHIr*a);
+		SND[iStrNodem1].R1tot = R*(Eye3 + Mat3x3(MatCross, PHIr*a));
 
 		/* constraint reaction (force) */
 		SND[iStrNodem1].F = Vec3(XCurr,
@@ -1475,7 +1476,8 @@ Modal::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 		PHIrT.Transpose(PHIr);
 
 		Vec3 d1tot = R*(SND[iStrNodem1].OffsetFEM + PHIt*a);
-		Mat3x3 R1tot = R*Mat3x3(1., PHIr*a);
+		//Mat3x3 R1tot = R*Mat3x3(1., PHIr*a);
+		Mat3x3 R1tot = Eye3 + Mat3x3(MatCross, PHIr*a);
 		Mat3xN SubMat1(NModes, 0.);
 		MatNx3 SubMat2(NModes, 0.);
 
@@ -1932,7 +1934,7 @@ Modal::InitialAssRes(SubVectorHandler& WorkVec,
 		PHIrT.Transpose(PHIr);
 
 		Vec3 d1tot = R*(SND[iStrNodem1].OffsetFEM + PHIt*a);
-		Mat3x3 R1tot = R*Mat3x3(1., PHIr*a);
+		Mat3x3 R1tot = R*(Eye3 + Mat3x3(MatCross, PHIr*a));
 
 		const Vec3& x2(SND[iStrNodem1].pNode->GetXCurr());
 		const Vec3& v2(SND[iStrNodem1].pNode->GetVCurr());

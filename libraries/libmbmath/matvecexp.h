@@ -345,7 +345,9 @@ public:
 	};
 
 	MatExp(const doublereal& d, const VecExp& v2) {
-		vec = Mat3x3(d, v2.GetVec());
+		//vec = Mat3x3(d, v2.GetVec());
+		vec = Eye3 * d;
+		vec += Mat3x3(MatCross, v2.GetVec());
 		mom = Mat3x3(MatCross, v2.GetMom());
 	};
 
