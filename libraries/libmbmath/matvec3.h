@@ -742,6 +742,7 @@ class Mat3x3: public sp_grad::SpConstMatElemAdapter<Mat3x3>
       Manip.Manipulate(*this, v1, v2);
    };
 
+#if 0
    // FIXME: is this "safe"?
    /*
     Costruttore che genera la matrice identita' moltiplicata per d e sommata
@@ -758,6 +759,7 @@ class Mat3x3: public sp_grad::SpConstMatElemAdapter<Mat3x3>
       pdMat[M23] = -v.pdVec[V1];
       pdMat[M33] = d;
    };
+#endif
 
    template <typename DERIVED>
    explicit Mat3x3(const sp_grad::SpMatElemExprBase<doublereal, DERIVED>& m)
@@ -1566,7 +1568,7 @@ public:
 // will replace Mat3x3(const Vec3&)
 class MatCross_Manip : public Mat3x3_Manip {
 public:
-        using Mat3x3_Manip::Manipulate;
+         using Mat3x3_Manip::Manipulate;
 	MatCross_Manip() {};
 	inline void Manipulate(Mat3x3& m, const Vec3& v) const override {
 		doublereal *pdm = m.pGetMat();
@@ -1768,7 +1770,9 @@ class MatR_Manip : public Mat3x3_Manip {
        */
       
       /* E' piu' efficiente se creo contemporaneamente I+d*g/\ */
-      m = Mat3x3(1., g*d);
+      // m = Mat3x3(Eye3+MatCross_Manip(g*d));
+      m = Eye3;
+      m += Mat3x3(MatCross, g*d);
       
       /* Alla fine sommo il termine d/2*g/\g/\, che e' una matrice piena */
       m += Mat3x3(MatCrossCross, g, g*(d/2.));
@@ -1790,7 +1794,8 @@ class MatG_Manip : public Mat3x3_Manip {
     */
    inline void Manipulate(Mat3x3& m, const Vec3& g) const override {
       doublereal d = (4./(4.+g.Dot()));
-      m = Mat3x3(d, g*(d/2.));
+      m = Eye3 * d;
+      m += Mat3x3(MatCross, g*(d/2.));
    };
 };
 
@@ -1808,7 +1813,9 @@ class MatGm1_Manip : public Mat3x3_Manip {
     Crea in m l'inversa della matrice G corrispondente ai parametri g.
     */
    inline void Manipulate(Mat3x3& m, const Vec3& g) const override {
-      m = Mat3x3(1., g/(-2.));
+      // m = Mat3x3(1., g/(-2.));
+      m = Eye3;
+      m += Mat3x3(MatCross, g/(-2.));
       m += g.Tens()/4.;
    };
 };
