@@ -50,8 +50,7 @@
 
 Wheel4::Wheel4(unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 firstRes(true)
 {
 	// help
@@ -1708,8 +1707,7 @@ Wheel4::InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr)
 TimeStep::TimeStep(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO)
+: UserDefinedElem(uLabel, pDO)
 {
 	// help
 	if (HP.IsKeyWord("help")) {

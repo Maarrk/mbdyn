@@ -41,7 +41,7 @@ extern const char* psElectricNames[];
 
 /* Electric - begin */
 
-class Electric : virtual public Elem, public ElemWithDofs {
+class Electric : public Elem, public DofOwnerOwner {
  public:
    /* Tipi di elementi elettrici */
    enum Type {

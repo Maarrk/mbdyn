@@ -45,10 +45,8 @@
 
 
 Shell::Shell(unsigned uLabel, const DofOwner* pDO, flag fOut)
-: Elem(uLabel, fOut),
-ElemGravityOwner(uLabel, fOut),
-ElemWithDofs(uLabel, pDO, fOut),
-InitialAssemblyElem(uLabel, fOut)
+: InitialAssemblyElem(uLabel, fOut),
+DofOwnerOwner(pDO)
 {
 	NO_OP;
 }

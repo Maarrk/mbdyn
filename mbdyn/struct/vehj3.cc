@@ -56,7 +56,7 @@ MultRMRtGammam1(Mat6x6& M, const Mat3x3& R, const Mat3x3& Gammam1)
 /* Costruttore non banale */
 DeformableJoint::DeformableJoint(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw6D* pCL,
+	ConstitutiveLaw6D*const pCL,
 	const StructNode* pN1,
 	const StructNode* pN2,
 	const Vec3& tilde_f1,
@@ -65,15 +65,14 @@ DeformableJoint::DeformableJoint(unsigned int uL,
 	const Mat3x3& tilde_R2h,
 	const OrientationDescription& od,
 	flag fOut)
-: Elem(uL, fOut),
-Joint(uL, pDO, fOut),
-ConstitutiveLaw6DOwner(pCL),
+: Joint(uL, pDO, fOut),
 pNode1(pN1), pNode2(pN2),
 tilde_f1(tilde_f1), tilde_f2(tilde_f2),
 tilde_R1h(tilde_R1h), tilde_R2h(tilde_R2h),
 od(od),
 tilde_k(Zero6), tilde_kPrime(Zero6),
-bFirstRes(false)
+bFirstRes(false),
+pDC(pCL)
 {
 	ASSERT(pNode1 != NULL);
 	ASSERT(pNode2 != NULL);
@@ -87,7 +86,11 @@ bFirstRes(false)
 /* Distruttore */
 DeformableJoint::~DeformableJoint(void)
 {
-	NO_OP;
+	/* Distrugge il legame costitutivo */
+	ASSERT(pDC != NULL);
+	if (pDC != NULL) {
+		SAFEDELETE(pDC);
+	}
 }
 
 
@@ -104,7 +107,7 @@ DeformableJoint::Restart(std::ostream& out) const
 	tilde_f2.Write(out, ", ") << ", hinge, reference, node, 1, ",
 	(tilde_R2h.GetVec(1)).Write(out, ", ")
 		<< ", 2, ", (tilde_R2h.GetVec(2)).Write(out, ", ") << ", ";
-	return pGetConstLaw()->Restart(out) << ';' << std::endl;
+	return pDC->Restart(out) << ';' << std::endl;
 }
 
 void
@@ -143,8 +146,8 @@ DeformableJoint::Output(OutputHandler& OH) const
 		Mat3x3 R1h(pNode1->GetRCurr()*tilde_R1h);
 		Mat3x3 R2h(pNode2->GetRCurr()*tilde_R2h);
 		Mat3x3 R(R1h.MulTM(R2h));
-		Vec3 F(GetF().GetVec1());
-		Vec3 M(GetF().GetVec2());
+		Vec3 F(pDC->GetF().GetVec1());
+		Vec3 M(pDC->GetF().GetVec2());
 		Vec3 E;
 
 		// angular strain
@@ -261,7 +264,7 @@ DeformableJoint::SetValue(DataManager *pDM,
 			}
 
 			/* else, pass to constitutive law */
-			ConstitutiveLaw6DOwner::SetValue(pDM, X, XP, ph);
+			pDC->SetValue(pDM, X, XP, ph);
 		}
 	}
 }
@@ -308,13 +311,13 @@ DeformableJoint::ParseHint(DataManager *pDM, const char *s) const
 		}
 	}
 
-	return ConstitutiveLaw6DOwner::ParseHint(pDM, s);
+	return pDC->ParseHint(pDM, s);
 }
 
 unsigned int
 DeformableJoint::iGetNumPrivData(void) const
 {
-	return 18 + ConstitutiveLaw6DOwner::iGetNumPrivData();
+	return 18 + pDC->iGetNumPrivData();
 }
 
 unsigned int
@@ -352,7 +355,7 @@ DeformableJoint::iGetPrivDataIdx(const char *s) const
 	{
 		size_t l = STRLENOF("constitutiveLaw.");
 		if (strncmp(s, "constitutiveLaw.", l) == 0) {
-			idx = ConstitutiveLaw6DOwner::iGetPrivDataIdx(&s[l]);
+			idx = pDC->iGetPrivDataIdx(&s[l]);
 			if (idx > 0) {
 				return 18 + idx;
 			}
@@ -443,10 +446,10 @@ DeformableJoint::dGetPrivData(unsigned int i) const
 	case 16:
 	case 17:
 	case 18:
-		return GetF()(i - 12);
+		return pDC->GetF()(i - 12);
 
 	default:
-		return ConstitutiveLaw6DOwner::dGetPrivData(i - 18);
+		return pDC->dGetPrivData(i - 18);
 	}
 }
 
@@ -809,7 +812,7 @@ DeformableJoint::GetEquationDimension(integer index) const {
 
 ElasticJoint::ElasticJoint(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw6D* pCL,
+	ConstitutiveLaw6D*const pCL,
 	const StructNode* pN1,
 	const StructNode* pN2,
 	const Vec3& tilde_f1,
@@ -818,15 +821,14 @@ ElasticJoint::ElasticJoint(unsigned int uL,
 	const Mat3x3& tilde_R2h,
 	const OrientationDescription& od,
 	flag fOut)
-: Elem(uL, fOut),
-DeformableJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, od, fOut),
+: DeformableJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, od, fOut),
 ThetaRef(Zero3)
 {
 	/*
 	 * Chiede la matrice tangente di riferimento
 	 * e la porta nel sistema globale
 	 */
-	FDE = MultRMRt(ConstitutiveLaw6DOwner::GetFDE(), R1h);
+	FDE = MultRMRt(pDC->GetFDE(), R1h);
 }
 
 ElasticJoint::~ElasticJoint(void)
@@ -838,7 +840,7 @@ void
 ElasticJoint::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw6DOwner::AfterConvergence(tilde_k);
+	pDC->AfterConvergence(tilde_k);
 }
 
 /* assemblaggio jacobiano */
@@ -909,7 +911,7 @@ void
 ElasticJoint::AfterConvergence(const VectorHandler& X,
 		const VectorHandler& XP, const VectorHandler& XPP)
 {
-	ConstitutiveLaw6DOwner::AfterConvergence(tilde_k);
+	pDC->AfterConvergence(tilde_k);
 }
  
 void
@@ -929,10 +931,10 @@ ElasticJoint::AssVec(SubVectorHandler& WorkVec)
 
 		tilde_k = Vec6(R1h.MulTV(d1 - f1), RotManip::VecRot(R1h.MulTM(R2h)));
 
-		ConstitutiveLaw6DOwner::Update(tilde_k);
+		pDC->Update(tilde_k);
 	}
 
-	F = MultRV(GetF(), R1h);
+	F = MultRV(pDC->GetF(), R1h);
 
 	WorkVec.Add(1, F.GetVec1());
 	WorkVec.Add(4, d1.Cross(F.GetVec1()) + F.GetVec2());
@@ -963,11 +965,11 @@ ElasticJoint::AfterPredict(VectorHandler& /* X */ ,
 	tilde_k = Vec6(R1h.MulTV(d1 - f1), ThetaRef);
 
 	/* Aggiorna il legame costitutivo */
-	ConstitutiveLaw6DOwner::Update(tilde_k);
+	pDC->Update(tilde_k);
 
 	/* Chiede la matrice tangente di riferimento e la porta
 	 * nel sistema globale */
-	FDE = ConstitutiveLaw6DOwner::GetFDE();
+	FDE = pDC->GetFDE();
         MultRMRtGammam1(FDE, R1h, GammaRefm1);
 
 	bFirstRes = true;
@@ -1011,7 +1013,7 @@ ElasticJoint::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 
 ElasticJointInv::ElasticJointInv(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw6D* pCL,
+	ConstitutiveLaw6D*const pCL,
 	const StructNode* pN1,
 	const StructNode* pN2,
 	const Vec3& tilde_f1,
@@ -1020,15 +1022,14 @@ ElasticJointInv::ElasticJointInv(unsigned int uL,
 	const Mat3x3& tilde_R2h,
 	const OrientationDescription& od,
 	flag fOut)
-: Elem(uL, fOut),
-DeformableJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, od, fOut),
+: DeformableJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, od, fOut),
 ThetaRef(Zero3)
 {
 	/*
 	 * Chiede la matrice tangente di riferimento
 	 * e la porta nel sistema globale
 	 */
-	FDE = MultRMRt(ConstitutiveLaw6DOwner::GetFDE(), R1h);
+	FDE = MultRMRt(pDC->GetFDE(), R1h);
 }
 
 ElasticJointInv::~ElasticJointInv(void)
@@ -1040,7 +1041,7 @@ void
 ElasticJointInv::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw6DOwner::AfterConvergence(tilde_k);
+	pDC->AfterConvergence(tilde_k);
 }
 
 /* assemblaggio jacobiano */
@@ -1107,10 +1108,10 @@ ElasticJointInv::AssVec(SubVectorHandler& WorkVec)
 	} else {
 		tilde_k = Vec6(hat_R.MulTV(d), ThetaCurr);
 
-		ConstitutiveLaw6DOwner::Update(tilde_k);
+		pDC->Update(tilde_k);
 	}
 
-	F = MultRV(GetF(), R1h);
+	F = MultRV(pDC->GetF(), R1h);
 
 	Vec3 dCrossF(d.Cross(F.GetVec1()));
 
@@ -1145,11 +1146,11 @@ ElasticJointInv::AfterPredict(VectorHandler& /* X */ ,
 	tilde_k = Vec6(hat_R.MulTV(d), ThetaRef);
 
 	/* Aggiorna il legame costitutivo */
-	ConstitutiveLaw6DOwner::Update(tilde_k);
+	pDC->Update(tilde_k);
 
 	/* Chiede la matrice tangente di riferimento e la porta
 	 * nel sistema globale */
-	FDE = ConstitutiveLaw6DOwner::GetFDE();
+	FDE = pDC->GetFDE();
         MultRMRtGammam1(FDE, R1h, GammaRefm1);
 
 	bFirstRes = true;
@@ -1193,7 +1194,7 @@ ElasticJointInv::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 
 ViscousJoint::ViscousJoint(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw6D* pCL,
+	ConstitutiveLaw6D*const pCL,
 	const StructNode* pN1,
 	const StructNode* pN2,
 	const Vec3& tilde_f1,
@@ -1202,14 +1203,13 @@ ViscousJoint::ViscousJoint(unsigned int uL,
 	const Mat3x3& tilde_R2h,
 	const OrientationDescription& od,
 	flag fOut)
-: Elem(uL, fOut),
-DeformableJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, od, fOut)
+: DeformableJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, od, fOut)
 {
 	/*
 	 * Chiede la matrice tangente di riferimento
 	 * e la porta nel sistema globale
 	 */
-	FDEPrime = MultRMRt(ConstitutiveLaw6DOwner::GetFDEPrime(), R1h);
+	FDEPrime = MultRMRt(pDC->GetFDEPrime(), R1h);
 }
 
 ViscousJoint::~ViscousJoint(void)
@@ -1221,7 +1221,7 @@ void
 ViscousJoint::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw6DOwner::AfterConvergence(tilde_k, tilde_kPrime);
+	pDC->AfterConvergence(tilde_k, tilde_kPrime);
 }
 
 void
@@ -1250,10 +1250,10 @@ ViscousJoint::AssVec(SubVectorHandler& WorkVec)
 		tilde_kPrime = Vec6(R1h.MulTV(d1Prime - pNode1->GetWCurr().Cross(d1)),
 			R1h.MulTV(pNode2->GetWCurr() - pNode1->GetWCurr()));
 
-		ConstitutiveLaw6DOwner::Update(Zero6, tilde_kPrime);
+		pDC->Update(Zero6, tilde_kPrime);
 	}
 
-	F = MultRV(ConstitutiveLaw6DOwner::GetF(), R1h);
+	F = MultRV(pDC->GetF(), R1h);
 
 	WorkVec.Add(1, F.GetVec1());
 	WorkVec.Add(4, d1.Cross(F.GetVec1()) + F.GetVec2());
@@ -1280,11 +1280,11 @@ ViscousJoint::AfterPredict(VectorHandler& /* X */ ,
 	tilde_kPrime = Vec6(R1h.MulTV(d1Prime - pNode1->GetWCurr().Cross(d1)),
 		R1h.MulTV(pNode2->GetWCurr() - pNode1->GetWCurr()));
 
-	ConstitutiveLaw6DOwner::Update(Zero6, tilde_kPrime);
+	pDC->Update(Zero6, tilde_kPrime);
 
 	/* FIXME: we need to be able to regenerate FDE
 	 * if the constitutive law throws ChangedEquationStructure */
-	FDEPrime = MultRMRt(ConstitutiveLaw6DOwner::GetFDEPrime(), R1h);
+	FDEPrime = MultRMRt(pDC->GetFDEPrime(), R1h);
 
 	bFirstRes = true;
 }
@@ -1328,7 +1328,7 @@ ViscousJoint::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 
 ViscoElasticJoint::ViscoElasticJoint(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw6D* pCL,
+	ConstitutiveLaw6D*const pCL,
 	const StructNode* pN1,
 	const StructNode* pN2,
 	const Vec3& tilde_f1,
@@ -1337,16 +1337,15 @@ ViscoElasticJoint::ViscoElasticJoint(unsigned int uL,
 	const Mat3x3& tilde_R2h,
 	const OrientationDescription& od,
 	flag fOut)
-: Elem(uL, fOut),
-DeformableJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, od, fOut),
+: DeformableJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, od, fOut),
 ThetaRef(Zero3)
 {
 	/*
 	 * Chiede la matrice tangente di riferimento
 	 * e la porta nel sistema globale
 	 */
-	FDE = MultRMRt(ConstitutiveLaw6DOwner::GetFDE(), R1h);
-	FDEPrime = MultRMRt(ConstitutiveLaw6DOwner::GetFDEPrime(), R1h);
+	FDE = MultRMRt(pDC->GetFDE(), R1h);
+	FDEPrime = MultRMRt(pDC->GetFDEPrime(), R1h);
 }
 
 ViscoElasticJoint::~ViscoElasticJoint(void)
@@ -1358,7 +1357,7 @@ void
 ViscoElasticJoint::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw6DOwner::AfterConvergence(tilde_k, tilde_kPrime);
+	pDC->AfterConvergence(tilde_k, tilde_kPrime);
 }
 
 void
@@ -1393,10 +1392,10 @@ ViscoElasticJoint::AssVec(SubVectorHandler& WorkVec)
 		tilde_kPrime = Vec6(R1h.MulTV(d1Prime - pNode1->GetWCurr().Cross(d1)),
 			R1h.MulTV(pNode2->GetWCurr() - pNode1->GetWCurr()));
 
-		ConstitutiveLaw6DOwner::Update(tilde_k, tilde_kPrime);
+		pDC->Update(tilde_k, tilde_kPrime);
 	}
 
-	F = MultRV(ConstitutiveLaw6DOwner::GetF(), R1h);
+	F = MultRV(pDC->GetF(), R1h);
 
 	WorkVec.Add(1, F.GetVec1());
 	WorkVec.Add(4, d1.Cross(F.GetVec1()) + F.GetVec2());
@@ -1433,16 +1432,16 @@ ViscoElasticJoint::AfterPredict(VectorHandler& /* X */ ,
 	tilde_kPrime = Vec6(R1h.MulTV(d1Prime - pNode1->GetWCurr().Cross(d1)),
 		R1h.MulTV(pNode2->GetWCurr() - pNode1->GetWCurr()));
 
-	ConstitutiveLaw6DOwner::Update(tilde_k, tilde_kPrime);
+	pDC->Update(tilde_k, tilde_kPrime);
 
 	/* Chiede la matrice tangente di riferimento e la porta
 	 * nel sistema globale */
-	FDE = ConstitutiveLaw6DOwner::GetFDE();
+	FDE = pDC->GetFDE();
         MultRMRtGammam1(FDE, R1h, GammaRefm1);
 
 	/* FIXME: we need to be able to regenerate FDE
 	 * if the constitutive law throws ChangedEquationStructure */
-	FDEPrime = MultRMRt(ConstitutiveLaw6DOwner::GetFDEPrime(), R1h);
+	FDEPrime = MultRMRt(pDC->GetFDEPrime(), R1h);
 
 	bFirstRes = true;
 }

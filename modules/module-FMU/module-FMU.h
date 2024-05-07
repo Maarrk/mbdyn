@@ -54,7 +54,7 @@
 
 
 class ModuleFMU
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
        	fmu* model;
         char FMUlocation[1000];

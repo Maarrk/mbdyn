@@ -47,9 +47,10 @@
 #include "sp_matrix_base.h"
 #include "sp_matvecass.h"
 
-class BodyAd: virtual public Body {
+template<class B, class N>
+class BodyAd: public B {
 public:
-     BodyAd(unsigned int uL, const StructNodeAd *pNode,
+     BodyAd(unsigned int uL, const N *pNode,
             doublereal dMassTmp, const Vec3& XgcTmp, const Mat3x3& JTmp,
             flag fOut);
 
@@ -82,7 +83,7 @@ private:
      const StructNodeAd* const pNode;
 };
 
-class DynamicBodyAd: public DynamicBody, public BodyAd {
+class DynamicBodyAd: public BodyAd<DynamicBody, DynamicStructNodeAd> {
 public:
      DynamicBodyAd(unsigned int uL, const DynamicStructNodeAd* pNodeTmp,
                    doublereal dMassTmp, const Vec3& XgcTmp, const Mat3x3& JTmp,
@@ -132,7 +133,7 @@ private:
      const DynamicStructNodeAd* const pNode;
 };
 
-class StaticBodyAd: public StaticBody, public BodyAd {
+class StaticBodyAd: public BodyAd<StaticBody,StaticStructNodeAd> {
 public:
      StaticBodyAd(unsigned int uL, const StaticStructNodeAd* pNode,
                   doublereal dMass, const Vec3& Xgc, const Mat3x3& J,
@@ -175,7 +176,7 @@ private:
      const StaticStructNodeAd* const pNode;
 };
 
-class ModalBodyAd: public ModalBody, public BodyAd {
+class ModalBodyAd: public BodyAd<ModalBody, ModalNodeAd> {
 public:
      ModalBodyAd(unsigned int uL, const ModalNodeAd* pNodeTmp,
                  doublereal dMassTmp, const Vec3& XgcTmp, const Mat3x3& JTmp,

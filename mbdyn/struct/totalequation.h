@@ -43,8 +43,7 @@ class TotalReaction;
 
 
 /* TotalEquation - begin */
-class TotalEquation :
-virtual public Elem, public Joint {
+class TotalEquation : public Joint {
 private:
 	const StructNode* pNode1;
 	const StructNode* pNode2;
@@ -250,8 +249,7 @@ public:
 
 /* TotalReaction - begin */
 
-class TotalReaction :
-virtual public Elem, public Joint {
+class TotalReaction : public Joint {
 private:
 	const StructNode* pNode1;
 	const StructNode* pNode2;

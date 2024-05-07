@@ -56,7 +56,7 @@ extern const char* psBulkNames[];
 
 /* Bulk - begin */
 
-class Bulk : virtual public Elem {
+class Bulk : public Elem {
  public:
    Bulk(unsigned int uLabel, flag fOutput)
      : Elem(uLabel, fOutput) { 
@@ -78,14 +78,14 @@ class Bulk : virtual public Elem {
 /* BulkSpringSupport - begin */
 
 class BulkSpringSupport 
-: virtual public Elem, public Bulk, public DriveOwner {
+: public Bulk, public DriveOwner {
  protected: 
    ScalarDof SD;
    
  public:
    BulkSpringSupport(unsigned int uLabel, const DriveCaller* pDC,
 		     const ScalarDof& sd, flag fOutput)
-     : Elem(uLabel, fOutput), Bulk(uLabel, fOutput),
+     : Bulk(uLabel, fOutput),
      DriveOwner(pDC), SD(sd) { 
       NO_OP;
    };

@@ -47,7 +47,7 @@
 // Gear Joint v2f - July 25th, 2013
 
 class GearJoint
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const StructNode* pNode1;
    const StructNode* pNode2;
@@ -104,8 +104,7 @@ public:
 GearJoint::GearJoint(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 pNode1(0), pNode2(0), pNodeRef(0), Gear_r1(1.), Gear_r2(1.)
 {
    DEBUGCOUT("Entering GearJoint constructor" << std::endl);
@@ -530,7 +529,7 @@ GearJoint::AfterConvergence(const VectorHandler& X,
 // Linear to Linear Transmission Joint v0a - July 16th, 2013
 
 class LinearTransmissionJoint
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const StructNode* pNode1;
    const StructNode* pNode2;
@@ -592,8 +591,7 @@ public:
 LinearTransmissionJoint::LinearTransmissionJoint(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 pNode1(0), pNode2(0), pNodeRef1(0), pNodeRef2(0), Coef_f1(1.), Coef_f2(1.)
 {
 	// help
@@ -1141,7 +1139,7 @@ LinearTransmissionJoint::AfterConvergence(const VectorHandler& X,
 // Motion Transmission Joint v0a - July 17th, 2013
 
 class MotionTransmissionJoint
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const StructNode* pNode1;
    const StructNode* pNode2;
@@ -1211,8 +1209,7 @@ public:
 MotionTransmissionJoint::MotionTransmissionJoint(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 pNode1(0), pNode2(0), pNodeRef1(0), pNodeRef2(0), Coef_f1(1.), Coef_f2(1.)
 {
 	// help

@@ -156,7 +156,6 @@ public:
 
 template <unsigned iNN>
 class Aerodynamic2DElem :
-	virtual public Elem,
 	public AerodynamicElem,
 	public InitialAssemblyElem,
 	public DriveOwner,
@@ -164,7 +163,7 @@ class Aerodynamic2DElem :
 {
 protected:
 	AeroData* aerodata;
-	InducedVelocity* pIndVel;
+	InducedVelocityElem* pIndVel;
 	bool bPassiveInducedVelocity;
 
 	const ShapeOwner Chord;		/* corda / chord*/
@@ -204,7 +203,7 @@ protected:
 public:
 	Aerodynamic2DElem(unsigned int uLabel,
 		const DofOwner *pDO,
-		InducedVelocity* pR, bool bPassive,
+		InducedVelocityElem* pR, bool bPassive,
 		const Shape* pC, const Shape* pF,
 		const Shape* pV, const Shape* pT,
 		const Shape* pTL,
@@ -252,7 +251,7 @@ public:
 	virtual unsigned int iGetInitialNumDof(void) const {
 		return 0;
 	};
-
+	
 	/* Dimensioni del workspace */
 	/* Initial workspace dimensions */
 	virtual void
@@ -279,7 +278,6 @@ public:
 /* AerodynamicBody - begin */
 
 class AerodynamicBody :
-	virtual public Elem,
 	public Aerodynamic2DElem<1>
 {
 protected:
@@ -311,7 +309,7 @@ protected:
 public:
 	AerodynamicBody(unsigned int uLabel,
 		const DofOwner *pDO,
-		const StructNode* pN, InducedVelocity* pR, bool bPassive,
+		const StructNode* pN, InducedVelocityElem* pR, bool bPassive,
 		const Vec3& fTmp, doublereal dS,
 		const Mat3x3& RaTmp,
 		const Shape* pC, const Shape* pF,
@@ -361,8 +359,8 @@ public:
 
 	/* Tipo di elemento aerodinamico */
 	/* Aerodynamic element type */
-	virtual AerodynamicElem::Type GetAerodynamicElemType(void) const {
-		return AerodynamicElem::AERODYNAMICBODY;
+	virtual AerodynamicElemBase::Type GetAerodynamicElemType(void) const {
+		return AerodynamicElemBase::AERODYNAMICBODY;
 	};
 
 	/* *******PER IL SOLUTORE PARALLELO******** */
@@ -389,7 +387,6 @@ public:
 /* AerodynamicBeam - begin */
 
 class AerodynamicBeam :
-	virtual public Elem,
 	public Aerodynamic2DElem<3>
 {
 protected:
@@ -430,7 +427,7 @@ protected:
 public:
 	AerodynamicBeam(unsigned int uLabel,
 		const DofOwner *pDO,
-		const Beam* pB, InducedVelocity* pR, bool bPassive,
+		const Beam* pB, InducedVelocityElem* pR, bool bPassive,
 		const Vec3& fTmp1,
 		const Vec3& fTmp2,
 		const Vec3& fTmp3,
@@ -484,8 +481,8 @@ public:
 
 	/* Tipo di elemento aerodinamico */
 	/* Type of aerodynamic element */
-	virtual AerodynamicElem::Type GetAerodynamicElemType(void) const {
-		return AerodynamicElem::AERODYNAMICBEAM;
+	virtual AerodynamicElemBase::Type GetAerodynamicElemType(void) const {
+		return AerodynamicElemBase::AERODYNAMICBEAM;
 	};
 
 	/* *******PER IL SOLUTORE PARALLELO******** */
@@ -513,7 +510,6 @@ public:
 /* AerodynamicBeam2 - begin */
 
 class AerodynamicBeam2 :
-	virtual public Elem,
 	public Aerodynamic2DElem<2>
 {
 protected:
@@ -551,7 +547,7 @@ protected:
 public:
 	AerodynamicBeam2(unsigned int uLabel,
 		const DofOwner *pDO,
-		const Beam2* pB, InducedVelocity* pR, bool bPassive,
+		const Beam2* pB, InducedVelocityElem* pR, bool bPassive,
 		const Vec3& fTmp1,
 		const Vec3& fTmp2,
 		const Mat3x3& Ra1Tmp,
@@ -603,8 +599,8 @@ public:
 
 	/* Tipo di elemento aerodinamico */
 	/* Type of aerodynamic element */
-	virtual AerodynamicElem::Type GetAerodynamicElemType(void) const {
-		return AerodynamicElem::AERODYNAMICBEAM;
+	virtual AerodynamicElemBase::Type GetAerodynamicElemType(void) const {
+		return AerodynamicElemBase::AERODYNAMICBEAM;
 	};
 
 	/* *******PER IL SOLUTORE PARALLELO******** */

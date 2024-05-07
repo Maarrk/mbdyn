@@ -42,7 +42,7 @@
 
 /* SocketStreamElem - begin */
 
-class SocketStreamElem : public StreamOutElem, virtual public Elem {
+class SocketStreamElem : public StreamOutElem {
 protected:
 	UseSocket *pUS;
 	StreamContent *pSC;

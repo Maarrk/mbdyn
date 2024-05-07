@@ -57,8 +57,7 @@
 // Shell4EAS - begin
 
 class Shell4EAS
-: virtual public Elem,
-public Shell
+: public Shell
 {
 #if 0
 protected:

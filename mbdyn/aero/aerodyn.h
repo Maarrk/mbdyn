@@ -86,7 +86,7 @@ extern const char* psAeroNames[];
 /* AirProperties - begin */
 
 class AirProperties 
-: virtual public Elem, public InitialAssemblyElem, public TplDriveOwner<Vec3> {
+: public InitialAssemblyElem, public TplDriveOwner<Vec3> {
      using Elem::AssRes;
      using Elem::AssJac;
      using InitialAssemblyElem::InitialAssRes;
@@ -240,11 +240,11 @@ public:
 /* AirPropOwner - end */
 
 
-/* AerodynamicElem - begin */
+/* AerodynamicElemBase - begin */
 
-class AerodynamicElem :
-	virtual public Elem,
-	public ElemWithDofs,
+class AerodynamicElemBase :
+	//public Elem,
+	//public DofOwnerOwner,
 	public AirPropOwner
 {
 public:
@@ -268,14 +268,28 @@ public:
 protected:
  
 public:
-	AerodynamicElem(unsigned int uL, const DofOwner *pDO, flag fOut);
-	virtual ~AerodynamicElem(void);
+	AerodynamicElemBase(void);
+	virtual ~AerodynamicElemBase(void);
 
 	/* Tipo di elemento aerodinamico */
-	virtual AerodynamicElem::Type GetAerodynamicElemType(void) const = 0;
+	virtual AerodynamicElemBase::Type GetAerodynamicElemType(void) const = 0;
 
 	virtual bool NeedsAirProperties(void) const;
 	virtual const InducedVelocity *pGetInducedVelocity(void) const;
+};
+
+/* AerodynamicElemBase  - end */
+
+/* AerodynamicElem - begin */
+
+class AerodynamicElem :
+	//public Elem,
+	public DofOwnerOwner,
+	public AerodynamicElemBase
+{
+public:
+	AerodynamicElem(const DofOwner* pDO);
+	virtual ~AerodynamicElem(void);
 };
 
 /* AerodynamicElem - end */

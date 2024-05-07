@@ -41,7 +41,7 @@
 /* JointRegularization - begin */
 
 class JointRegularization
-: virtual public Elem, public InitialAssemblyElem
+: public InitialAssemblyElem
 {
 protected:
 	const Joint *pJ;
@@ -85,7 +85,7 @@ public:
 /* TikhonovRegularization - begin */
 
 class TikhonovRegularization
-: virtual public Elem, public JointRegularization
+: public JointRegularization
 {
 protected:
 	std::vector<doublereal> dC;
@@ -142,7 +142,7 @@ public:
 /* DynamicRegularization - begin */
 
 class DynamicRegularization
-: virtual public Elem, public JointRegularization
+: public JointRegularization
 {
 protected:
 	std::vector<doublereal> dC;
@@ -195,7 +195,7 @@ public:
 /* JacobianRegularization - begin */
 
 class JacobianRegularization
-: virtual public Elem, public JointRegularization
+: public JointRegularization
 {
 protected:
 	std::vector<doublereal> dC;

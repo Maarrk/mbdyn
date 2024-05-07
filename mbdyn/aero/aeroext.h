@@ -48,7 +48,7 @@
 
 
 class AerodynamicExternal :
-	virtual public Elem,
+	public Elem,
 	public AerodynamicElem,
 	public DriveOwner
 {
@@ -160,8 +160,8 @@ public:
 	virtual void Output(OutputHandler& OH) const;
  
  	/* Tipo di elemento aerodinamico */
-	virtual AerodynamicElem::Type GetAerodynamicElemType(void) const {
-		return AerodynamicElem::AERODYNAMICEXTERNAL;
+	virtual AerodynamicElemBase::Type GetAerodynamicElemType(void) const {
+		return AerodynamicElemBase::AERODYNAMICEXTERNAL;
 	};
 	
 	/* *******PER IL SOLUTORE PARALLELO******** */        
@@ -195,7 +195,7 @@ private:
 
 /* AerodynamicExternalModal */
 class AerodynamicExternalModal :
-	virtual public Elem,
+	public Elem,
 	public AerodynamicElem,
 	public DriveOwner
 {
@@ -289,8 +289,8 @@ public:
 	virtual void Output(OutputHandler& OH) const;
  
  	/* Tipo di elemento aerodinamico */
-	virtual AerodynamicElem::Type GetAerodynamicElemType(void) const {
-		return AerodynamicElem::AERODYNAMICEXTERNAL;
+	virtual AerodynamicElemBase::Type GetAerodynamicElemType(void) const {
+		return AerodynamicElemBase::AERODYNAMICEXTERNAL;
 	};
 	
 	/* *******PER IL SOLUTORE PARALLELO******** */        

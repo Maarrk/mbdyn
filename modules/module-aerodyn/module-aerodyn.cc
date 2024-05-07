@@ -70,8 +70,7 @@
 #include "NREL_AeroDyn.h"
 
 class AeroDynModule
-: virtual public Elem,
-public UserDefinedElem
+: public UserDefinedElem
 {
 private:
 
@@ -229,8 +228,7 @@ AeroDynModule::AeroDynModule(
 	const DofOwner *pDO,
 	DataManager* pDM,
 	MBDynParser& HP)
-: Elem(uLabel, 0),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 bFirst(true)
 {
 	if (HP.IsKeyWord("help")) {

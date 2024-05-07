@@ -48,7 +48,7 @@
 /* Beam - begin */
 
 class Beam2
-: virtual public Elem, public ElemGravityOwner, public InitialAssemblyElem {
+: public InitialAssemblyElem, public GravityOwner {
     friend class AerodynamicBeam;
 
   public:
@@ -94,7 +94,7 @@ class Beam2
     Mat3x3 RPrev;
 
     /* Constitutive laws*/
-    ConstitutiveLaw6DOwner* pD;
+    ConstitutiveLaw6D* pD;
 
     /* Reference constitutive laws */
     Mat6x6 DRef;
@@ -196,7 +196,7 @@ class Beam2
 	 const Vec3& F1, const Vec3& F2,
 	 const Mat3x3& R1, const Mat3x3& R2,
 	 const Mat3x3& r,
-	 const ConstitutiveLaw6D* pd,
+	 ConstitutiveLaw6D* const pd,
 	 OrientationDescription ood,
 	 flag fOut);
 
@@ -360,7 +360,7 @@ class Beam2
 
 /* ViscoElasticBeam - begin */
 
-class ViscoElasticBeam2 : virtual public Elem, public Beam2 {
+class ViscoElasticBeam2 : public Beam2 {
   protected:
 
     /* Derivate di deformazioni e curvature */
@@ -399,7 +399,7 @@ class ViscoElasticBeam2 : virtual public Elem, public Beam2 {
 		     const Mat3x3& R1,
 		     const Mat3x3& R2,
 	             const Mat3x3& r,
-	             const ConstitutiveLaw6D* pd,
+	             ConstitutiveLaw6D* const pd,
 		     OrientationDescription ood,
 		     flag fOut);
 

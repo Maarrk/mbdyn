@@ -56,7 +56,7 @@
 
 #include "module-hydrodynamic_plain_bearing.h"
 
-class HydrodynamicPlainBearing: virtual public Elem, public UserDefinedElem
+class HydrodynamicPlainBearing: public UserDefinedElem
 {
      using Elem::AssRes;
 public:
@@ -266,8 +266,7 @@ const HydrodynamicPlainBearing::PrivData HydrodynamicPlainBearing::sm_rgPrivData
 HydrodynamicPlainBearing::HydrodynamicPlainBearing(
      unsigned uLabel, const DofOwner *pDO,
      DataManager* pDM, MBDynParser& HP)
-     :  Elem(uLabel, flag(0)),
-        UserDefinedElem(uLabel, pDO),
+     :  UserDefinedElem(uLabel, pDO),
         m_pShaft(0),
         m_pBearing(0),
         m_o1_R1(0.,0.,0.),

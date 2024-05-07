@@ -36,7 +36,7 @@
 
 // Resistor element
 class Resistor
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const ElectricNode * pElec1;
    const ElectricNode * pElec2;
@@ -86,7 +86,7 @@ public:
 };
 
 class Capacitor
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const ElectricNode * pElec1;
    const ElectricNode * pElec2;
@@ -138,7 +138,7 @@ public:
 
 
 class Inductor
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const ElectricNode * pElec1;
    const ElectricNode * pElec2;
@@ -190,7 +190,7 @@ public:
 
 
 class Diode
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const ElectricNode * pElec1;
    const ElectricNode * pElec2;
@@ -245,7 +245,7 @@ public:
 //Switch
 
 class Switch
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const ElectricNode * pElec1;
    const ElectricNode * pElec2;
@@ -297,7 +297,7 @@ public:
 //Electrical Source
 
 class ElectricalSource
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const ElectricNode * pElecIn1;
    const ElectricNode * pElecIn2;
@@ -362,7 +362,7 @@ public:
 //Ideal transformer
 
 class IdealTransformer
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const ElectricNode * pElecIn1;
    const ElectricNode * pElecIn2;
@@ -418,7 +418,7 @@ public:
 //Operational Amplifier
 
 class OperationalAmplifier
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const ElectricNode * pElecNeg;
    const ElectricNode * pElecPos;
@@ -473,7 +473,7 @@ public:
 // Bipolar junction transistor
 
 class BipolarTransistor
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const ElectricNode * pElecC;
    const ElectricNode * pElecB;
@@ -535,7 +535,7 @@ public:
 
 
 class ProximitySensor
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const ElectricNode * pElec1;
    const ElectricNode * pElec2;

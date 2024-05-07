@@ -37,7 +37,7 @@
 #include "userelem.h"
 
 class ModuleTemplate
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 	// add private data
 
@@ -77,8 +77,7 @@ public:
 ModuleTemplate::ModuleTemplate(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO)
+: UserDefinedElem(uLabel, pDO)
 {
 	// help
 	if (HP.IsKeyWord("help")) {

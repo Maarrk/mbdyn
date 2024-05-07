@@ -46,9 +46,7 @@ Mass::Mass(unsigned int uL,
 	const StructDispNode *pNode,
 	doublereal dMass,
 	flag fOut)
-: Elem(uL, fOut),
-ElemGravityOwner(uL, fOut),
-InitialAssemblyElem(uL, fOut),
+: InitialAssemblyElem(uL, fOut),
 pNode(pNode),
 dMass(dMass)
 {
@@ -218,8 +216,7 @@ DynamicMass::DynamicMass(unsigned int uL,
 	const DynamicStructDispNode* pNode,
 	doublereal dMass,
 	flag fOut)
-: Elem(uL, fOut),
-Mass(uL, pNode, dMass, fOut)
+: Mass(uL, pNode, dMass, fOut)
 {
 	NO_OP;
 }
@@ -475,8 +472,7 @@ StaticMass::StaticMass(unsigned int uL,
 	const StaticStructDispNode* pNode,
 	doublereal dMass,
 	flag fOut)
-: Elem(uL, fOut),
-Mass(uL, pNode, dMass, fOut)
+: Mass(uL, pNode, dMass, fOut)
 {
 	NO_OP;
 }
@@ -722,9 +718,7 @@ Body::Body(unsigned int uL,
 	const Vec3& Xgc,
 	const Mat3x3& J,
 	flag fOut)
-: Elem(uL, fOut),
-ElemGravityOwner(uL, fOut),
-InitialAssemblyElem(uL, fOut),
+: InitialAssemblyElem(uL, fOut),
 pNode(pNode),
 dMass(dMass),
 Xgc(Xgc),
@@ -987,8 +981,7 @@ DynamicBody::DynamicBody(unsigned int uL,
 	const Vec3& Xgc,
 	const Mat3x3& J,
 	flag fOut)
-: Elem(uL, fOut),
-Body(uL, pNode, dMass, Xgc, J, fOut)
+: Body(uL, pNode, dMass, Xgc, J, fOut)
 {
 	NO_OP;
 }
@@ -1409,9 +1402,7 @@ ModalBody::ModalBody(unsigned int uL,
 	const Vec3& Xgc,
 	const Mat3x3& J,
 	flag fOut)
-: Elem(uL, fOut),
-  Body(uL, pNode, dMass, Xgc, J, fOut),
-  DynamicBody(uL, pNode, dMass, Xgc, J, fOut),
+: DynamicBody(uL, pNode, dMass, Xgc, J, fOut),
   XPP(::Zero3),
   WP(::Zero3)
 {
@@ -1651,8 +1642,7 @@ StaticBody::StaticBody(unsigned int uL,
 	const Vec3& Xgc,
 	const Mat3x3& J,
 	flag fOut)
-: Elem(uL, fOut),
-Body(uL, pNode, dMass, Xgc, J, fOut)
+: Body(uL, pNode, dMass, Xgc, J, fOut)
 {
 	NO_OP;
 }

@@ -67,9 +67,8 @@ struct GenericAerodynamicData {
 };
 
 class GenericAerodynamicForce :
-	virtual public Elem,
-	public AerodynamicElem,
-	public InitialAssemblyElem
+	public InitialAssemblyElem,
+	public AerodynamicElem
 {
 protected:
 	/* Node the forces are applied to */
@@ -164,7 +163,7 @@ public:
 		const VectorHandler& XCurr);
 
 	/* Tipo di elemento aerodinamico */
-	virtual AerodynamicElem::Type GetAerodynamicElemType(void) const;
+	virtual AerodynamicElemBase::Type GetAerodynamicElemType(void) const;
 
 	/*
 	 * Fornisce il tipo e la label dei nodi che sono connessi all'elemento

@@ -44,19 +44,18 @@
 
 /* Costruttore non banale */
 Rod::Rod(unsigned int uL, const DofOwner* pDO,
-		   const ConstitutiveLaw1D* pCL,
+		   ConstitutiveLaw1D* const pCL,
 		   const StructDispNode* pN1, const StructDispNode* pN2,
 		   doublereal dLength, flag fOut, bool bHasOffsets)
-: Elem(uL, fOut),
-Joint(uL, pDO, fOut),
-ConstitutiveLaw1DOwner(pCL),
+: Joint(uL, pDO, fOut),
 pNode1(pN1),
 pNode2(pN2),
 dL0(dLength),
 v(Zero3),
 dElle(0.),
 dEpsilon(0.),
-dEpsilonPrime(0.)
+dEpsilonPrime(0.),
+pDC(pCL)
 {
 	/* Verifica di consistenza dei dati iniziali */
 	ASSERT(pNode1 != 0);
@@ -83,7 +82,11 @@ dEpsilonPrime(0.)
 /* Distruttore */
 Rod::~Rod(void)
 {
-	NO_OP;
+	/* Distrugge il legame costitutivo */
+	ASSERT(pDC != NULL);
+	if (pDC != NULL) {
+		SAFEDELETE(pDC);
+	}
 }
 
 /* Deformazione */
@@ -97,7 +100,7 @@ Rod::dCalcEpsilon(void)
 void
 Rod::AfterConvergence(const VectorHandler& X, const VectorHandler& XP)
 {
-	ConstitutiveLaw1DOwner::AfterConvergence(dEpsilon);
+	pDC->AfterConvergence(dEpsilon);
 }
 
 /* Contributo al file di restart */
@@ -108,7 +111,7 @@ Rod::Restart(std::ostream& out) const
 		<< pNode1->GetLabel() << ", "
 		<< pNode2->GetLabel() << ", "
 		<< dL0 << ", ";
-	return pGetConstLaw()->Restart(out) << ';' << std::endl;
+	return pDC->Restart(out) << ';' << std::endl;
 }
 
 void
@@ -130,8 +133,8 @@ Rod::AssMat(FullSubMatrixHandler& WorkMat, doublereal dCoef)
 	dElle = std::sqrt(dCross);
 
 	/* Forza e slope */
-	doublereal dF = GetF();
-	doublereal dFDE = GetFDE();
+	doublereal dF = pDC->GetF();
+	doublereal dFDE = pDC->GetFDE();
 
 	Mat3x3 K(Mat3x3(MatCrossCross, v, v*((-dF*dCoef)/(dElle*dCross)))
 		+v.Tens(v*((dFDE*dCoef)/(dL0*dCross))));
@@ -170,13 +173,13 @@ Rod::AssVec(SubVectorHandler& WorkVec)
 	/* Ampiezza della forza */
 	bool ChangeJac(false);
 	try {
-		ConstitutiveLaw1DOwner::Update(dEpsilon);
+		pDC->Update(dEpsilon);
 
 	} catch (Elem::ChangedEquationStructure& err) {
 		ChangeJac = true;
 	}
 
-	doublereal dF = GetF();
+	doublereal dF = pDC->GetF();
 
 	/* Vettore forza */
 	Vec3 F = v*(dF/dElle);
@@ -307,7 +310,7 @@ Rod::OutputPrepare(OutputHandler& OH)
 			Var_v = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "v",
 				OutputHandler::Dimensions::Dimensionless,
 				"direction unit vector");
-			ConstitutiveLaw1DOwner::OutputAppendPrepare(OH, m_sOutputNameBase + "." "constitutiveLaw");
+			pDC->OutputAppendPrepare(OH, m_sOutputNameBase + "." "constitutiveLaw");
 		}
 #endif // USE_NETCDF
 	}
@@ -321,7 +324,7 @@ Rod::Output(OutputHandler& OH) const
 
 
 		Vec3 vTmp(v/dElle);
-		doublereal d = GetF();
+		doublereal d = pDC->GetF();
 		doublereal dEllePrime = dEpsilonPrime*dL0;
 
 #ifdef USE_NETCDF
@@ -336,7 +339,7 @@ Rod::Output(OutputHandler& OH) const
 			OH.WriteNcVar(Var_dEllePrime, dEllePrime);
 			OH.WriteNcVar(Var_v, vTmp);
 
-			ConstitutiveLaw1DOwner::NetCDFOutputAppend(OH);
+			pDC->NetCDFOutputAppend(OH);
 		}
 #endif // USE_NETCDF
 		if (OH.UseText(OutputHandler::JOINTS)) {
@@ -345,7 +348,7 @@ Rod::Output(OutputHandler& OH) const
 			Joint::Output(out, "Rod", GetLabel(),
 					Vec3(d, 0., 0.), Zero3, vTmp*d, Zero3)
 				<< " " << dElle << " " << vTmp << " " << dEllePrime,
-				ConstitutiveLaw1DOwner::OutputAppend(out) << std::endl;
+				pDC->OutputAppend(out) << std::endl;
 		}
 	}
 }
@@ -463,7 +466,7 @@ Rod::AfterConvergence(const VectorHandler& X,
 unsigned int
 Rod::iGetNumPrivData(void) const
 {
-	return 3 + ConstitutiveLaw1DOwner::iGetNumPrivData();
+	return 3 + pDC->iGetNumPrivData();
 }
 
 unsigned int
@@ -490,7 +493,7 @@ Rod::iGetPrivDataIdx(const char *s) const
 			return 0;
 		}
 
-		unsigned int iIdx = ConstitutiveLaw1DOwner::iGetPrivDataIdx(&s[l]);
+		unsigned int iIdx = pDC->iGetPrivDataIdx(&s[l]);
 		if (iIdx == 0) {
 			// propagate error
 			return 0;
@@ -521,7 +524,7 @@ Rod::dGetPrivData(unsigned int i) const
 
 	switch (i) {
 	case 1:
-		return GetF();
+		return pDC->GetF();
 
 	case 2:
 		return dElle;
@@ -531,9 +534,9 @@ Rod::dGetPrivData(unsigned int i) const
 	}
 
 	i -= 3;
-	ASSERT(i <= ConstitutiveLaw1DOwner::iGetNumPrivData());
+	ASSERT(i <= pDC->iGetNumPrivData());
 
-	return ConstitutiveLaw1DOwner::dGetPrivData(i);
+	return pDC->dGetPrivData(i);
 }
 
 const OutputHandler::Dimensions
@@ -550,12 +553,11 @@ Rod::GetEquationDimension(integer index) const {
 /* Costruttore non banale */
 ViscoElasticRod::ViscoElasticRod(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw1D* pCL,
+	ConstitutiveLaw1D* const pCL,
 	const StructDispNode* pN1,
 	const StructDispNode* pN2,
 	doublereal dLength, flag fOut)
-: Elem(uL, fOut),
-Rod(uL, pDO, pCL, pN1, pN2, dLength, fOut)
+: Rod(uL, pDO, pCL, pN1, pN2, dLength, fOut)
 {
 	NO_OP;
 }
@@ -570,7 +572,7 @@ void
 ViscoElasticRod::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw1DOwner::AfterConvergence(dEpsilon, dEpsilonPrime);
+	pDC->AfterConvergence(dEpsilon, dEpsilonPrime);
 }
 
 VariableSubMatrixHandler&
@@ -622,9 +624,9 @@ ViscoElasticRod::AssJac(VariableSubMatrixHandler& WorkMat,
 	Vec3 vPrime(pNode2->GetVCurr()-pNode1->GetVCurr());
 
 	/* Forza e slopes */
-	doublereal dF = GetF();
-	doublereal dFDE = GetFDE();
-	doublereal dFDEPrime = GetFDEPrime();
+	doublereal dF = pDC->GetF();
+	doublereal dFDE = pDC->GetFDE();
+	doublereal dFDEPrime = pDC->GetFDEPrime();
 
 	Mat3x3 K(Mat3x3( MatCrossCross, v, v*((-dF*dCoef)/(dElle*dCross)) )
 		+ v.Tens( v*((dFDE*dCoef+dFDEPrime)/(dL0*dCross)) )
@@ -690,12 +692,12 @@ ViscoElasticRod::AssRes(SubVectorHandler& WorkVec,
 	/* Ampiezza della forza */
 	bool ChangeJac(false);
 	try {
-		ConstitutiveLaw1DOwner::Update(dEpsilon, dEpsilonPrime);
+		pDC->Update(dEpsilon, dEpsilonPrime);
 
 	} catch (Elem::ChangedEquationStructure& err) {
 		ChangeJac = true;
 	}
-	doublereal dF = GetF();
+	doublereal dF = pDC->GetF();
 
 	/* Vettore forza */
 	Vec3 F(v*(dF/dElle));
@@ -760,9 +762,9 @@ ViscoElasticRod::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 	Vec3 vPrime(pNode2->GetVCurr()-pNode1->GetVCurr());
 
 	/* Forza e slopes */
-	doublereal dF = GetF();
-	doublereal dFDE = GetFDE();
-	doublereal dFDEPrime = GetFDEPrime();
+	doublereal dF = pDC->GetF();
+	doublereal dFDE = pDC->GetFDE();
+	doublereal dFDEPrime = pDC->GetFDEPrime();
 
 	Mat3x3 K(Mat3x3(MatCrossCross, v, v*((-dF)/(dElle*dCross)))
 		+ v.Tens(v*((dFDE)/(dL0*dCross)))
@@ -831,8 +833,8 @@ ViscoElasticRod::InitialAssRes(SubVectorHandler& WorkVec,
 	dEpsilonPrime = (v.Dot(vPrime))/(dElle*dL0);
 
 	/* Ampiezza della forza */
-	ConstitutiveLaw1DOwner::Update(dEpsilon, dEpsilonPrime);
-	doublereal dF = GetF();
+	pDC->Update(dEpsilon, dEpsilonPrime);
+	doublereal dF = pDC->GetF();
 
 	/* Vettore forza */
 	Vec3 F(v*(dF/dElle));
@@ -851,15 +853,14 @@ ViscoElasticRod::InitialAssRes(SubVectorHandler& WorkVec,
 /* Costruttore non banale */
 RodWithOffset::RodWithOffset(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw1D* pCL,
+	ConstitutiveLaw1D* const pCL,
 	const StructNode* pN1,
 	const StructNode* pN2,
 	const Vec3& f1Tmp,
 	const Vec3& f2Tmp,
 	doublereal dLength,
 	flag fOut)
-: Elem(uL, fOut),
-Rod(uL, pDO, pCL, pN1, pN2, dLength, fOut, true),
+: Rod(uL, pDO, pCL, pN1, pN2, dLength, fOut, true),
 f1(f1Tmp),
 f2(f2Tmp)
 {
@@ -902,14 +903,14 @@ RodWithOffset::Restart(std::ostream& out) const
 		<< pNode2->GetLabel() << ", "
 		"position, reference, node, ", f2.Write(out, ", ") << ", "
 		<< dL0;
-	return pGetConstLaw()->Restart(out) << ';' << std::endl;
+	return pDC->Restart(out) << ';' << std::endl;
 }
 
 void
 RodWithOffset::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw1DOwner::AfterConvergence(dEpsilon, dEpsilonPrime);
+	pDC->AfterConvergence(dEpsilon, dEpsilonPrime);
 }
 
 VariableSubMatrixHandler&
@@ -956,9 +957,9 @@ RodWithOffset::AssJac(VariableSubMatrixHandler& WorkMat,
 	Vec3 vPrime(v2 + Omega2.Cross(f2Tmp) - v1 - Omega1.Cross(f1Tmp));
 
 	/* Forza e slopes */
-	doublereal dF = GetF();
-	doublereal dFDE = GetFDE();
-	doublereal dFDEPrime = GetFDEPrime();
+	doublereal dF = pDC->GetF();
+	doublereal dFDE = pDC->GetFDE();
+	doublereal dFDEPrime = pDC->GetFDEPrime();
 
 	/* Vettore forza */
 	Vec3 F = v*(dF/dElle);
@@ -1102,13 +1103,13 @@ RodWithOffset::AssVec(SubVectorHandler& WorkVec)
 	/* Ampiezza della forza */
 	bool ChangeJac(false);
 	try {
-		ConstitutiveLaw1DOwner::Update(dEpsilon, dEpsilonPrime);
+		pDC->Update(dEpsilon, dEpsilonPrime);
 
 	} catch (Elem::ChangedEquationStructure& err) {
 		ChangeJac = true;
 	}
 
-	doublereal dF = GetF();
+	doublereal dF = pDC->GetF();
 
 	/* Vettore forza */
 	Vec3 F(v*(dF/dElle));
@@ -1169,9 +1170,9 @@ RodWithOffset::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 	Vec3 vPrime(v2 + Omega2.Cross(f2Tmp) - v1 - Omega1.Cross(f1Tmp));
 
 	/* Forza e slopes */
-	doublereal dF = GetF();
-	doublereal dFDE = GetFDE();
-	doublereal dFDEPrime = GetFDEPrime();
+	doublereal dF = pDC->GetF();
+	doublereal dFDE = pDC->GetFDE();
+	doublereal dFDEPrime = pDC->GetFDEPrime();
 
 	/* Vettore forza */
 	Vec3 F = v*(dF/dElle);

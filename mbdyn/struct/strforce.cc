@@ -49,8 +49,7 @@ AbsoluteDispForce::AbsoluteDispForce(unsigned int uL,
 	const StructDispNode* pN,
 	const TplDriveCaller<Vec3>* pDC,
 	flag fOut)
-: Elem(uL, fOut),
-Force(uL, fOut),
+: Force(uL, fOut),
 f(pDC),
 pNode(pN)
 {
@@ -214,8 +213,7 @@ AbsoluteInternalDispForce::AbsoluteInternalDispForce(unsigned int uL,
 	const StructDispNode* pN2,
 	const TplDriveCaller<Vec3>* pDC,
 	flag fOut)
-: Elem(uL, fOut),
-Force(uL, fOut),
+: Force(uL, fOut),
 f(pDC),
 pNode1(pN1),
 pNode2(pN2)
@@ -392,8 +390,7 @@ StructuralForce::StructuralForce(unsigned int uL,
 	const StructNode* pN,
 	const TplDriveCaller<Vec3>* pDC,
 	flag fOut)
-: Elem(uL, fOut),
-Force(uL, fOut),
+: Force(uL, fOut),
 f(pDC),
 pNode(pN)
 {
@@ -426,8 +423,7 @@ AbsoluteForce::AbsoluteForce(unsigned int uL,
 	const TplDriveCaller<Vec3>* pDC,
 	const Vec3& TmpArm,
 	flag fOut)
-: Elem(uL, fOut),
-StructuralForce(uL, pN, pDC, fOut),
+: StructuralForce(uL, pN, pDC, fOut),
 Arm(TmpArm)
 {
 	NO_OP;
@@ -699,8 +695,7 @@ FollowerForce::FollowerForce(unsigned int uL, const StructNode* pN,
 	const TplDriveCaller<Vec3>* pDC,
 	const Vec3& TmpArm,
 	flag fOut)
-: Elem(uL, fOut),
-StructuralForce(uL, pN, pDC, fOut),
+: StructuralForce(uL, pN, pDC, fOut),
 Arm(TmpArm)
 {
 	NO_OP;
@@ -1010,8 +1005,7 @@ FollowerForce::InitialAssRes(SubVectorHandler& WorkVec,
 AbsoluteCouple::AbsoluteCouple(unsigned int uL, const StructNode* pN,
 	const TplDriveCaller<Vec3>* pDC,
 	flag fOut)
-: Elem(uL, fOut),
-StructuralForce(uL, pN, pDC, fOut)
+: StructuralForce(uL, pN, pDC, fOut)
 {
 	NO_OP;
 }
@@ -1174,8 +1168,7 @@ AbsoluteCouple::InitialAssRes(SubVectorHandler& WorkVec,
 FollowerCouple::FollowerCouple(unsigned int uL, const StructNode* pN,
 	const TplDriveCaller<Vec3>* pDC,
 	flag fOut)
-: Elem(uL, fOut),
-StructuralForce(uL, pN, pDC, fOut)
+: StructuralForce(uL, pN, pDC, fOut)
 {
 	NO_OP;
 }
@@ -1445,8 +1438,7 @@ StructuralInternalForce::StructuralInternalForce(unsigned int uL,
 	const StructNode* pN1, const StructNode* pN2,
 	const TplDriveCaller<Vec3>* pDC,
 	flag fOut)
-: Elem(uL, fOut),
-Force(uL, fOut),
+: Force(uL, fOut),
 f(pDC),
 pNode1(pN1), pNode2(pN2)
 {
@@ -1483,8 +1475,7 @@ AbsoluteInternalForce::AbsoluteInternalForce(unsigned int uL,
 	const TplDriveCaller<Vec3>* pDC,
 	const Vec3& TmpArm1, const Vec3& TmpArm2,
 	flag fOut)
-: Elem(uL, fOut),
-StructuralInternalForce(uL, pN1, pN2, pDC, fOut),
+: StructuralInternalForce(uL, pN1, pN2, pDC, fOut),
 Arm1(TmpArm1), Arm2(TmpArm2)
 {
 	NO_OP;
@@ -1824,8 +1815,7 @@ FollowerInternalForce::FollowerInternalForce(unsigned int uL,
 	const TplDriveCaller<Vec3>* pDC,
 	const Vec3& TmpArm1, const Vec3& TmpArm2,
 	flag fOut)
-: Elem(uL, fOut),
-StructuralInternalForce(uL, pN1, pN2, pDC, fOut),
+: StructuralInternalForce(uL, pN1, pN2, pDC, fOut),
 Arm1(TmpArm1), Arm2(TmpArm2)
 {
 	NO_OP;
@@ -2212,8 +2202,7 @@ AbsoluteInternalCouple::AbsoluteInternalCouple(unsigned int uL,
 	const StructNode* pN1, const StructNode* pN2,
 	const TplDriveCaller<Vec3>* pDC,
 	flag fOut)
-: Elem(uL, fOut),
-StructuralInternalForce(uL, pN1, pN2, pDC, fOut)
+: StructuralInternalForce(uL, pN1, pN2, pDC, fOut)
 {
 	NO_OP;
 }
@@ -2399,8 +2388,7 @@ FollowerInternalCouple::FollowerInternalCouple(unsigned int uL,
 	const StructNode* pN1, const StructNode* pN2,
 	const TplDriveCaller<Vec3>* pDC,
 	flag fOut)
-: Elem(uL, fOut),
-StructuralInternalForce(uL, pN1, pN2, pDC, fOut)
+: StructuralInternalForce(uL, pN1, pN2, pDC, fOut)
 {
 	NO_OP;
 }

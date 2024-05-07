@@ -221,7 +221,6 @@ struct LoadableCalls {
 };
 
 class LoadableElem :
-	virtual public Elem,
 	public UserDefinedElem
 {
 protected:

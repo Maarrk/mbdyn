@@ -37,10 +37,7 @@
 #include "nestedelem.h"
 
 NestedElem::NestedElem(const Elem* pE)
-: Elem(pE->GetLabel(), pE->fToBeOutput()),
-InitialAssemblyElem(pE->GetLabel(), pE->fToBeOutput()),
-AerodynamicElem(pE->GetLabel(), dynamic_cast<const ElemWithDofs *>(pE) ? dynamic_cast<const ElemWithDofs *>(pE)->pGetDofOwner() : 0, pE->fToBeOutput()),
-ElemGravityOwner(pE->GetLabel(), pE->fToBeOutput()),
+: InitialAssemblyElem(pE->GetLabel(), pE->fToBeOutput()),
 pElem(const_cast<Elem *>(pE))
 {
 	ASSERT(pE != NULL);
@@ -384,23 +381,23 @@ NestedElem::InitialAssRes(SubVectorHandler& WorkVec,
 }
 
 /* AerodynamicElem */
-AerodynamicElem::Type
+AerodynamicElemBase::Type
 NestedElem::GetAerodynamicElemType(void) const
 {
 	ASSERT(pElem != NULL);
-	AerodynamicElem *pAE = dynamic_cast<AerodynamicElem *>(pElem);
+	AerodynamicElemBase *pAE = dynamic_cast<AerodynamicElemBase *>(pElem);
 	if (pAE) {
 		return pAE->GetAerodynamicElemType();
 	}
 
-	return AerodynamicElem::UNKNOWN;
+	return AerodynamicElemBase::UNKNOWN;
 }
 
 bool
 NestedElem::NeedsAirProperties(void) const
 {
 	ASSERT(pElem != NULL);
-	AerodynamicElem *pAE = dynamic_cast<AerodynamicElem *>(pElem);
+	AerodynamicElemBase *pAE = dynamic_cast<AerodynamicElemBase *>(pElem);
 	if (pAE) {
 		return pAE->NeedsAirProperties();
 	}
@@ -413,7 +410,7 @@ NestedElem::PutAirProperties(const AirProperties* pAP)
 {
 	ASSERT(pElem != NULL);
 	ASSERT(NeedsAirProperties());
-	AerodynamicElem *pAE = dynamic_cast<AerodynamicElem *>(pElem);
+	AerodynamicElemBase *pAE = dynamic_cast<AerodynamicElemBase *>(pElem);
 	if (pAE) {
 		return pAE->PutAirProperties(pAP);
 	}
@@ -436,7 +433,7 @@ Vec3
 NestedElem::GetS_int(void) const
 {
 	ASSERT(pElem != NULL);
-	ElemGravityOwner *pEGO = dynamic_cast<ElemGravityOwner *>(pElem);
+	GravityOwner *pEGO = dynamic_cast<GravityOwner *>(pElem);
 	if (pEGO) {
 		return pEGO->GetS_int();
 	}
@@ -448,7 +445,7 @@ Mat3x3
 NestedElem::GetJ_int(void) const
 {
 	ASSERT(pElem != NULL);
-	ElemGravityOwner *pEGO = dynamic_cast<ElemGravityOwner *>(pElem);
+	GravityOwner *pEGO = dynamic_cast<GravityOwner *>(pElem);
 	if (pEGO) {
 		return pEGO->GetJ_int();
 	}
@@ -460,7 +457,7 @@ Vec3
 NestedElem::GetB_int(void) const
 {
 	ASSERT(pElem != NULL);
-	ElemGravityOwner *pEGO = dynamic_cast<ElemGravityOwner *>(pElem);
+	GravityOwner *pEGO = dynamic_cast<GravityOwner *>(pElem);
 	if (pEGO) {
 		return pEGO->GetB_int();
 	}
@@ -474,7 +471,7 @@ Vec3
 NestedElem::GetG_int(void) const
 {
 	ASSERT(pElem != NULL);
-	ElemGravityOwner *pEGO = dynamic_cast<ElemGravityOwner *>(pElem);
+	GravityOwner *pEGO = dynamic_cast<GravityOwner *>(pElem);
 	if (pEGO) {
 		return pEGO->GetG_int();
 	}
@@ -486,7 +483,7 @@ doublereal
 NestedElem::dGetM(void) const
 {
 	ASSERT(pElem != NULL);
-	ElemGravityOwner *pEGO = dynamic_cast<ElemGravityOwner *>(pElem);
+	GravityOwner *pEGO = dynamic_cast<GravityOwner *>(pElem);
 	if (pEGO) {
 		return pEGO->dGetM();
 	}
@@ -498,7 +495,7 @@ Vec3
 NestedElem::GetS(void) const
 {
 	ASSERT(pElem != NULL);
-	ElemGravityOwner *pEGO = dynamic_cast<ElemGravityOwner *>(pElem);
+	GravityOwner *pEGO = dynamic_cast<GravityOwner *>(pElem);
 	if (pEGO) {
 		return pEGO->GetS();
 	}
@@ -510,7 +507,7 @@ Mat3x3
 NestedElem::GetJ(void) const
 {
 	ASSERT(pElem != NULL);
-	ElemGravityOwner *pEGO = dynamic_cast<ElemGravityOwner *>(pElem);
+	GravityOwner *pEGO = dynamic_cast<GravityOwner *>(pElem);
 	if (pEGO) {
 		return pEGO->GetJ();
 	}
@@ -523,7 +520,7 @@ const DofOwner*
 NestedElem::pGetDofOwner(void) const
 {
 	ASSERT(pElem != NULL);
-	ElemWithDofs *pEwD = dynamic_cast<ElemWithDofs *>(pElem);
+	DofOwnerOwner *pEwD = dynamic_cast<DofOwnerOwner *>(pElem);
 	if (pEwD) {
 		return pEwD->pGetDofOwner();
 	}
@@ -536,7 +533,7 @@ integer
 NestedElem::iGetFirstIndex(void) const
 {
 	ASSERT(pElem != NULL);
-	ElemWithDofs *pEwD = dynamic_cast<ElemWithDofs *>(pElem);
+	DofOwnerOwner *pEwD = dynamic_cast<DofOwnerOwner *>(pElem);
 	if (pEwD) {
 		return pEwD->iGetFirstIndex();
 	}
@@ -548,7 +545,7 @@ void
 NestedElem::SetInitialValue(VectorHandler& X)
 {
 	ASSERT(pElem != NULL);
-	ElemWithDofs *pEwD = dynamic_cast<ElemWithDofs *>(pElem);
+	DofOwnerOwner *pEwD = dynamic_cast<DofOwnerOwner *>(pElem);
 	if (pEwD) {
 		pEwD->SetInitialValue(X);
 	}
@@ -557,7 +554,7 @@ NestedElem::SetInitialValue(VectorHandler& X)
 const OutputHandler::Dimensions 
 NestedElem::GetEquationDimension(integer index) const {
 	ASSERT(pElem != NULL);
-	ElemWithDofs*  temp_pElem = dynamic_cast<ElemWithDofs*> (pElem);
+	DofOwnerOwner*  temp_pElem = dynamic_cast<DofOwnerOwner*> (pElem);
 
 	if (temp_pElem != 0) {
 		return temp_pElem->GetEquationDimension(index);

@@ -55,7 +55,7 @@
 /* Beam - begin */
 
 class HBeam
-: virtual public Elem, public ElemGravityOwner, public InitialAssemblyElem {
+: public InitialAssemblyElem, public GravityOwner {
     friend class AerodynamicBeam;
 
   public:
@@ -87,7 +87,7 @@ class HBeam
     Mat3x3 RRef;
 
     /* Constitutive laws*/
-    ConstitutiveLaw6DOwner* pD;
+    ConstitutiveLaw6D* pD;
 
     /* Reference constitutive laws */
     Mat6x6 DRef;
@@ -183,7 +183,7 @@ class HBeam
 	 const StructNode* pN1, const StructNode* pN2,
 	 const Vec3& F1, const Vec3& F2,
 	 const Mat3x3& R1, const Mat3x3& R2,
-	 const ConstitutiveLaw6D* pd,
+	 ConstitutiveLaw6D* const pd,
 	 flag fOut);
 
     /* Distruttore banale */
@@ -313,7 +313,7 @@ class HBeam
 #ifdef VISCOELASTIC_BEAM
 /* ViscoElasticBeam - begin */
 
-class ViscoElasticHBeam : virtual public Elem, public HBeam {
+class ViscoElasticHBeam : public HBeam {
   protected:
 
     /* Derivate di deformazioni e curvature */
@@ -349,7 +349,7 @@ class ViscoElasticHBeam : virtual public Elem, public HBeam {
 	             const Vec3& F1,
 		     const Vec3& F2,
 	             const Mat3x3& r,
-	             const ConstitutiveLaw6D* pd,
+	             ConstitutiveLaw6D* const pd,
 		     flag fOut);
 
     /* Distruttore banale */

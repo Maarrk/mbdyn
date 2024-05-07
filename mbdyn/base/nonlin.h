@@ -118,7 +118,7 @@ public:
 	virtual std::map<OutputHandler::Dimensions, std::set<integer>>* GetDimMap() { return 0; };
 };
 
-class NonlinearSolverTestNone : virtual public NonlinearSolverTest {
+class NonlinearSolverTestNone : public NonlinearSolverTest {
 public:
         virtual Type GetType() const;
 	virtual void TestOne(doublereal& dRes, const VectorHandler& Vec,
@@ -134,7 +134,7 @@ public:
 // 			doublereal* pTestDiff=0);
 };
 
-class NonlinearSolverTestNorm : virtual public NonlinearSolverTest {
+class NonlinearSolverTestNorm : public NonlinearSolverTest {
 public:
         virtual Type GetType() const;
 	virtual void TestOne(doublereal& dRes, const VectorHandler& Vec,
@@ -144,7 +144,7 @@ public:
 	virtual doublereal TestPost(const doublereal& dRes) const;
 };
 
-class NonlinearSolverTestRelNorm : virtual public NonlinearSolverTest {
+class NonlinearSolverTestRelNorm : public NonlinearSolverTest {
 public:
 	MyVectorHandler AbsRes;
 	virtual VectorHandler* GetAbsRes();
@@ -161,7 +161,7 @@ public:
 			doublereal dScaleAlgEqu = 1., doublereal* pTestDiff=0);
 };
 
-class NonlinearSolverTestSepNorm : virtual public NonlinearSolverTest {
+class NonlinearSolverTestSepNorm : public NonlinearSolverTest {
 public:
 	/* Indices for corresponding dimensions */
 	std::map<OutputHandler::Dimensions, std::set<integer>> MapOfDimensionIndices;
@@ -185,7 +185,7 @@ public:
 };
 
 
-class NonlinearSolverTestMinMax : virtual public NonlinearSolverTest {
+class NonlinearSolverTestMinMax : public NonlinearSolverTest {
 public:
         virtual Type GetType() const;
 	virtual void TestOne(doublereal& dRes, const VectorHandler& Vec,
@@ -194,7 +194,7 @@ public:
 			const doublereal& dResNew) const;
 };
 
-class NonlinearSolverTestScale : virtual public NonlinearSolverTest {
+class NonlinearSolverTestScale {
 protected:
 	const VectorHandler* pScale; 
 	
@@ -205,8 +205,8 @@ public:
 	virtual const doublereal& dScaleCoef(const integer& iIndex) const;
 };
 
-class NonlinearSolverTestScaleNorm : virtual public NonlinearSolverTestScale,
-	virtual public NonlinearSolverTestNorm {
+class NonlinearSolverTestScaleNorm : public NonlinearSolverTestScale,
+	public NonlinearSolverTestNorm {
 public:
         virtual Type GetType() const;
 	virtual void TestOne(doublereal& dRes, const VectorHandler& Vec,
@@ -216,8 +216,8 @@ public:
 	virtual const doublereal& dScaleCoef(const integer& iIndex) const;
 };
 
-class NonlinearSolverTestScaleRelNorm : virtual public NonlinearSolverTestScale,
-	virtual public NonlinearSolverTestNorm {
+class NonlinearSolverTestScaleRelNorm : public NonlinearSolverTestScale,
+	public NonlinearSolverTestNorm {
 public:
 	virtual void TestOne(doublereal& dRes, const VectorHandler& Vec,
 			const integer& iIndex, doublereal dCoef) const;
@@ -226,8 +226,8 @@ public:
 	virtual const doublereal& dScaleCoef(const integer& iIndex) const;
 };
 
-class NonlinearSolverTestScaleSepNorm : virtual public NonlinearSolverTestScale,
-	virtual public NonlinearSolverTestSepNorm {
+class NonlinearSolverTestScaleSepNorm : public NonlinearSolverTestScale,
+	public NonlinearSolverTestSepNorm {
 public:
 	virtual void TestOne(doublereal& dRes, const VectorHandler& Vec,
 			const integer& iIndex, doublereal dCoef) const;
@@ -236,8 +236,8 @@ public:
 	virtual const doublereal& dScaleCoef(const integer& iIndex) const;
 };
 
-class NonlinearSolverTestScaleMinMax : virtual public NonlinearSolverTestScale,
-	virtual public NonlinearSolverTestMinMax {
+class NonlinearSolverTestScaleMinMax : public NonlinearSolverTestScale,
+	public NonlinearSolverTestMinMax {
 public:
         virtual Type GetType() const;
 	virtual void TestOne(doublereal& dRes, const VectorHandler& Vec,

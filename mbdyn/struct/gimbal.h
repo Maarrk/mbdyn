@@ -40,8 +40,7 @@
 
 /* GimbalRotationJoint - begin */
 
-class GimbalRotationJoint : 
-virtual public Elem, public Joint {
+class GimbalRotationJoint : public Joint {
 private:      
 protected:
 	const StructNode* pNode1;

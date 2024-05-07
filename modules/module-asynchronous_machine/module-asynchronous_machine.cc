@@ -83,7 +83,7 @@
 #include "module-asynchronous_machine.h"
 
 class asynchronous_machine
-: virtual public Elem, public UserDefinedElem
+: public UserDefinedElem
 {
 public:
 	asynchronous_machine(unsigned uLabel, const DofOwner *pDO,
@@ -158,8 +158,7 @@ const doublereal asynchronous_machine::sm_SingTol = std::pow(std::numeric_limits
 asynchronous_machine::asynchronous_machine(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: 	Elem(uLabel, flag(0)),
-	UserDefinedElem(uLabel, pDO),
+: 	UserDefinedElem(uLabel, pDO),
 	m_pRotorNode(0),
 	m_pStatorNode(0),
 	m_MK(0.),

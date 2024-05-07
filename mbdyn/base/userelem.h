@@ -39,10 +39,10 @@
 
 // base class for user-defined elements
 class UserDefinedElem :
-	virtual public Elem,
 	public InitialAssemblyElem,
-	public AerodynamicElem,
-	public ElemGravityOwner
+	public AerodynamicElemBase,
+	public GravityOwner,
+	public DofOwnerOwner
 {
 protected:
 	bool needsAirProperties;
@@ -55,7 +55,7 @@ public:
 	void NeedsAirProperties(bool yesno);
 
    	virtual Elem::Type GetElemType(void) const;
-   	virtual AerodynamicElem::Type GetAerodynamicElemType(void) const;
+   	virtual AerodynamicElemBase::Type GetAerodynamicElemType(void) const;
 
 	/* returns the dimension of the component */
 	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;

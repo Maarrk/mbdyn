@@ -182,10 +182,9 @@ DestroyUDE(void)
 
 // base class for user-defined elements
 UserDefinedElem::UserDefinedElem(unsigned uLabel, const DofOwner* pDO)
-: Elem(uLabel, flag(0)),
-InitialAssemblyElem(uLabel, flag(0)),
-AerodynamicElem(uLabel, pDO, flag(0)),
-ElemGravityOwner(uLabel, flag(0)),
+: InitialAssemblyElem(uLabel, flag(0)),
+AerodynamicElemBase(),
+DofOwnerOwner(pDO),
 needsAirProperties(false)
 {
 	NO_OP;
@@ -214,10 +213,10 @@ UserDefinedElem::GetElemType(void) const
    	return Elem::LOADABLE;
 }
 
-AerodynamicElem::Type
+AerodynamicElemBase::Type
 UserDefinedElem::GetAerodynamicElemType(void) const
 {
-	return AerodynamicElem::AERODYNAMICLOADABLE;
+	return AerodynamicElemBase::AERODYNAMICLOADABLE;
 }
 
 const OutputHandler::Dimensions 

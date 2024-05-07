@@ -38,11 +38,9 @@
 #include <stdlib.h>
 #include <cmath>
 
-AircraftInstruments::AircraftInstruments(unsigned int uLabel,
-	const DofOwner *pDO,
+AircraftInstruments::AircraftInstruments(unsigned int uLabel, const DofOwner* pDO,
 	const StructNode* pN, const Mat3x3 &R, flag fOut, doublereal initLong, doublereal initLat, doublereal earth_radius)
-: Elem(uLabel, fOut),
-AerodynamicElem(uLabel, pDO, fOut),
+: Elem(uLabel, fOut), AerodynamicElem(pDO),
 pNode(pN),
 Rh(R),
 earth_radius(earth_radius),

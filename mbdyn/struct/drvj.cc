@@ -44,8 +44,7 @@ LinearVelocityJoint::LinearVelocityJoint(unsigned int uL,
 					 const Vec3& TmpDir,
 					 const DriveCaller* pDC,
 					 flag fOut)
-: Elem(uL, fOut), 
-Joint(uL, pDO, fOut), 
+: Joint(uL, pDO, fOut), 
 DriveOwner(pDC),
 pNode(pN), Dir(TmpDir), 
 dF(0.)
@@ -324,8 +323,7 @@ AngularVelocityJoint::AngularVelocityJoint(unsigned int uL,
 					   const Vec3& TmpDir,
 					   const DriveCaller* pDC,
 					   flag fOut)
-: Elem(uL, fOut), 
-Joint(uL, pDO, fOut), 
+: Joint(uL, pDO, fOut), 
 DriveOwner(pDC), 
 pNode(pN), Dir(TmpDir), 
 dM(0.)

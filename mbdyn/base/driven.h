@@ -44,7 +44,7 @@
 
 #include "except.h"
 
-class DrivenElem : virtual public Elem,
+class DrivenElem : 
 	public NestedElem, protected DriveOwner {
 protected:
 	DataManager *pDM;

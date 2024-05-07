@@ -1416,7 +1416,7 @@ DataManager::ReadElems(MBDynParser& HP)
 				for (ElemContainerType::const_iterator p = ElemData[iCnt].ElemContainer.begin();
 					p != ElemData[iCnt].ElemContainer.end(); ++p)
 				{
-					ElemGravityOwner *pGO = Cast<ElemGravityOwner>(p->second);
+					GravityOwner *pGO = Cast<GravityOwner>(p->second);
 
 					ASSERT(pGO != 0);
 					pGO->PutGravity(pGrav);
@@ -1438,7 +1438,7 @@ DataManager::ReadElems(MBDynParser& HP)
 				for (ElemContainerType::const_iterator p = ElemData[iCnt].ElemContainer.begin();
 					p != ElemData[iCnt].ElemContainer.end(); ++p)
 				{
-					AerodynamicElem *pAE = Cast<AerodynamicElem>(p->second);
+					AerodynamicElemBase *pAE = Cast<AerodynamicElemBase>(p->second);
 
 					ASSERT(pAE != 0);
 					pAE->PutAirProperties(pProp);
@@ -1459,7 +1459,7 @@ DataManager::ReadElems(MBDynParser& HP)
 				for (ElemContainerType::const_iterator p = ElemData[iCnt].ElemContainer.begin();
 					p != ElemData[iCnt].ElemContainer.end(); ++p)
 				{
-					if (dynamic_cast<AerodynamicElem *>(p->second)->NeedsAirProperties()) {
+					if (dynamic_cast<AerodynamicElemBase *>(p->second)->NeedsAirProperties()) {
 						if (!bStop) {
 							silent_cerr("The following aerodynamic elements "
 								"are defined: " << std::endl);
@@ -2488,7 +2488,7 @@ DataManager::ReadOneElem(MBDynParser& HP, unsigned int uLabel, const std::string
 			RT = R.Transpose();
 		}
 
-		std::set<const ElemGravityOwner *> elements;
+		std::set<const GravityOwner *> elements;
 		Elem::Type Type = Elem::UNKNOWN;
 		bool bOut(false);
 		bool bLog(true);
@@ -2562,7 +2562,7 @@ DataManager::ReadOneElem(MBDynParser& HP, unsigned int uLabel, const std::string
 			if (HP.IsKeyWord("all")) {
                              for (const auto& oTmpEl: ElemData[Type].ElemContainer)
 				{
-					ElemGravityOwner *pEl = dynamic_cast<ElemGravityOwner *>(oTmpEl.second);
+					GravityOwner *pEl = dynamic_cast<GravityOwner *>(oTmpEl.second);
 					if (!pEl) {
 						silent_cerr(psElemNames[Type]
 							<< "(" << oTmpEl.second->GetLabel() << "): "
@@ -2574,7 +2574,7 @@ DataManager::ReadOneElem(MBDynParser& HP, unsigned int uLabel, const std::string
 
 					if (elements.find(pEl) != elements.end()) {
 						silent_cerr(psElemNames[Type]
-							<< "(" << pEl->GetLabel() << "): "
+							<< "(" << oTmpEl.second->GetLabel() << "): "
 							" duplicate label at line "
 							<< HP.GetLineData() << "\n");
 						throw ErrGeneric(MBDYN_EXCEPT_ARGS);
@@ -2593,7 +2593,7 @@ DataManager::ReadOneElem(MBDynParser& HP, unsigned int uLabel, const std::string
 					throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 				}
 
-				ElemGravityOwner *pEl = dynamic_cast<ElemGravityOwner *>(pTmpEl);
+				GravityOwner *pEl = dynamic_cast<GravityOwner *>(pTmpEl);
 				if (!pEl) {
 					silent_cerr("Inertia(" << uLabel << "): "
 						<< psElemNames[Type]

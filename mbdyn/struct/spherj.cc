@@ -47,8 +47,7 @@ SphericalHingeJoint::SphericalHingeJoint(unsigned int uL, const DofOwner* pDO,
 					 const Vec3& dTmp2, const Mat3x3& RTmp2h,
 					 const OrientationDescription& od,
 					 flag fOut)
-: Elem(uL, fOut), 
-Joint(uL, pDO, fOut),
+: Joint(uL, pDO, fOut),
 pNode1(pN1), pNode2(pN2), 
 d1(dTmp1), R1h(RTmp1h),
 d2(dTmp2), R2h(RTmp2h), 
@@ -606,8 +605,7 @@ PinJoint::PinJoint(unsigned int uL, const DofOwner* pDO,
 		   const Vec3& X0Tmp, const Vec3& dTmp,
 		   const OrientationDescription& od,
 		   flag fOut)
-: Elem(uL, fOut), 
-Joint(uL, pDO, fOut), pNode(pN), X0(X0Tmp), d(dTmp), 
+: Joint(uL, pDO, fOut), pNode(pN), X0(X0Tmp), d(dTmp), 
 F(Zero3),
 od(od)
 {

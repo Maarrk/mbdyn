@@ -539,7 +539,7 @@ public:
 		return ElasticConstitutiveLaw1D::Restart_int(out);
 	};
 
-	using SimulationEntity::Update;
+	//using SimulationEntity::Update;
 	virtual void Update(const doublereal& Eps, const doublereal& /* EpsPrime*/ = 0.) override {
 		ConstitutiveLaw1D::Epsilon = Eps;
 		doublereal e1 = Eps - ElasticConstitutiveLaw1D::Get();

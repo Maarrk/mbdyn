@@ -46,7 +46,8 @@
 /* InducedVelocity - begin */
 
 class InducedVelocity
-: virtual public Elem {
+// : public Elem 
+{
 public:
 	enum Type {
 		UNKNOWN = -1,
@@ -116,19 +117,18 @@ protected:
 	ResForceSet **ppRes;
 
 public:
-	InducedVelocity(unsigned int uL,
-		const StructNode* pCraft,
-		ResForceSet **ppres, flag fOut);
+	InducedVelocity(const StructNode* pCraft,
+		ResForceSet **ppres);
 	virtual ~InducedVelocity(void);
 
 	// funzioni di servizio
 
-	/* Metodi per l'estrazione di dati "privati".
-	 * Si suppone che l'estrattore li sappia interpretare.
-	 * Come default non ci sono dati privati estraibili */
-	virtual unsigned int iGetNumPrivData(void) const;
-	virtual unsigned int iGetPrivDataIdx(const char *s) const;
-	virtual doublereal dGetPrivData(unsigned int i) const;
+// 	/* Metodi per l'estrazione di dati "privati".
+// 	 * Si suppone che l'estrattore li sappia interpretare.
+// 	 * Come default non ci sono dati privati estraibili */
+// 	virtual unsigned int iGetNumPrivData(void) const;
+// 	virtual unsigned int iGetPrivDataIdx(const char *s) const;
+// 	virtual doublereal dGetPrivData(unsigned int i) const;
 
 	// Return "true" if sectional forces are needed
 	virtual bool bSectionalForces(void) const;
@@ -148,10 +148,10 @@ public:
 	 * E' usato per completare i singoli Dof relativi all'elemento.
 	 */
 
-	// ritorna il numero di Dofs per gli elementi che sono anche DofOwners
-	virtual unsigned int iGetNumDof(void) const {
-		return 0;
-	};
+// 	// ritorna il numero di Dofs per gli elementi che sono anche DofOwners
+// 	virtual unsigned int iGetNumDof(void) const {
+// 		return 0;
+// 	};
 
 	// Type
 	virtual InducedVelocity::Type GetInducedVelocityType(void) const = 0;
@@ -203,47 +203,33 @@ public:
 	virtual Vec3 GetInducedVelocity(Elem::Type type,
 		unsigned uLabel, unsigned uPnt, const Vec3& X) const = 0;
 
-	// Dimensioni del workspace
-	virtual void
-	WorkSpaceDim(integer* piNumRows, integer* piNumCols) const {
-		*piNumRows = 0;
-		*piNumCols = 0;
-	};
+// 	// Elaborazione stato interno dopo la convergenza
+// 	virtual void
+// 	AfterConvergence(const VectorHandler& X, const VectorHandler& XP);
+// 
+// 	// Relativo ai ...WithDofs
+// 	virtual void SetInitialValue(VectorHandler& /* X */ ) {
+// 		NO_OP;
+// 	};
+// 
+// 	// Relativo ai ...WithDofs
+// 	virtual void
+// 	SetValue(DataManager *pDM,
+// 		VectorHandler& /* X */ , VectorHandler& /* XP */ ,
+// 		SimulationEntity::Hints *ph = 0)
+// 	{
+// 		NO_OP;
+// 	};
 
-	// assemblaggio jacobiano
-	virtual VariableSubMatrixHandler&
-	AssJac(VariableSubMatrixHandler& WorkMat,
-		doublereal dCoef,
-		const VectorHandler& XCurr,
-		const VectorHandler& XPrimeCurr);
-
-	// Elaborazione stato interno dopo la convergenza
-	virtual void
-	AfterConvergence(const VectorHandler& X, const VectorHandler& XP);
-
-	// Relativo ai ...WithDofs
-	virtual void SetInitialValue(VectorHandler& /* X */ ) {
-		NO_OP;
-	};
-
-	// Relativo ai ...WithDofs
-	virtual void
-	SetValue(DataManager *pDM,
-		VectorHandler& /* X */ , VectorHandler& /* XP */ ,
-		SimulationEntity::Hints *ph = 0)
-	{
-		NO_OP;
-	};
-
-	// *******PER IL SOLUTORE PARALLELO********
-	// Fornisce il tipo e la label dei nodi che sono connessi all'elemento
-	// utile per l'assemblaggio della matrice di connessione fra i dofs
-	virtual void
-	GetConnectedNodes(std::vector<const Node *>& connectedNodes) const {
-		connectedNodes.resize(1);
-		connectedNodes[0] = pCraft;
-	};
-	// ************************************************
+// 	// *******PER IL SOLUTORE PARALLELO********
+// 	// Fornisce il tipo e la label dei nodi che sono connessi all'elemento
+// 	// utile per l'assemblaggio della matrice di connessione fra i dofs
+// 	virtual void
+// 	GetConnectedNodes(std::vector<const Node *>& connectedNodes) const {
+// 		connectedNodes.resize(1);
+// 		connectedNodes[0] = pCraft;
+// 	};
+// 	// ************************************************
 
 #ifdef USE_MPI
 	void ExchangeLoads(flag fWhat);	// ExchangeLoads
@@ -257,9 +243,10 @@ public:
 /* InducedVelocityElem - begin */
 
 class InducedVelocityElem
-: virtual public Elem, public AerodynamicElem, public InducedVelocity {
+: public AerodynamicElem, public InducedVelocity, public Elem {
 public:
-	InducedVelocityElem(unsigned int uL, const DofOwner* pDO,
+	InducedVelocityElem(unsigned int uL, 
+		const DofOwner* pDO,
 		const StructNode* pCraft,
 		ResForceSet **ppres, flag fOut);
 	virtual ~InducedVelocityElem(void);
@@ -268,7 +255,7 @@ public:
 
 	// Tipo dell'elemento (usato per debug ecc.)
 	virtual Elem::Type GetElemType(void) const;
-	virtual AerodynamicElem::Type GetAerodynamicElemType(void) const;
+	virtual AerodynamicElemBase::Type GetAerodynamicElemType(void) const;
 
 	/* Il metodo iGetNumDof() serve a ritornare il numero di gradi di liberta'
 	 * propri che l'elemento definisce. Non e' virtuale in quanto serve a
@@ -290,6 +277,27 @@ public:
 		ASSERT(i >= 0 && i < this->iGetNumDof());
 		return DofOrder::DIFFERENTIAL;
 	};
+
+	/* Metodi per l'estrazione di dati "privati".
+	 * Si suppone che l'estrattore li sappia interpretare.
+	 * Come default non ci sono dati privati estraibili */
+	virtual unsigned int iGetNumPrivData(void) const;
+	virtual unsigned int iGetPrivDataIdx(const char *s) const;
+	virtual doublereal dGetPrivData(unsigned int i) const;
+
+	// Dimensioni del workspace
+	virtual void
+	WorkSpaceDim(integer* piNumRows, integer* piNumCols) const {
+		*piNumRows = 0;
+		*piNumCols = 0;
+	};
+
+	// assemblaggio jacobiano
+	virtual VariableSubMatrixHandler&
+	AssJac(VariableSubMatrixHandler& WorkMat,
+		doublereal dCoef,
+		const VectorHandler& XCurr,
+		const VectorHandler& XPrimeCurr);
 
 	/* return s the dimension of the component */
 	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;

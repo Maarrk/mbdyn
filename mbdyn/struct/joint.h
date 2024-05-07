@@ -48,8 +48,8 @@ extern const char* psJointNames[];
 /* Joint - begin */
 
 class Joint
-: virtual public Elem, public ElemGravityOwner,
-	public ElemWithDofs, public InitialAssemblyElem
+: public InitialAssemblyElem, public GravityOwner, //public ElemGravityOwner,
+	public DofOwnerOwner//, public InitialAssemblyElem
 {
 protected:
 #ifdef USE_NETCDF

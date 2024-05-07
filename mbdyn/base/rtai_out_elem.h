@@ -40,7 +40,7 @@
 
 /* RTMBDynOutElem - begin */
 
-class RTMBDynOutElem : public StreamOutElem, virtual public Elem {
+class RTMBDynOutElem : public StreamOutElem {
 protected:
 	/* FIXME: store restart info as well */
 	std::string host;

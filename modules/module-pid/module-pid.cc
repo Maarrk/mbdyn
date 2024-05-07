@@ -8,7 +8,7 @@
 
 Pid::Pid(unsigned int uLabel, const DofOwner *pDO,
             DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)), UserDefinedElem(uLabel, pDO)
+: UserDefinedElem(uLabel, pDO)
 {
     if (HP.IsKeyWord("help")) {
         silent_cout("\nModule: PID\n"

@@ -37,7 +37,7 @@
       
 /* Thermal - begin */
 
-class Thermal : virtual public Elem, public ElemWithDofs {
+class Thermal : public Elem, public DofOwnerOwner {
  public:
    /* Tipi di elementi termici */
    enum Type {

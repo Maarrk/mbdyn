@@ -268,7 +268,7 @@ public:
 
 /* DiscreteControlElem - begin */
 
-class DiscreteControlElem : virtual public Elem, public Electric {
+class DiscreteControlElem : public Electric {
 protected:
 	DiscreteControlProcess* pDCP;
 	bool bNewStep;		// Decides whether to read data from control process

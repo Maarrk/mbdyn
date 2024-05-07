@@ -146,6 +146,8 @@ if test $MAKESRC = yes ; then
 		exit $RC
 	fi
 	echo "Generating html source documentation...."
+	cd Doxygen
 	doxygen
+	cd -
 fi
 

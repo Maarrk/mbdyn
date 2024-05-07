@@ -6,7 +6,6 @@ ThermalCapacitance::ThermalCapacitance(unsigned int uL,
    	const DofOwner* pDO,
 	const ThermalNode* p1, 
 	doublereal c, flag fOut) : 
-Elem(uL, fOut), 
 Thermal(uL, pDO, fOut), 
 pNode1(p1), 
 thermalcapacitance(c) {

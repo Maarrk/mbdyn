@@ -41,7 +41,7 @@
 
 /* MinorLoss - begin */
 
-class MinorLoss : virtual public Elem, public HydraulicElem {
+class MinorLoss : public HydraulicElem {
  private:
    const PressureNode* m_pNode1;
    const PressureNode* m_pNode2;
@@ -104,7 +104,7 @@ class MinorLoss : virtual public Elem, public HydraulicElem {
 
 /* ThreeWayMinorLoss - begin */
 
-class ThreeWayMinorLoss : virtual public Elem, public HydraulicElem {
+class ThreeWayMinorLoss : public HydraulicElem {
 private:
 	const PressureNode* m_pNode0;
 	const PressureNode* m_pNode1;
@@ -173,7 +173,7 @@ public:
 
 /* Orifice - begin */
 
-class Orifice : virtual public Elem, public HydraulicElem {
+class Orifice : public HydraulicElem {
  private:
    const PressureNode* m_pNode1;
    const PressureNode* m_pNode2;

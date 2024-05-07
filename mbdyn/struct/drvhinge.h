@@ -42,7 +42,7 @@
 /* DriveHingeJoint - begin */
 
 class DriveHingeJoint : 
-virtual public Elem, public Joint, public TplDriveOwner<Vec3> {
+public Joint, public TplDriveOwner<Vec3> {
 private:      
    
 protected:

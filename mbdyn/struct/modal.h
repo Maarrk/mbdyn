@@ -62,7 +62,8 @@
  * puo' darsi che venga creata una classe apposta
  */
 
-class Modal : virtual public Elem, public Joint {
+class Modal : public Joint
+{
 public:
 	struct StrNodeData;
 protected:

@@ -90,8 +90,7 @@ Motor::Motor(const unsigned int uL, const DofOwner* pD,
 		const DriveCaller* pM0,
 		const DriveCaller* pM1,
 		const flag fOut)
-: Elem(uL, fOut), 
-Electric(uL, pD, fOut),
+: Electric(uL, pD, fOut),
 pStrNode1(pN1), pStrNode2(pN2), pVoltage1(pV1), pVoltage2(pV2),
 Rn(Rn), dGain(dG), dL(dL), dR(dR), p(p), M0(pM0), M1(pM1), M(i0 * dG), i(i0)
 {

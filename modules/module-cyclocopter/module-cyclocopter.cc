@@ -54,7 +54,7 @@
 */
 
 class CyclocopterInflow
-: virtual public Elem, public UserDefinedElem, public InducedVelocity {
+: public UserDefinedElem, public InducedVelocity {
 protected:
 	const StructNode* pRotor;
 
@@ -124,12 +124,31 @@ public:
 		      const VectorHandler& XCurr);
    	SubVectorHandler& 
 	InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr);
+
+	// Dimensioni del workspace
+	virtual void
+	WorkSpaceDim(integer* piNumRows, integer* piNumCols) const {
+		*piNumRows = 0;
+		*piNumCols = 0;
+	};
+
+	/* assemblaggio jacobiano (nullo per tutti tranne che per il DynamicInflow) */
+	virtual VariableSubMatrixHandler&
+	AssJac(VariableSubMatrixHandler& WorkMat,
+		doublereal /* dCoef */ ,
+		const VectorHandler& /* XCurr */ ,
+		const VectorHandler& /* XPrimeCurr */ ) override
+	{
+		DEBUGCOUT("Entering CyclocopterInflow::AssJac()" << std::endl);
+		WorkMat.SetNullMatrix();
+
+		return WorkMat;
+	}
 };
 
 CyclocopterInflow::CyclocopterInflow(unsigned int uL, const DofOwner* pDO)
-: Elem(uL, flag(0)),
-UserDefinedElem(uL, pDO),
-InducedVelocity(uL, 0, 0, flag(0)),
+: UserDefinedElem(uL, pDO),
+InducedVelocity(0, 0),
 pRotor(0),
 bFlagAverage(false),
 dRadius(0.),
@@ -406,7 +425,7 @@ ReadUniform(DataManager* pDM,
 /* CyclocopterNoInflow - begin */
 
 class CyclocopterNoInflow
-: virtual public Elem, public CyclocopterInflow {
+: public CyclocopterInflow {
 public:
 	CyclocopterNoInflow(unsigned int uL, const DofOwner* pDO,
 		DataManager* pDM, MBDynParser& HP);
@@ -455,8 +474,7 @@ public:
 
 CyclocopterNoInflow::CyclocopterNoInflow(unsigned int uL, const DofOwner* pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uL, flag(0)),
-CyclocopterInflow(uL, pDO)
+: CyclocopterInflow(uL, pDO)
 {
 	if (HP.IsKeyWord("help")) {
 		silent_cout(
@@ -556,7 +574,7 @@ force is mainly in one direction.
 */
 
 class CyclocopterUniform1D
-: virtual public Elem, public CyclocopterInflow {
+: public CyclocopterInflow {
 protected:
 	Vec3 RRot3;
 	Mat3x3 RRotor;
@@ -632,8 +650,7 @@ public:
 
 CyclocopterUniform1D::CyclocopterUniform1D(unsigned int uL, const DofOwner* pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uL, flag(0)),
-CyclocopterInflow(uL, pDO),
+: CyclocopterInflow(uL, pDO),
 RRot3(::Zero3),
 RRotor(::Eye3),
 dUindMeanPrev(0.),
@@ -781,7 +798,7 @@ CyclocopterUniform1D::AfterConvergence(const VectorHandler& X, const VectorHandl
 		dWeight = 1.;
 	}
 
-	InducedVelocity::AfterConvergence(X, XP);
+	// InducedVelocity::AfterConvergence(X, XP);
 }
 
 SubVectorHandler&
@@ -861,7 +878,7 @@ with the rotor rotation axis!
 */
 
 class CyclocopterUniform2D
-: virtual public Elem, public CyclocopterInflow {
+: public CyclocopterInflow {
 protected:
 	Mat3x3 RRotor;
 	Vec3 dUind;
@@ -931,12 +948,23 @@ public:
 	virtual Mat3x3 GetRRotor(const Vec3& X) const {
 		return ::Zero3x3;
 	};
+	/* assemblaggio jacobiano (nullo per tutti tranne che per il DynamicInflow) */
+	virtual VariableSubMatrixHandler&
+	AssJac(VariableSubMatrixHandler& WorkMat,
+		doublereal /* dCoef */ ,
+		const VectorHandler& /* XCurr */ ,
+		const VectorHandler& /* XPrimeCurr */ ) override
+	{
+		DEBUGCOUT("Entering CyclocopterUniform2D::AssJac()" << std::endl);
+		WorkMat.SetNullMatrix();
+
+		return WorkMat;
+	}
 };
 
 CyclocopterUniform2D::CyclocopterUniform2D(unsigned int uL, const DofOwner* pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uL, flag(0)),
-CyclocopterInflow(uL, pDO),
+: CyclocopterInflow(uL, pDO),
 RRotor(::Eye3),
 dUind(::Zero3), dUindPrev(::Zero3),
 bFlagIsFirstBlade(true),
@@ -1122,7 +1150,7 @@ CyclocopterUniform2D::AfterConvergence(const VectorHandler& X, const VectorHandl
 		dWeight = 1.;
 	}
 
-	InducedVelocity::AfterConvergence(X, XP);
+	// InducedVelocity::AfterConvergence(X, XP);
 }
 
 SubVectorHandler&
@@ -1219,7 +1247,7 @@ momentum theory
 */
 
 class CyclocopterPolimi
-: virtual public Elem, public CyclocopterInflow {
+: public CyclocopterInflow {
 protected:
 	Mat3x3 RRotor;
 	Vec3 dUind;
@@ -1302,8 +1330,7 @@ public:
 
 CyclocopterPolimi::CyclocopterPolimi(unsigned int uL, const DofOwner* pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uL, flag(0)),
-CyclocopterInflow(uL, pDO),
+: CyclocopterInflow(uL, pDO),
 RRotor(::Eye3),
 dUind(::Zero3), dUindPrev(::Zero3),
 dXi(0.),
@@ -1438,7 +1465,7 @@ CyclocopterPolimi::AfterConvergence(const VectorHandler& X, const VectorHandler&
 		dWeight = 1.;
 	}
 
-	InducedVelocity::AfterConvergence(X, XP);
+	// InducedVelocity::AfterConvergence(X, XP);
 }
 
 void
@@ -1574,7 +1601,7 @@ Baltimore, MD, June 7-10, 2004.
 */
 
 class CyclocopterKARI
-: virtual public Elem, public CyclocopterInflow {
+: public CyclocopterInflow {
 public:
 	CyclocopterKARI(unsigned int uL, const DofOwner* pDO,
 		DataManager* pDM, MBDynParser& HP);
@@ -1619,8 +1646,7 @@ public:
 
 CyclocopterKARI::CyclocopterKARI(unsigned int uL, const DofOwner* pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uL, 0),
-CyclocopterInflow(uL, pDO),
+: CyclocopterInflow(uL, pDO),
 pRotor(0),
 RRot(::Eye3)
 {

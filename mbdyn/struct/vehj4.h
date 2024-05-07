@@ -43,7 +43,7 @@ extern const char* psConstLawNames[];
 /* DeformableAxialJoint - begin */
 
 class DeformableAxialJoint :
-virtual public Elem, public Joint, public ConstitutiveLaw1DOwner {
+public Joint {
 protected:
 	const StructNode* pNode1;
 	const StructNode* pNode2;
@@ -65,6 +65,8 @@ protected:
 
 	Mat3x3 MDE;
 	Mat3x3 MDEPrime;
+	
+	ConstitutiveLaw1D* pDC;
 
 #ifdef USE_NETCDF
 	MBDynNcVar Var_Theta;
@@ -87,7 +89,7 @@ public:
 	/* Costruttore non banale */
 	DeformableAxialJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Mat3x3& tilde_R1h,
@@ -169,7 +171,7 @@ public:
 
 /* ElasticAxialJoint - begin */
 
-class ElasticAxialJoint : virtual public Elem, public DeformableAxialJoint {
+class ElasticAxialJoint : public DeformableAxialJoint {
 protected:
 	doublereal dThetaRef;
 	doublereal dThetaCurr;
@@ -182,7 +184,7 @@ protected:
 public:
 	ElasticAxialJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Mat3x3& tilde_R1h,
@@ -275,7 +277,7 @@ public:
 
 /* ViscousAxialJoint - begin */
 
-class ViscousAxialJoint : virtual public Elem, public DeformableAxialJoint {
+class ViscousAxialJoint : public DeformableAxialJoint {
 protected:
 	doublereal dOmega;
 
@@ -289,7 +291,7 @@ protected:
 public:
 	ViscousAxialJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Mat3x3& tilde_R1h,
@@ -371,7 +373,7 @@ public:
 /* ViscoElasticAxialJoint - begin */
 
 class ViscoElasticAxialJoint
-: virtual public Elem, public DeformableAxialJoint {
+: public DeformableAxialJoint {
 protected:
 	doublereal dThetaRef;
 	doublereal dThetaCurr;
@@ -389,7 +391,7 @@ protected:
 public:
 	ViscoElasticAxialJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Mat3x3& tilde_R1h,

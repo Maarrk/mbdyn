@@ -4,7 +4,7 @@
 #include "therm.h"
 #include "thermalnode.h"
 
-class ThermalCapacitance : virtual public Thermal {
+class ThermalCapacitance : public Thermal {
  private:
    const ThermalNode* pNode1;
    doublereal thermalcapacitance;

@@ -41,7 +41,7 @@
 
 /* PlaneHingeJoint - begin */
 
-class PlaneHingeJoint : virtual public Elem, public Joint {
+class PlaneHingeJoint : public Joint {
  private:
    /* Cerniera piana - asse di rotazione dato dall'asse 3 del sistema di 
     * riferimento della cerniera. Tale sistema e' noto relativamente ai due
@@ -207,7 +207,7 @@ class PlaneHingeJoint : virtual public Elem, public Joint {
 
 /* PlaneRotationJoint - begin */
 
-class PlaneRotationJoint : virtual public Elem, public Joint {
+class PlaneRotationJoint : public Joint {
  private:
    /* Cerniera piana - asse di rotazione dato dall'asse 3 del sistema di 
     * riferimento della cerniera. Tale sistema e' noto relativamente ai due
@@ -348,8 +348,7 @@ class PlaneRotationJoint : virtual public Elem, public Joint {
 
 /* AxialRotationJoint - begin */
 
-class AxialRotationJoint : virtual public Elem, 
-public Joint, public DriveOwner {
+class AxialRotationJoint : public Joint, public DriveOwner {
  private:
    /* Rotazione assiale attorno ad una cerniera piana - 
     * asse di rotazione dato dall'asse 3 del sistema di 
@@ -528,7 +527,7 @@ public Joint, public DriveOwner {
 
 /* Incastro con liberta' di rotazione su un asse */
 
-class PlanePinJoint : virtual public Elem, public Joint {
+class PlanePinJoint : public Joint {
  private:
    const StructNode* pNode;
    Vec3 X0;

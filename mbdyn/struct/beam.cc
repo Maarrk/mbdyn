@@ -75,13 +75,11 @@ Beam::Beam(unsigned int uL,
 	const Mat3x3& R3,
 	const Mat3x3& r_I,
 	const Mat3x3& rII,
-	const ConstitutiveLaw6D* pD_I,
-	const ConstitutiveLaw6D* pDII,
+	ConstitutiveLaw6D* const pD_I,
+	ConstitutiveLaw6D* const pDII,
 	OrientationDescription ood,
 	flag fOut)
-: Elem(uL, fOut),
-ElemGravityOwner(uL, fOut),
-InitialAssemblyElem(uL, fOut),
+: InitialAssemblyElem(uL, fOut),
 od(ood),
 f(),
 RNode(),
@@ -114,14 +112,8 @@ bFirstRes(false)
 	RPrev[S_I] = RRef[S_I] = R[S_I] = r_I;
 	RPrev[SII] = RRef[SII] = R[SII] = rII;
 
-	pD[S_I] = 0;
-	SAFENEWWITHCONSTRUCTOR(pD[S_I],
-		ConstitutiveLaw6DOwner,
-		ConstitutiveLaw6DOwner(pD_I));
-	pD[SII] = 0;
-	SAFENEWWITHCONSTRUCTOR(pD[SII],
-		ConstitutiveLaw6DOwner,
-		ConstitutiveLaw6DOwner(pDII));
+	pD[S_I] = pD_I;
+	pD[SII] = pDII;
 
 	Init();
 }
@@ -140,8 +132,8 @@ Beam::Beam(unsigned int uL,
 	const Mat3x3& R3,
 	const Mat3x3& r_I,
 	const Mat3x3& rII,
-	const ConstitutiveLaw6D* pD_I,
-	const ConstitutiveLaw6D* pDII,
+	ConstitutiveLaw6D* const pD_I,
+	ConstitutiveLaw6D* const pDII,
 	doublereal dM_I,
 	const Vec3& s0_I,
 	const Mat3x3& j0_I,
@@ -150,9 +142,7 @@ Beam::Beam(unsigned int uL,
 	const Mat3x3& j0II,
 	OrientationDescription ood,
 	flag fOut)
-: Elem(uL, fOut),
-ElemGravityOwner(uL, fOut),
-InitialAssemblyElem(uL, fOut),
+: InitialAssemblyElem(uL, fOut),
 od(ood),
 f(),
 RNode(),
@@ -177,14 +167,8 @@ bFirstRes(false)
 	RPrev[S_I] = RRef[S_I] = R[S_I] = r_I;
 	RPrev[SII] = RRef[SII] = R[SII] = rII;
 
-	pD[S_I] = 0;
-	SAFENEWWITHCONSTRUCTOR(pD[S_I],
-		ConstitutiveLaw6DOwner,
-		ConstitutiveLaw6DOwner(pD_I));
-	pD[SII] = 0;
-	SAFENEWWITHCONSTRUCTOR(pD[SII],
-		ConstitutiveLaw6DOwner,
-		ConstitutiveLaw6DOwner(pDII));
+	pD[S_I] = pD_I;
+	pD[SII] = pDII;
 
 	Init();
 }
@@ -574,7 +558,7 @@ Beam::Restart_(std::ostream& out) const
 		out << ", reference, global, 1, ",
 			(R[i].GetVec(1)).Write(out, ", ")
 			<< ", 2, ", (R[i].GetVec(2)).Write(out, ", ") << ", ",
-			pD[i]->pGetConstLaw()->Restart(out);
+			pD[i]->Restart(out);
 	}
 
 	return out;
@@ -1393,11 +1377,11 @@ ViscoElasticBeam::ViscoElasticBeam(
 	const Mat3x3& R3,
 	const Mat3x3& r_I,
 	const Mat3x3& rII,
-	const ConstitutiveLaw6D* pD_I,
-	const ConstitutiveLaw6D* pDII,
+	ConstitutiveLaw6D* const pD_I,
+	ConstitutiveLaw6D* const pDII,
 	OrientationDescription ood,
 	flag fOut)
-: Elem(uL, fOut),
+:
 Beam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut)
 {
 	Init();
@@ -1417,15 +1401,15 @@ ViscoElasticBeam::ViscoElasticBeam(
 	const Mat3x3& R2,
 	const Mat3x3& R3,
 	const Mat3x3& r_I, const Mat3x3& rII,
-	const ConstitutiveLaw6D* pD_I,
-	const ConstitutiveLaw6D* pDII,
+	ConstitutiveLaw6D* const pD_I,
+	ConstitutiveLaw6D* const pDII,
 	doublereal dM_I,
 	const Vec3& s0_I, const Mat3x3& j0_I,
 	doublereal dMII,
 	const Vec3& s0II, const Mat3x3& j0II,
 	OrientationDescription ood,
 	flag fOut)
-: Elem(uL, fOut),
+: 
 Beam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII,
 	  dM_I, s0_I, j0_I, dMII, s0II, j0II, ood, fOut)
 {

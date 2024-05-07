@@ -67,7 +67,7 @@ class CollocPenta15;
 class CollocTet10h;
 
 // 3D base class
-class SolidElem: virtual public Elem, public ElemGravityOwner, public InitialAssemblyElem {
+class SolidElem: public InitialAssemblyElem, public GravityOwner {
 public:
      SolidElem(unsigned uLabel,
                flag fOut);

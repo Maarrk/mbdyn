@@ -61,7 +61,7 @@
  *   Phi_e = p * Phi_m ... electric angle between rotor field and stator field
  */
 
-class Motor : virtual public Elem, public Electric {
+class Motor : public Electric {
 private:
 	const StructNode *pStrNode1;
 	const StructNode *pStrNode2;

@@ -39,7 +39,7 @@
 
 /* PrismaticJoint - begin */
 
-class PrismaticJoint : virtual public Elem, public Joint {
+class PrismaticJoint : public Joint {
  private:
    /* Giunto prismatico - vincola due corpi alla traslazione 
     * l'uno rispetto all'altro. Il sistema di riferimento del prisma e' dato

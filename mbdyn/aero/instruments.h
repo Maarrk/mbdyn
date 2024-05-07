@@ -36,7 +36,7 @@
 
 #include "aerodyn.h"
 
-class AircraftInstruments : virtual public Elem, public AerodynamicElem {
+class AircraftInstruments : public Elem, public AerodynamicElem {
 public:
 	enum Measure {
 		AIRSPEED = 1,
@@ -99,7 +99,8 @@ protected:
 
 public:
 	AircraftInstruments(unsigned int uLabel,
-		const DofOwner *pDO, const StructNode* pN,
+		const DofOwner* pDO,
+		const StructNode* pN,
 		const Mat3x3 &R, flag fOut, doublereal initLong, doublereal initLat, doublereal earth_radius);
 	virtual ~AircraftInstruments(void);
 
@@ -118,8 +119,8 @@ public:
 	virtual void Output(OutputHandler& OH) const;
 
 	/* Tipo di elemento aerodinamico */
-	virtual AerodynamicElem::Type GetAerodynamicElemType(void) const {
-		return AerodynamicElem::AIRCRAFTINSTRUMENTS;
+	virtual AerodynamicElemBase::Type GetAerodynamicElemType(void) const {
+		return AerodynamicElemBase::AIRCRAFTINSTRUMENTS;
 	};
 
 	/* Dimensioni del workspace */

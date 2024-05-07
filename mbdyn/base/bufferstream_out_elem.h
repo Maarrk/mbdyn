@@ -40,7 +40,7 @@
 
 /* BufferStreamElem_base - begin */
 
-class BufferStreamElem_base : public StreamOutElem, virtual public Elem {
+class BufferStreamElem_base : public StreamOutElem {
 protected:
 	StreamContent *pSC;
 	StreamOutEcho *pSOE;
@@ -69,7 +69,7 @@ public:
 
 /* BufferStreamElem - begin */
 
-class BufferStreamElem : public BufferStreamElem_base, virtual public Elem {
+class BufferStreamElem : public BufferStreamElem_base {
 protected:
 	std::vector<doublereal> buffer;
 	
@@ -89,7 +89,7 @@ public:
 
 /* BufferStreamElemRaw - begin */
 
-class BufferStreamElemRaw : public BufferStreamElem_base, virtual public Elem {
+class BufferStreamElemRaw : public BufferStreamElem_base {
 protected:
 	bool m_bOwnsMemory;
 	const doublereal *m_pBuffer;

@@ -79,7 +79,7 @@ Gravity::AssRes(SubVectorHandler& WorkVec,
 /* UniformGravity - begin */
 
 UniformGravity::UniformGravity(const TplDriveCaller<Vec3>* pDC, flag fOut)
-: Elem(1, fOut), Gravity(fOut), TplDriveOwner<Vec3>(pDC)
+: Gravity(fOut), TplDriveOwner<Vec3>(pDC)
 {
 	Acc = Get();
 }
@@ -136,7 +136,7 @@ UniformGravity::Output(OutputHandler& OH) const
 
 CentralGravity::CentralGravity(const Vec3& X0,
 	doublereal dM, doublereal dG, flag fOut)
-: Elem(1, fOut), Gravity(fOut), m_X0(X0), m_dM(dM), m_dG(dG)
+: Gravity(fOut), m_X0(X0), m_dM(dM), m_dG(dG)
 {
 	NO_OP;
 }
@@ -221,16 +221,16 @@ GravityOwner::bGetGravity(const Vec3& X, Vec3& Acc) const
 
 /* ElemGravityOwner - begin */
 
-ElemGravityOwner::ElemGravityOwner(unsigned int uL, flag fOut)
-: Elem(uL, fOut), GravityOwner()
-{
-	NO_OP;
-}
-
-ElemGravityOwner::~ElemGravityOwner(void)
-{
-	NO_OP;
-}
+// ElemGravityOwner::ElemGravityOwner(unsigned int uL, flag fOut)
+// : Elem(uL, fOut), GravityOwner()
+// {
+// 	NO_OP;
+// }
+// 
+// ElemGravityOwner::~ElemGravityOwner(void)
+// {
+// 	NO_OP;
+// }
 
 /* ElemGravityOwner - end */
 

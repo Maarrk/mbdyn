@@ -44,7 +44,7 @@
 #include "cudatest.h"
 
 class MBDynCUDATest
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 	const StructDispNode *m_pNode;
 	CUDATest *m_pCUDATest;
@@ -86,8 +86,7 @@ public:
 MBDynCUDATest::MBDynCUDATest(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 m_pNode(0),
 m_pCUDATest(0)
 {

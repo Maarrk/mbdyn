@@ -87,21 +87,20 @@ DeformableAxialJoint::AssMatMDEPrime(FullSubMatrixHandler& WMA,
 /* Costruttore non banale */
 DeformableAxialJoint::DeformableAxialJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Mat3x3& tilde_R1h,
 		const Mat3x3& tilde_R2h,
 		flag fOut)
-: Elem(uL, fOut),
-Joint(uL, pDO, fOut),
-ConstitutiveLaw1DOwner(pCL),
+: Joint(uL, pDO, fOut),
 pNode1(pN1),
 pNode2(pN2),
 tilde_R1h(tilde_R1h),
 tilde_R2h(tilde_R2h),
 bFirstRes(false),
-dTol(0.)
+dTol(0.),
+pDC(pCL)
 {
 	ASSERT(pNode1 != NULL);
 	ASSERT(pNode2 != NULL);
@@ -112,7 +111,11 @@ dTol(0.)
 /* Distruttore */
 DeformableAxialJoint::~DeformableAxialJoint(void)
 {
-	NO_OP;
+	/* Distrugge il legame costitutivo */
+	ASSERT(pDC != NULL);
+	if (pDC != NULL) {
+		SAFEDELETE(pDC);
+	}
 }
 
 /* Contributo al file di restart */
@@ -127,7 +130,7 @@ DeformableAxialJoint::Restart(std::ostream& out) const
 		<< pNode2->GetLabel() << ", hinge, reference, node, 1, ",
 		(tilde_R2h.GetVec(1)).Write(out, ", ")
 		<< ", 2, ", (tilde_R2h.GetVec(2)).Write(out, ", ") << ", ";
-	return pGetConstLaw()->Restart(out) << ';' << std::endl;
+	return pDC->Restart(out) << ';' << std::endl;
 }
 
 void
@@ -158,7 +161,7 @@ DeformableAxialJoint::Output(OutputHandler& OH) const
 		Mat3x3 R2h(pNode2->GetRCurr()*tilde_R2h);
 		Mat3x3 R(R1h.MulTM(R2h));
 
-		Vec3 v(0., 0., GetF());
+		Vec3 v(0., 0., pDC->GetF());
 
 		if (OH.UseText(OutputHandler::JOINTS)) {
 			Joint::Output(OH.Joints(), "DeformableHinge", GetLabel(),
@@ -214,7 +217,7 @@ DeformableAxialJoint::SetValue(DataManager *pDM,
 			}
 
 			/* else, pass to constitutive law */
-			ConstitutiveLaw1DOwner::SetValue(pDM, X, XP, ph);
+			pDC->SetValue(pDM, X, XP, ph);
 		}
 	}
 }
@@ -251,13 +254,13 @@ DeformableAxialJoint::ParseHint(DataManager *pDM, const char *s) const
 		}
 	}
 
-	return ConstitutiveLaw1DOwner::ParseHint(pDM, s);
+	return pDC->ParseHint(pDM, s);
 }
 
 unsigned int
 DeformableAxialJoint::iGetNumPrivData(void) const
 {
-	return 3 + ConstitutiveLaw1DOwner::iGetNumPrivData();
+	return 3 + pDC->iGetNumPrivData();
 }
 
 unsigned int
@@ -280,7 +283,7 @@ DeformableAxialJoint::iGetPrivDataIdx(const char *s) const
 
 	const size_t l = STRLENOF("constitutiveLaw.");
 	if (strncmp(s, "constitutiveLaw.", l) == 0) {
-		unsigned idx = ConstitutiveLaw1DOwner::iGetPrivDataIdx(&s[l]);
+		unsigned idx = pDC->iGetPrivDataIdx(&s[l]);
 		if (idx > 0) {
 			return 3 + idx;
 		}
@@ -317,10 +320,10 @@ DeformableAxialJoint::dGetPrivData(unsigned int i) const
 	}
 
 	case 3:
-		return GetF();
+		return pDC->GetF();
 
 	default:
-		return ConstitutiveLaw1DOwner::dGetPrivData(i - 3);
+		return pDC->dGetPrivData(i - 3);
 	}
 }
 
@@ -337,14 +340,13 @@ DeformableAxialJoint::GetEquationDimension(integer index) const {
 
 ElasticAxialJoint::ElasticAxialJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Mat3x3& tilde_R1h,
 		const Mat3x3& tilde_R2h,
 		flag fOut)
-: Elem(uL, fOut),
-DeformableAxialJoint(uL, pDO, pCL, pN1, pN2, tilde_R1h, tilde_R2h, fOut),
+: DeformableAxialJoint(uL, pDO, pCL, pN1, pN2, tilde_R1h, tilde_R2h, fOut),
 dThetaRef(0.)
 {
 	// force update of MDE/MDEPrime as needed
@@ -360,7 +362,7 @@ void
 ElasticAxialJoint::AfterConvergence(const VectorHandler& X,
 		const VectorHandler& XP)
 {
-	ConstitutiveLaw1DOwner::AfterConvergence(dThetaCurr);
+	pDC->AfterConvergence(dThetaCurr);
 }
 
 /* assemblaggio jacobiano */
@@ -448,12 +450,12 @@ ElasticAxialJoint::AfterPredict(void)
 	dThetaCurr = dThetaRef = RotManip::VecRot(R1h.MulTM(R2h))(3);
 
 	/* Aggiorna il legame costitutivo */
-	ConstitutiveLaw1DOwner::Update(dThetaRef);
+	pDC->Update(dThetaRef);
 
 	/* Chiede la matrice tangente di riferimento e la porta
 	 * nel sistema globale */
 	Vec3 e1z(R1h.GetVec(3));
-	MDE = e1z.Tens(e1z*ConstitutiveLaw1DOwner::GetFDE());
+	MDE = e1z.Tens(e1z*pDC->GetFDE());
 }
 
 void
@@ -465,7 +467,7 @@ ElasticAxialJoint::AssMat(FullSubMatrixHandler& WMA, doublereal dCoef)
 
 	// Chiede la matrice tangente di riferimento e la porta
 	// nel sistema globale
-	MDE = R1h*ConstitutiveLaw1DOwner::GetFDE()*GammaCurrm1.MulMT(R1h);
+	MDE = R1h*pDC->GetFDE()*GammaCurrm1.MulMT(R1h);
 #endif
 
 	AssMatM(WMA, dCoef);
@@ -564,7 +566,7 @@ void
 ElasticAxialJoint::AfterConvergence(const VectorHandler& X,
 		const VectorHandler& XP, const VectorHandler& XPP)
 {
-	ConstitutiveLaw1DOwner::AfterConvergence(dThetaCurr);
+	pDC->AfterConvergence(dThetaCurr);
 }
  
 
@@ -580,7 +582,7 @@ ElasticAxialJoint::AssVec(SubVectorHandler& WorkVec)
 		Mat3x3 R2h(pNode2->GetRCurr()*tilde_R2h);
 		Vec3 ThetaCurr(RotManip::VecRot(R1h.MulTM(R2h)));
 		dThetaCurr = ThetaCurr(3);
-		ConstitutiveLaw1DOwner::Update(dThetaCurr);
+		pDC->Update(dThetaCurr);
 
 		// sanity check
 		if (dTol > 0.) {
@@ -593,7 +595,7 @@ ElasticAxialJoint::AssVec(SubVectorHandler& WorkVec)
 	}
 
 	/* Couple attached to node 1 */
-	M = R1h.GetVec(3)*GetF();
+	M = R1h.GetVec(3)*pDC->GetF();
 
 	WorkVec.Add(1, M);
 	WorkVec.Sub(4, M);
@@ -664,14 +666,13 @@ ElasticAxialJoint::InitialAssRes(SubVectorHandler& WorkVec,
 
 ViscousAxialJoint::ViscousAxialJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Mat3x3& tilde_R1h,
 		const Mat3x3& tilde_R2h,
 		flag fOut)
-: Elem(uL, fOut),
-DeformableAxialJoint(uL, pDO, pCL, pN1, pN2, tilde_R1h, tilde_R2h, fOut)
+: DeformableAxialJoint(uL, pDO, pCL, pN1, pN2, tilde_R1h, tilde_R2h, fOut)
 {
 	// force update of MDE/MDEPrime as needed
 	AfterPredict();
@@ -686,7 +687,7 @@ void
 ViscousAxialJoint::AfterConvergence(const VectorHandler& X,
 		const VectorHandler& XP)
 {
-	ConstitutiveLaw1DOwner::AfterConvergence(0, dOmega);
+	pDC->AfterConvergence(0, dOmega);
 }
 
 void
@@ -698,11 +699,11 @@ ViscousAxialJoint::AfterPredict(void)
 	/* Aggiorna il legame costitutivo */
 	Vec3 e1z(pNode1->GetRRef()*tilde_R1h.GetVec(3));
 	dOmega = e1z.Dot(pNode2->GetWRef() - pNode1->GetWRef());
-	ConstitutiveLaw1DOwner::Update(0., dOmega);
+	pDC->Update(0., dOmega);
 
 	/* Chiede la matrice tangente di riferimento e la porta
 	 * nel sistema globale */
-	MDEPrime = e1z.Tens(e1z*GetFDEPrime());
+	MDEPrime = e1z.Tens(e1z*pDC->GetFDEPrime());
 }
 
 /* assemblaggio jacobiano */
@@ -861,10 +862,10 @@ ViscousAxialJoint::AssVec(SubVectorHandler& WorkVec)
 	} else {
 		dOmega = e1z.Dot(pNode2->GetWCurr() - pNode1->GetWCurr());
 
-		ConstitutiveLaw1DOwner::Update(0., dOmega);
+		pDC->Update(0., dOmega);
 	}
 
-	M = e1z*ConstitutiveLaw1DOwner::GetF();
+	M = e1z*pDC->GetF();
 
 	WorkVec.Add(1, M);
 	WorkVec.Sub(4, M);
@@ -904,13 +905,13 @@ ViscousAxialJoint::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 
 	const Vec3& W2(pNode2->GetWCurr());
 
-	MDEPrime = e1z.Tens(e1z*ConstitutiveLaw1DOwner::GetFDEPrime());
+	MDEPrime = e1z.Tens(e1z*pDC->GetFDEPrime());
 
 	Mat3x3 Tmp(MDEPrime*Mat3x3(MatCross, W2));
 	WM.Add(4, 7, Tmp);
 	WM.Sub(1, 7, Tmp);
 
-	Tmp += Mat3x3(MatCross, e1z*ConstitutiveLaw1DOwner::GetF());
+	Tmp += Mat3x3(MatCross, e1z*pDC->GetF());
 	WM.Add(1, 1, Tmp);
 	WM.Sub(4, 1, Tmp);
 
@@ -952,10 +953,10 @@ ViscousAxialJoint::InitialAssRes(SubVectorHandler& WorkVec,
 	} else {
 		dOmega = e1z.Dot(pNode2->GetWCurr() - pNode1->GetWCurr());
 
-		ConstitutiveLaw1DOwner::Update(0., dOmega);
+		pDC->Update(0., dOmega);
 	}
 
-	M = e1z*ConstitutiveLaw1DOwner::GetF();
+	M = e1z*pDC->GetF();
 
 	WorkVec.Add(1, M);
 	WorkVec.Sub(4, M);
@@ -970,14 +971,13 @@ ViscousAxialJoint::InitialAssRes(SubVectorHandler& WorkVec,
 
 ViscoElasticAxialJoint::ViscoElasticAxialJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Mat3x3& tilde_R1h,
 		const Mat3x3& tilde_R2h,
 		flag fOut)
-: Elem(uL, fOut),
-DeformableAxialJoint(uL, pDO, pCL, pN1, pN2, tilde_R1h, tilde_R2h, fOut),
+: DeformableAxialJoint(uL, pDO, pCL, pN1, pN2, tilde_R1h, tilde_R2h, fOut),
 dThetaRef(0.)
 {
 	// force update of MDE/MDEPrime as needed
@@ -993,7 +993,7 @@ void
 ViscoElasticAxialJoint::AfterConvergence(const VectorHandler& X,
 		const VectorHandler& XP)
 {
-	ConstitutiveLaw1DOwner::AfterConvergence(dThetaCurr, dOmega);
+	pDC->AfterConvergence(dThetaCurr, dOmega);
 }
 
 void
@@ -1013,7 +1013,7 @@ ViscoElasticAxialJoint::AfterPredict(void)
 	dOmega = e1z.Dot(pNode2->GetWRef() - pNode1->GetWRef());
 
 	/* Updates constitutive law */
-	ConstitutiveLaw1DOwner::Update(dThetaRef, dOmega);
+	pDC->Update(dThetaRef, dOmega);
 
 	/* don't repeat the above operations during AssRes */
 	bFirstRes = true;
@@ -1022,8 +1022,8 @@ ViscoElasticAxialJoint::AfterPredict(void)
 	 * reference frame; they won't change during the solution
 	 * of the current time step, according to the updated-updated
 	 * approach */
-	MDE = e1z.Tens(e1z*ConstitutiveLaw1DOwner::GetFDE());
-	MDEPrime = e1z.Tens(e1z*GetFDEPrime());
+	MDE = e1z.Tens(e1z*pDC->GetFDE());
+	MDEPrime = e1z.Tens(e1z*pDC->GetFDEPrime());
 }
 
 /* assemblaggio jacobiano */
@@ -1191,10 +1191,10 @@ ViscoElasticAxialJoint::AssVec(SubVectorHandler& WorkVec)
 		dOmega = e1z.Dot(pNode2->GetWCurr() - pNode1->GetWCurr());
 
 		/* aggiorna il legame costitutivo */
-		ConstitutiveLaw1DOwner::Update(dThetaCurr, dOmega);
+		pDC->Update(dThetaCurr, dOmega);
 	}
 
-	M = e1z*ConstitutiveLaw1DOwner::GetF();
+	M = e1z*pDC->GetF();
 
 	WorkVec.Add(1, M);
 	WorkVec.Sub(4, M);
@@ -1233,14 +1233,14 @@ ViscoElasticAxialJoint::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 	Vec3 e1z(pNode1->GetRCurr()*tilde_R1h.GetVec(3));
 	const Vec3& W2(pNode2->GetWCurr());
 
-	MDE = e1z.Tens(e1z*ConstitutiveLaw1DOwner::GetFDE());
-	MDEPrime = e1z.Tens(e1z*ConstitutiveLaw1DOwner::GetFDEPrime());
+	MDE = e1z.Tens(e1z*pDC->GetFDE());
+	MDEPrime = e1z.Tens(e1z*pDC->GetFDEPrime());
 
 	Mat3x3 Tmp(MDE + MDEPrime*Mat3x3(MatCross, W2));
 	WM.Add(4, 7, Tmp);
 	WM.Sub(1, 7, Tmp);
 
-	Tmp += Mat3x3(MatCross, e1z*ConstitutiveLaw1DOwner::GetF());
+	Tmp += Mat3x3(MatCross, e1z*pDC->GetF());
 	WM.Add(1, 1, Tmp);
 	WM.Sub(4, 1, Tmp);
 
@@ -1286,10 +1286,10 @@ ViscoElasticAxialJoint::InitialAssRes(SubVectorHandler& WorkVec,
 		dThetaCurr = RotManip::VecRot(R1h.MulTM(R2h))(3);
 		dOmega = e1z.Dot(pNode2->GetWCurr() - pNode1->GetWCurr());
 
-		ConstitutiveLaw1DOwner::Update(dThetaCurr, dOmega);
+		pDC->Update(dThetaCurr, dOmega);
 	}
 
-	M = e1z*ConstitutiveLaw1DOwner::GetF();
+	M = e1z*pDC->GetF();
 
 	WorkVec.Add(1, M);
 	WorkVec.Sub(4, M);

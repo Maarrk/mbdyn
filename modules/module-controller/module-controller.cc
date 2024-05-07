@@ -40,7 +40,7 @@
 #include "userelem.h"
 
 class ModuleController
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 	std::vector<DriveCaller *> measures;
 
@@ -85,8 +85,7 @@ public:
 ModuleController::ModuleController(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO)
+: UserDefinedElem(uLabel, pDO)
 {
 	// help
 	if (HP.IsKeyWord("help")) {

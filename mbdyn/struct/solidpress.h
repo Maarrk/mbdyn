@@ -56,7 +56,7 @@ class Gauss3x3;
 class CollocTria6h;
 
 // 2D base class
-class SurfaceLoadElem: virtual public Elem, public InitialAssemblyElem {
+class SurfaceLoadElem: public InitialAssemblyElem {
 public:
      SurfaceLoadElem(unsigned uLabel,
                       flag fOut);

@@ -637,14 +637,14 @@ DataManager::SetElemDimensionIndices(std::map<OutputHandler::Dimensions, std::se
 	if (ElemIter.bGetFirst(pTmpEl)){
 		do {
 
-			ElemWithDofs*  dof_pTmpEl = dynamic_cast<ElemWithDofs*> (pTmpEl);
+			DofOwnerOwner*  dof_pTmpEl = dynamic_cast<DofOwnerOwner*> (pTmpEl);
 
 			if (dof_pTmpEl != 0) {
 
 				integer first_index = dof_pTmpEl->iGetFirstIndex();
 
 				/* set the indices value to corresponding dimensions */
-				for (unsigned int i = 1; i <= dof_pTmpEl->iGetNumDof(); i++) {
+				for (unsigned int i = 1; i <= pTmpEl->iGetNumDof(); i++) {
 					(*pDimMap)[dof_pTmpEl->GetEquationDimension(i)].insert(first_index + i);
 				}
 

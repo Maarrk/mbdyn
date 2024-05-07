@@ -41,7 +41,7 @@
 
 /* ModalForce - begin */
 
-class ModalForce : virtual public Elem, public Force {
+class ModalForce : public Force {
 protected:
 	const Modal *pModal;
 	std::vector<unsigned int> modeList;

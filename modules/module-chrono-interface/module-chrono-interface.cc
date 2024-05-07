@@ -50,8 +50,7 @@
 ChronoInterfaceBaseElem::ChronoInterfaceBaseElem(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 m_pDM(pDM),
 MBDyn_CE_CEModel_Converged(pDM),
 bMBDyn_CE_FirstSend(true),

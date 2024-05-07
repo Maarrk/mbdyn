@@ -44,7 +44,7 @@ extern const char* psForceNames[];
 /* Force - begin */
 
 class Force 
-: virtual public Elem, public InitialAssemblyElem {
+: public InitialAssemblyElem {
 public:
 	/* Tipi di Force */
 	enum Type {
@@ -85,8 +85,7 @@ public:
 public:
 	/* Costruttore banale */
 	Force(unsigned int uL, flag fOut)
-	: Elem(uL, fOut), 
-	InitialAssemblyElem(uL, fOut)
+	: InitialAssemblyElem(uL, fOut)
 	{ 
 		NO_OP; 
 	};
@@ -101,7 +100,7 @@ public:
 	};
          
 	/* Tipo dell'elemento (usato per debug ecc.) */
-	virtual Elem::Type GetElemType(void) const { 
+	virtual InitialAssemblyElem::Type GetElemType(void) const { 
 		return Elem::FORCE; 
 	};   
    
@@ -141,7 +140,7 @@ public:
 
 /* AbstractForce - begin */
 
-class AbstractForce : virtual public Elem, public Force, public DriveOwner {
+class AbstractForce : public Force, public DriveOwner {
 protected:
 	const Node* pNode;
    
@@ -200,7 +199,7 @@ public:
 
 /* AbstractInternalForce - begin */
 
-class AbstractInternalForce : virtual public Elem, public Force, public DriveOwner {
+class AbstractInternalForce : public Force, public DriveOwner {
 protected:
 	const Node* pNode1;
 	const Node* pNode2;

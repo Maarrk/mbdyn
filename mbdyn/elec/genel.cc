@@ -45,7 +45,7 @@ Genel::Genel(unsigned int uL,
 	const DofOwner* pDO,
 	flag fOut)
 : Elem(uL, fOut),
-ElemWithDofs(uL, pDO, fOut)
+DofOwnerOwner(pDO)
 {
 	NO_OP;
 }
@@ -252,7 +252,7 @@ ReadGenel(DataManager* pDM,
 					"keyword \"rotor\" expected at line " << HP.GetLineData() << std::endl);
 			}
 
-			pRot = pDM->ReadElem<const Rotor, const InducedVelocity, Elem::INDUCEDVELOCITY>(HP);
+			pRot = pDM->ReadElem<const Rotor, const InducedVelocityElem, Elem::INDUCEDVELOCITY>(HP);
 
 			dRadius = pRot->dGetRadius();
 			if (dRadius < std::numeric_limits<doublereal>::epsilon()) {

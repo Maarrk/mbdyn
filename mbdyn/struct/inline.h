@@ -37,7 +37,7 @@
 
 /* InLineJoint - begin */
 
-class InLineJoint : virtual public Elem, public Joint {
+class InLineJoint : public Joint {
  private:
    const StructNode* pNode1;
    const StructNode* pNode2;
@@ -157,7 +157,7 @@ class InLineJoint : virtual public Elem, public Joint {
 
 /* InLineWithOffsetJoint - begin */
 
-class InLineWithOffsetJoint : virtual public Elem, public Joint {
+class InLineWithOffsetJoint : public Joint {
  private:
    const StructNode* pNode1;
    const StructNode* pNode2;

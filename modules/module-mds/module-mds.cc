@@ -37,7 +37,7 @@
 #include "userelem.h"
 
 class ModuleMDS
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 	// add private data
 	doublereal dM, dD, dK;
@@ -83,8 +83,7 @@ public:
 ModuleMDS::ModuleMDS(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO)
+: UserDefinedElem(uLabel, pDO)
 {
 	// help
 	if (HP.IsKeyWord("help")) {

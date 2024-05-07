@@ -42,7 +42,7 @@
 /* Costruttore non banale */
 DeformableDispJoint::DeformableDispJoint(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw3D* pCL,
+	ConstitutiveLaw3D*const pCL,
 	const StructNode* pN1,
 	const StructNode* pN2,
 	const Vec3& tilde_f1,
@@ -50,15 +50,15 @@ DeformableDispJoint::DeformableDispJoint(unsigned int uL,
 	const Mat3x3& tilde_R1h,
 	const Mat3x3& tilde_R2h,
 	flag fOut)
-: Elem(uL, fOut),
-Joint(uL, pDO, fOut),
-ConstitutiveLaw3DOwner(pCL),
+: Joint(uL, pDO, fOut),
 pNode1(pN1), pNode2(pN2),
 tilde_f1(tilde_f1), tilde_f2(tilde_f2),
 tilde_R1h(tilde_R1h), tilde_R2h(tilde_R2h),
 tilde_R1hT_tilde_f1(tilde_R1h.Transpose()*tilde_f1),
 tilde_d(Zero3), tilde_dPrime(Zero3),
-bFirstRes(false), F(Zero3)
+bFirstRes(false), 
+F(Zero3),
+pDC(pCL)
 {
 	ASSERT(pNode1 != NULL);
 	ASSERT(pNode2 != NULL);
@@ -69,7 +69,11 @@ bFirstRes(false), F(Zero3)
 /* Distruttore */
 DeformableDispJoint::~DeformableDispJoint(void)
 {
-	NO_OP;
+	/* Distrugge il legame costitutivo */
+	ASSERT(pDC != NULL);
+	if (pDC != NULL) {
+		SAFEDELETE(pDC);
+	}
 }
 
 /* assemblaggio jacobiano - F */
@@ -324,7 +328,7 @@ DeformableDispJoint::Restart(std::ostream& out) const
 	(tilde_R2h.GetVec(1)).Write(out, ", ")
 		<< ", 2, ", (tilde_R2h.GetVec(2)).Write(out, ", ") << ", ";
 
-	return pGetConstLaw()->Restart(out) << ';' << std::endl;
+	return pDC->Restart(out) << ';' << std::endl;
 }
 
 void
@@ -358,7 +362,7 @@ DeformableDispJoint::Output(OutputHandler& OH) const
 	if (bToBeOutput()) {
 #ifdef USE_NETCDF
 		if (OH.UseNetCDF(OutputHandler::JOINTS)) {
-			Joint::NetCDFOutput(OH, GetF(), Zero3, pNode1->GetRCurr()*(tilde_R1h*GetF()), Zero3);
+			Joint::NetCDFOutput(OH, pDC->GetF(), Zero3, pNode1->GetRCurr()*(tilde_R1h*pDC->GetF()), Zero3);
 			OH.WriteNcVar(Var_tilde_d, tilde_d);
 			OH.WriteNcVar(Var_d, (pNode1->GetRCurr()*(tilde_R1h*tilde_d)));
 			if (GetConstLawType() & ConstLawType::VISCOUS) {
@@ -373,8 +377,8 @@ DeformableDispJoint::Output(OutputHandler& OH) const
 
 		if (OH.UseText(OutputHandler::JOINTS)) {
 			Joint::Output(OH.Joints(), "DeformableDispJoint", GetLabel(),
-					GetF(), Zero3,
-				pNode1->GetRCurr()*(tilde_R1h*GetF()), Zero3)
+					pDC->GetF(), Zero3,
+				pNode1->GetRCurr()*(tilde_R1h*pDC->GetF()), Zero3)
 				<< " " << tilde_d;
 			if (GetConstLawType() & ConstLawType::VISCOUS) {
 				OH.Joints() << " " << tilde_dPrime;
@@ -420,7 +424,7 @@ DeformableDispJoint::SetValue(DataManager *pDM,
 			}
 
 			/* else, pass to constitutive law */
-			ConstitutiveLaw3DOwner::SetValue(pDM, X, XP, ph);
+			pDC->SetValue(pDM, X, XP, ph);
 		}
 	}
 }
@@ -460,7 +464,7 @@ DeformableDispJoint::ParseHint(DataManager *pDM, const char *s) const
 		}
 	}
 
-	return ConstitutiveLaw3DOwner::ParseHint(pDM, s);
+	return pDC->ParseHint(pDM, s);
 }
 
 /* inverse dynamics capable element */
@@ -473,7 +477,7 @@ DeformableDispJoint::bInverseDynamics(void) const
 unsigned int
 DeformableDispJoint::iGetNumPrivData(void) const
 {
-	return 9 + ConstitutiveLaw3DOwner::iGetNumPrivData();
+	return 9 + pDC->iGetNumPrivData();
 }
 
 unsigned int
@@ -499,7 +503,7 @@ DeformableDispJoint::iGetPrivDataIdx(const char *s) const
 	{
 		size_t l = STRLENOF("constitutiveLaw.");
 		if (strncmp(s, "constitutiveLaw.", l) == 0) {
-			idx = ConstitutiveLaw3DOwner::iGetPrivDataIdx(&s[l]);
+			idx = pDC->iGetPrivDataIdx(&s[l]);
 			if (idx > 0) {
 				return 9 + idx;
 			}
@@ -565,10 +569,10 @@ DeformableDispJoint::dGetPrivData(unsigned int i) const
 	case 7:
 	case 8:
 	case 9:
-		return GetF()(i - 6);
+		return pDC->GetF()(i - 6);
 
 	default:
-		return ConstitutiveLaw3DOwner::dGetPrivData(i - 9);
+		return pDC->dGetPrivData(i - 9);
 	}
 }
 
@@ -584,7 +588,7 @@ DeformableDispJoint::GetEquationDimension(integer index) const {
 
 ElasticDispJoint::ElasticDispJoint(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw3D* pCL,
+	ConstitutiveLaw3D*const pCL,
 	const StructNode* pN1,
 	const StructNode* pN2,
 	const Vec3& tilde_f1,
@@ -592,15 +596,14 @@ ElasticDispJoint::ElasticDispJoint(unsigned int uL,
 	const Mat3x3& tilde_R1h,
 	const Mat3x3& tilde_R2h,
 	flag fOut)
-: Elem(uL, fOut),
-DeformableDispJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, fOut)
+: DeformableDispJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, fOut)
 {
 	/*
 	 * Chiede la matrice tangente di riferimento
 	 * e la porta nel sistema globale
 	 */
 	Mat3x3 R1h(pNode1->GetRRef()*tilde_R1h);
-	FDE = R1h*GetFDE().MulMT(R1h);
+	FDE = R1h*pDC->GetFDE().MulMT(R1h);
 }
 
 ElasticDispJoint::~ElasticDispJoint(void)
@@ -612,7 +615,7 @@ void
 ElasticDispJoint::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw3DOwner::AfterConvergence(tilde_d);
+	pDC->AfterConvergence(tilde_d);
 }
 
 /* assemblaggio jacobiano */
@@ -749,7 +752,7 @@ void
 ElasticDispJoint::AfterConvergence(const VectorHandler& X,
 		const VectorHandler& XP, const VectorHandler& XPP)
 {
-	ConstitutiveLaw3DOwner::AfterConvergence(tilde_d);
+	pDC->AfterConvergence(tilde_d);
 }
 
 void
@@ -765,10 +768,10 @@ ElasticDispJoint::AssVec(SubVectorHandler& WorkVec)
 	} else {
 		tilde_d = R1h.MulTV(d1) - tilde_R1hT_tilde_f1;
 
-		ConstitutiveLaw3DOwner::Update(tilde_d);
+		pDC->Update(tilde_d);
 	}
 
-	F = R1h*GetF();
+	F = R1h*pDC->GetF();
 
 	WorkVec.Add(1, F);
 	WorkVec.Add(4, d1.Cross(F));
@@ -785,11 +788,11 @@ ElasticDispJoint::AfterPredict(VectorHandler& X, VectorHandler& XP)
 	tilde_d = R1h.MulTV(pNode2->GetXCurr() + d2 - pNode1->GetXCurr())
 		- tilde_R1hT_tilde_f1;
 
-	ConstitutiveLaw3DOwner::Update(tilde_d);
+	pDC->Update(tilde_d);
 
 	/* FIXME: we need to be able to regenerate FDE
 	 * if the constitutive law throws ChangedEquationStructure */
-	FDE = R1h*GetFDE().MulMT(R1h);
+	FDE = R1h*pDC->GetFDE().MulMT(R1h);
 
 	bFirstRes = true;
 }
@@ -857,7 +860,7 @@ ElasticDispJoint::InitialAssRes(SubVectorHandler& WorkVec,
 
 ElasticDispJointInv::ElasticDispJointInv(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw3D* pCL,
+	ConstitutiveLaw3D*const pCL,
 	const StructNode* pN1,
 	const StructNode* pN2,
 	const Vec3& tilde_f1,
@@ -865,15 +868,14 @@ ElasticDispJointInv::ElasticDispJointInv(unsigned int uL,
 	const Mat3x3& tilde_R1h,
 	const Mat3x3& tilde_R2h,
 	flag fOut)
-: Elem(uL, fOut),
-DeformableDispJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, fOut)
+: DeformableDispJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, fOut)
 {
 	/*
 	 * Chiede la matrice tangente di riferimento
 	 * e la porta nel sistema globale
 	 */
 	Mat3x3 R1h(pNode1->GetRRef()*tilde_R1h);
-	FDE = R1h*GetFDE().MulMT(R1h);
+	FDE = R1h*pDC->GetFDE().MulMT(R1h);
 }
 
 ElasticDispJointInv::~ElasticDispJointInv(void)
@@ -885,7 +887,7 @@ void
 ElasticDispJointInv::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw3DOwner::AfterConvergence(tilde_d);
+	pDC->AfterConvergence(tilde_d);
 }
 
 /* assemblaggio jacobiano */
@@ -1016,10 +1018,10 @@ ElasticDispJointInv::AssVec(SubVectorHandler& WorkVec)
 	} else {
 		tilde_d = hat_R.MulTV(d);
 
-		ConstitutiveLaw3DOwner::Update(tilde_d);
+		pDC->Update(tilde_d);
 	}
 
-	F = hat_R*GetF();
+	F = hat_R*pDC->GetF();
 
 	Vec3 dCrossF(d.Cross(F));
 	WorkVec.Add(1, F);
@@ -1040,11 +1042,11 @@ ElasticDispJointInv::AfterPredict(VectorHandler& X, VectorHandler& XP)
 	Vec3 f2(pNode2->GetRCurr()*tilde_f2);
 	tilde_d = hat_R.MulTV(pNode2->GetXCurr() + f2 - pNode1->GetXCurr() - f1);
 
-	ConstitutiveLaw3DOwner::Update(tilde_d);
+	pDC->Update(tilde_d);
 
 	/* FIXME: we need to be able to regenerate FDE
 	 * if the constitutive law throws ChangedEquationStructure */
-	FDE = hat_R*GetFDE().MulMT(hat_R);
+	FDE = hat_R*pDC->GetFDE().MulMT(hat_R);
 
 	bFirstRes = true;
 }
@@ -1112,7 +1114,7 @@ ElasticDispJointInv::InitialAssRes(SubVectorHandler& WorkVec,
 
 ViscousDispJoint::ViscousDispJoint(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw3D* pCL,
+	ConstitutiveLaw3D*const pCL,
 	const StructNode* pN1,
 	const StructNode* pN2,
 	const Vec3& tilde_f1,
@@ -1120,15 +1122,14 @@ ViscousDispJoint::ViscousDispJoint(unsigned int uL,
 	const Mat3x3& tilde_R1h,
 	const Mat3x3& tilde_R2h,
 	flag fOut)
-: Elem(uL, fOut),
-DeformableDispJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, fOut)
+: DeformableDispJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, fOut)
 {
 	/*
 	 * Chiede la matrice tangente di riferimento
 	 * e la porta nel sistema globale
 	 */
 	Mat3x3 R1h(pNode1->GetRRef()*tilde_R1h);
-	FDEPrime = R1h*GetFDEPrime()*R1h.Transpose();
+	FDEPrime = R1h*pDC->GetFDEPrime()*R1h.Transpose();
 }
 
 ViscousDispJoint::~ViscousDispJoint(void)
@@ -1140,7 +1141,7 @@ void
 ViscousDispJoint::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw3DOwner::AfterConvergence(Zero3, tilde_dPrime);
+	pDC->AfterConvergence(Zero3, tilde_dPrime);
 }
 
 void
@@ -1231,7 +1232,7 @@ void
 ViscousDispJoint::AfterConvergence(const VectorHandler& X,
 		const VectorHandler& XP, const VectorHandler& XPP)
 {
-	ConstitutiveLaw3DOwner::AfterConvergence(tilde_d);
+	pDC->AfterConvergence(tilde_d);
 }
 
 void
@@ -1252,10 +1253,10 @@ ViscousDispJoint::AssVec(SubVectorHandler& WorkVec)
 		tilde_dPrime = R1h.Transpose()*(d1Prime
 			- pNode1->GetWCurr().Cross(d1));
 
-		ConstitutiveLaw3DOwner::Update(Zero3, tilde_dPrime);
+		pDC->Update(Zero3, tilde_dPrime);
 	}
 
-	Vec3 F(R1h*GetF());
+	Vec3 F(R1h*pDC->GetF());
 
 	WorkVec.Add(1, F);
 	WorkVec.Add(4, d1.Cross(F));
@@ -1277,11 +1278,11 @@ ViscousDispJoint::AfterPredict(VectorHandler& X, VectorHandler& XP)
 	tilde_dPrime = R1h.Transpose()*(d1Prime
 		- pNode1->GetWCurr().Cross(d1));
 
-	ConstitutiveLaw3DOwner::Update(Zero3, tilde_dPrime);
+	pDC->Update(Zero3, tilde_dPrime);
 
 	/* FIXME: we need to be able to regenerate FDE
 	 * if the constitutive law throws ChangedEquationStructure */
-	FDEPrime = R1h*GetFDEPrime()*R1hT;
+	FDEPrime = R1h*pDC->GetFDEPrime()*R1hT;
 
 	bFirstRes = true;
 }
@@ -1320,8 +1321,8 @@ ViscousDispJoint::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 	Vec3 Omega1(pNode1->GetWRef());
 	Vec3 Omega2(pNode2->GetWRef());
 
-	Vec3 F(R1h*GetF());
-	Mat3x3 FDEPrime(R1h*GetFDEPrime()*R1h.Transpose());
+	Vec3 F(R1h*pDC->GetF());
+	Mat3x3 FDEPrime(R1h*pDC->GetFDEPrime()*R1h.Transpose());
 	Mat3x3 Tmp(Mat3x3(MatCross, F) - FDEPrime*Mat3x3(MatCross, Omega2 - Omega1));
 
 	WM.Add(1, 1, Tmp);
@@ -1368,9 +1369,9 @@ ViscousDispJoint::InitialAssRes(SubVectorHandler& WorkVec,
 	tilde_d = R1h.Transpose()*(g2*(4./(4. + g2.Dot()))
 			- g1*(4./(4. + g1.Dot())));
 	tilde_dPrime = R1h.Transpose()*(Omega2 - Omega1);
-	ConstitutiveLaw3DOwner::Update(tilde_d, tilde_dPrime);
+	pDC->Update(tilde_d, tilde_dPrime);
 
-	Vec3 F(R1h*GetF());
+	Vec3 F(R1h*pDC->GetF());
 
 	WorkVec.Add(1, F);
 	WorkVec.Sub(4, F);
@@ -1385,7 +1386,7 @@ ViscousDispJoint::InitialAssRes(SubVectorHandler& WorkVec,
 
 ViscoElasticDispJoint::ViscoElasticDispJoint(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw3D* pCL,
+	ConstitutiveLaw3D*const pCL,
 	const StructNode* pN1,
 	const StructNode* pN2,
 	const Vec3& tilde_f1,
@@ -1393,8 +1394,7 @@ ViscoElasticDispJoint::ViscoElasticDispJoint(unsigned int uL,
 	const Mat3x3& tilde_R1h,
 	const Mat3x3& tilde_R2h,
 	flag fOut)
-: Elem(uL, fOut),
-DeformableDispJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, fOut)
+: DeformableDispJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde_R2h, fOut)
 {
 	/*
 	 * Chiede la matrice tangente di riferimento
@@ -1402,8 +1402,8 @@ DeformableDispJoint(uL, pDO, pCL, pN1, pN2, tilde_f1, tilde_f2, tilde_R1h, tilde
 	 */
 	Mat3x3 R1h(pNode1->GetRRef()*tilde_R1h);
 	Mat3x3 R1hT(R1h.Transpose());
-	FDE = R1h*GetFDE()*R1hT;
-	FDEPrime = R1h*GetFDEPrime()*R1hT;
+	FDE = R1h*pDC->GetFDE()*R1hT;
+	FDEPrime = R1h*pDC->GetFDEPrime()*R1hT;
 }
 
 ViscoElasticDispJoint::~ViscoElasticDispJoint(void)
@@ -1415,7 +1415,7 @@ void
 ViscoElasticDispJoint::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw3DOwner::AfterConvergence(tilde_d, tilde_dPrime);
+	pDC->AfterConvergence(tilde_d, tilde_dPrime);
 }
 
 /* assemblaggio jacobiano */
@@ -1508,7 +1508,7 @@ void
 ViscoElasticDispJoint::AfterConvergence(const VectorHandler& X,
 		const VectorHandler& XP, const VectorHandler& XPP)
 {
-	ConstitutiveLaw3DOwner::AfterConvergence(tilde_d);
+	pDC->AfterConvergence(tilde_d);
 }
 
 void
@@ -1530,10 +1530,10 @@ ViscoElasticDispJoint::AssVec(SubVectorHandler& WorkVec)
 		tilde_d = R1hT*d1 - tilde_R1hT_tilde_f1;
 		tilde_dPrime = R1hT*(d1Prime - pNode1->GetWCurr().Cross(d1));
 
-		ConstitutiveLaw3DOwner::Update(tilde_d, tilde_dPrime);
+		pDC->Update(tilde_d, tilde_dPrime);
 	}
 
-	Vec3 F(R1h*GetF());
+	Vec3 F(R1h*pDC->GetF());
 
 	WorkVec.Add(1, F);
 	WorkVec.Add(4, d1.Cross(F));
@@ -1555,12 +1555,12 @@ ViscoElasticDispJoint::AfterPredict(VectorHandler& X, VectorHandler& XP)
 	tilde_d = R1hT*d1 - tilde_R1hT_tilde_f1;
 	tilde_dPrime = R1hT*(d1Prime - pNode1->GetWCurr().Cross(d1));
 
-	ConstitutiveLaw3DOwner::Update(tilde_d, tilde_dPrime);
+	pDC->Update(tilde_d, tilde_dPrime);
 
 	/* FIXME: we need to be able to regenerate FDE and FDEPrime
 	 * if the constitutive law throws ChangedEquationStructure */
-	FDE = R1h*GetFDE()*R1hT;
-	FDEPrime = R1h*GetFDEPrime()*R1hT;
+	FDE = R1h*pDC->GetFDE()*R1hT;
+	FDEPrime = R1h*pDC->GetFDEPrime()*R1hT;
 
 	bFirstRes = true;
 }
@@ -1599,9 +1599,9 @@ ViscoElasticDispJoint::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 	Vec3 Omega1(pNode1->GetWRef());
 	Vec3 Omega2(pNode2->GetWRef());
 
-	Vec3 F(R1h*GetF());
-	Mat3x3 FDE(R1h*GetFDE().MulMT(R1h));
-	Mat3x3 FDEPrime(R1h*GetFDEPrime().MulMT(R1h));
+	Vec3 F(R1h*pDC->GetF());
+	Mat3x3 FDE(R1h*pDC->GetFDE().MulMT(R1h));
+	Mat3x3 FDEPrime(R1h*pDC->GetFDEPrime().MulMT(R1h));
 
 	Mat3x3 Tmp(Mat3x3(MatCross, F) - FDEPrime*Mat3x3(MatCross, Omega2 - Omega1) + FDE);
 
@@ -1655,9 +1655,9 @@ ViscoElasticDispJoint::InitialAssRes(SubVectorHandler& WorkVec,
 	tilde_d = R1hT*d1 - tilde_R1hT_tilde_f1;
 	tilde_dPrime = R1hT*(d1Prime - pNode1->GetWCurr().Cross(d1));
 
-	ConstitutiveLaw3DOwner::Update(tilde_d, tilde_dPrime);
+	pDC->Update(tilde_d, tilde_dPrime);
 
-	Vec3 F(R1h*GetF());
+	Vec3 F(R1h*pDC->GetF());
 
 	WorkVec.Add(1, F);
 	WorkVec.Add(4, d1.Cross(F));

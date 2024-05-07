@@ -54,7 +54,7 @@
 HydraulicElem::HydraulicElem(unsigned int uL, const DofOwner* pDO,
 			     HydraulicFluid* hf, flag fOut)
 : Elem(uL, fOut), 
-ElemWithDofs(uL, pDO, fOut), 
+DofOwnerOwner(pDO), 
 HF(hf)
 {
    ASSERT(HF != NULL);

@@ -4,7 +4,7 @@
 #include "therm.h"
 #include "thermalnode.h"
 
-class ThermalSource : virtual public Thermal, public DriveOwner {
+class ThermalSource : public Thermal, public DriveOwner {
  private:
    const ThermalNode* pNode1;
    //doublereal thermalcapacitance;

@@ -56,8 +56,7 @@ Brake::Brake(unsigned int uL, const DofOwner* pDO,
 		const Vec3& dir,
 #endif
 		DriveCaller *pdc)
-: Elem(uL, fOut), 
-Joint(uL, pDO, fOut), 
+: Joint(uL, pDO, fOut), 
 pNode1(pN1), pNode2(pN2),
 d1(dTmp1), R1h(R1hTmp), d2(dTmp2), R2h(R2hTmp), /* F(Zero3), */ M(Zero3), dTheta(0.),
 Sh_c(sh), fc(f), preF(pref), r(rr), 

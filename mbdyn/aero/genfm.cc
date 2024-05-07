@@ -240,9 +240,8 @@ GenericAerodynamicForce::GenericAerodynamicForce(unsigned int uLabel,
 	doublereal dS, doublereal dL, bool bAlphaFirst,
 	GenericAerodynamicData *pD,
 	flag fOut)
-: Elem(uLabel, fOut),
-AerodynamicElem(uLabel, pDO, fOut),
-InitialAssemblyElem(uLabel, fOut),
+: InitialAssemblyElem(uLabel, fOut),
+AerodynamicElem(pDO),
 pNode(pN),
 dRefSurface(dS),
 dRefLength(dL),
@@ -320,10 +319,10 @@ GenericAerodynamicForce::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 }
 
 /* Tipo di elemento aerodinamico */
-AerodynamicElem::Type
+AerodynamicElemBase::Type
 GenericAerodynamicForce::GetAerodynamicElemType(void) const
 {
-	return AerodynamicElem::GENERICFORCE;
+	return AerodynamicElemBase::GENERICFORCE;
 }
 
 void

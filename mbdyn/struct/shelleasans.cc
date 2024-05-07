@@ -268,7 +268,6 @@ Shell4EASANS::Shell4EASANS(unsigned int uL,
 #endif // ! USE_CL_IN_SHELL
 	flag fOut)
 : 
-Elem(uL, fOut), 
 Shell(uL, pDO, fOut),
 
 S_alpha_beta_0(2, 2),

@@ -39,7 +39,7 @@
 // ModuleIMU: begin
 
 class ModuleIMU
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 	// add private data
 	const StructNode *m_pNode;
@@ -89,8 +89,7 @@ public:
 ModuleIMU::ModuleIMU(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 m_pNode(0),
 m_tilde_f(::Zero3),
 m_tilde_Rh(::Eye3),
@@ -337,7 +336,7 @@ ModuleIMU::InitialAssRes(
 // ModuleIMUConstraint: begin
 
 class ModuleIMUConstraint
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 	// add private data
 	const StructNode *m_pNode;
@@ -417,8 +416,7 @@ public:
 ModuleIMUConstraint::ModuleIMUConstraint(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 m_pNode(0),
 m_tilde_f(::Zero3),
 m_tilde_Rh(::Eye3),

@@ -53,8 +53,7 @@
 #include "drive.h"
 
 class RotorLooseCoupling
-: virtual public Elem,
-	public UserDefinedElem,
+: 	public UserDefinedElem,
 	public UniformRotor
 {
 private:
@@ -113,7 +112,8 @@ public:
 		const Vec3& F,
 		const Vec3& M,
 		const Vec3& X);
-
+	virtual std::ostream& Restart(std::ostream& out) const;
+	virtual VariableSubMatrixHandler& AssJac(VariableSubMatrixHandler&, doublereal, const VectorHandler&, const VectorHandler&);
 	virtual unsigned int iGetInitialNumDof(void) const;
 	virtual void 
 	InitialWorkSpaceDim(integer* piNumRows, integer* piNumCols) const;
@@ -128,8 +128,7 @@ RotorLooseCoupling::RotorLooseCoupling(unsigned uLabel,
 	const DofOwner *pDO,
 	DataManager* pDM,
 	MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 UniformRotor(uLabel, pDO, 0, Eye3, 0, 0, 0, -1., -1., 0, 0, 0., 0., 1., 1., flag(0)),
 m_pDM(pDM),
 m_nCols(0),
@@ -179,6 +178,25 @@ RotorLooseCoupling::~RotorLooseCoupling(void)
 		m_qF.pop_back();
 	}
 }
+
+VariableSubMatrixHandler&
+RotorLooseCoupling::AssJac(VariableSubMatrixHandler& WorkMat, doublereal, const VectorHandler&, const VectorHandler&)
+{
+	// should not be called, since initial workspace is empty
+	ASSERT(0);
+
+	WorkMat.SetNullMatrix();
+
+	return WorkMat;
+}
+
+std::ostream&
+RotorLooseCoupling::Restart(std::ostream& out) const
+{
+	return out << "# RotorLooseCoupling: not implemented" << std::endl;
+}
+
+
 
 Elem::Type
 RotorLooseCoupling::GetElemType(void) const

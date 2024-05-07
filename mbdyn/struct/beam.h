@@ -54,7 +54,7 @@ class MBDynParser;
 /* Beam - begin */
 
 class Beam
-: virtual public Elem, public ElemGravityOwner, public InitialAssemblyElem {
+: public InitialAssemblyElem, public GravityOwner {
     friend class AerodynamicBeam;
     friend Elem* ReadBeam(DataManager* pDM, MBDynParser& HP, unsigned int uLabel);
     friend class Beam2;
@@ -154,7 +154,7 @@ protected:
     Mat3x3 RPrev[NUMSEZ];
 
     /* Constitutive laws*/
-    ConstitutiveLaw6DOwner* pD[NUMSEZ];
+    ConstitutiveLaw6D* pD[NUMSEZ];
 
     /* Reference constitutive laws */
     Mat6x6 DRef[NUMSEZ];
@@ -268,7 +268,7 @@ protected:
 	 const Vec3& F1, const Vec3& F2, const Vec3& F3,
 	 const Mat3x3& R1, const Mat3x3& R2, const Mat3x3& R3,
 	 const Mat3x3& r_I, const Mat3x3& rII,
-	 const ConstitutiveLaw6D* pD_I, const ConstitutiveLaw6D* pDII,
+	 ConstitutiveLaw6D* const pD_I, ConstitutiveLaw6D* const pDII,
 	 OrientationDescription ood,
 	 flag fOut);
 
@@ -278,7 +278,7 @@ protected:
 	 const Vec3& F1, const Vec3& F2, const Vec3& F3,
 	 const Mat3x3& R1, const Mat3x3& R2, const Mat3x3& R3,
 	 const Mat3x3& r_I, const Mat3x3& rII,
-	 const ConstitutiveLaw6D* pD_I, const ConstitutiveLaw6D* pDII,
+	 ConstitutiveLaw6D* const pD_I, ConstitutiveLaw6D* const pDII,
 	 doublereal dM_I,
 	 const Vec3& s0_I, const Mat3x3& j0_I,
 	 doublereal dMII,
@@ -344,7 +344,7 @@ protected:
     AssRes(SubVectorHandler& WorkVec,
            doublereal dCoef,
 	   const VectorHandler& XCurr,
-	   const VectorHandler& XPrimeCurr);
+	   const VectorHandler& XPrimeCurr) override;
 
     /* Inverse Dynamics: */
     virtual SubVectorHandler&
@@ -352,7 +352,7 @@ protected:
 	   const VectorHandler&  XCurr ,
 	   const VectorHandler&  XPrimeCurr ,
 	   const VectorHandler&  XPrimePrimeCurr ,
-	   InverseDynamics::Order iOrder = InverseDynamics::INVERSE_DYNAMICS);
+	   InverseDynamics::Order iOrder = InverseDynamics::INVERSE_DYNAMICS) override;
 
     /* inverse dynamics capable element */
     virtual bool bInverseDynamics(void) const;
@@ -452,7 +452,7 @@ protected:
 
 /* ViscoElasticBeam - begin */
 
-class ViscoElasticBeam : virtual public Elem, virtual public Beam {
+class ViscoElasticBeam : public Beam {
   protected:
 
     /* Derivate di deformazioni e curvature */
@@ -499,8 +499,8 @@ class ViscoElasticBeam : virtual public Elem, virtual public Beam {
 		     const Mat3x3& R3,
 	             const Mat3x3& r_I,
 		     const Mat3x3& rII,
-	             const ConstitutiveLaw6D* pD_I,
-		     const ConstitutiveLaw6D* pDII,
+	             ConstitutiveLaw6D* const pD_I,
+		     ConstitutiveLaw6D* const pDII,
 		     OrientationDescription ood,
 		     flag fOut);
 
@@ -517,8 +517,8 @@ class ViscoElasticBeam : virtual public Elem, virtual public Beam {
 		     const Mat3x3& R3,
 		     const Mat3x3& r_I,
 		     const Mat3x3& rII,
-		     const ConstitutiveLaw6D* pD_I,
-		     const ConstitutiveLaw6D* pDII,
+		     ConstitutiveLaw6D* const pD_I,
+		     ConstitutiveLaw6D* const pDII,
 		     doublereal dM_I,
 		     const Vec3& s0_I,
 		     const Mat3x3& j0_I,

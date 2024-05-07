@@ -42,7 +42,7 @@
 
 /* Pipe - begin */
 
-class Pipe : virtual public Elem, public HydraulicElem {
+class Pipe : public HydraulicElem {
  private:
    const PressureNode* pNode1;
    const PressureNode* pNode2;
@@ -121,7 +121,7 @@ class Pipe : virtual public Elem, public HydraulicElem {
 
 /* Dynamic_pipe Tubo ad elementi finiti - begin */
 
-class Dynamic_pipe : virtual public Elem, public HydraulicElem {
+class Dynamic_pipe : public HydraulicElem {
  private:
    const PressureNode* pNode1;
    const PressureNode* pNode2;
@@ -213,7 +213,7 @@ class Dynamic_pipe : virtual public Elem, public HydraulicElem {
 
 /* DynamicPipe (tubo ad elementi finiti) - begin */
 
-class DynamicPipe : virtual public Elem, public HydraulicElem {
+class DynamicPipe : public HydraulicElem {
  private:
    const PressureNode* pNode1;
    const PressureNode* pNode2;

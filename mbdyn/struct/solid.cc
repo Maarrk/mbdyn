@@ -659,9 +659,7 @@ private:
 
 SolidElem::SolidElem(unsigned uLabel,
                      flag fOut)
-     :Elem{uLabel, fOut},
-      ElemGravityOwner{uLabel, fOut},
-      InitialAssemblyElem(uLabel, fOut)
+     :InitialAssemblyElem{uLabel, fOut}
 {
 }
 
@@ -785,8 +783,7 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Sol
                                                                                              std::array<typename SolidCSLType::ConstLawPtr, iNumEvalPointsStiffness>&& rgMaterialData,
                                                                                              const RigidBodyKinematics* pRBK,
                                                                                              flag fOut)
-: Elem{uLabel, fOut},
-  SolidElem{uLabel, fOut},
+: SolidElem{uLabel, fOut},
   IncomprSolidElemType{rgNodesPressure},
   rgNodes{rgNodesDisp},
   rhon{rhon},
@@ -1867,8 +1864,7 @@ SolidElemDynamic<ElementType, CollocationType, SolidCSLType, eMassMatrix>::Solid
                                                                                             std::array<typename SolidCSLType::ConstLawPtr, iNumEvalPointsStiffness>&& rgMaterialData,
                                                                                             const RigidBodyKinematics* const pRBK,
                                                                                             flag fOut)
-:Elem{uLabel, fOut},
- SolidElemStaticType{uLabel, rgNodes, rgNodesPressure, rhon, std::move(rgMaterialData), pRBK, fOut}
+:SolidElemStaticType{uLabel, rgNodes, rgNodesPressure, rhon, std::move(rgMaterialData), pRBK, fOut}
 {
      MassMatrixHelper<eMassMatrix>::AssMassMatrix(*this, M);
 }

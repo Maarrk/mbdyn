@@ -41,27 +41,27 @@
 #include "mbconfig.h"           /* This goes first in every *.c,*.cc file */
 #include "bodyad.h"
 
-BodyAd::BodyAd(unsigned int uL,
-               const StructNodeAd *pNode,
-               doublereal dMass,
-               const Vec3& Xgc,
-               const Mat3x3& J,
-               flag fOut)
-     :Body(uL, pNode, dMass, Xgc, J, fOut),
-      pNode(pNode)
+template<class B, class N>
+BodyAd<B, N>::BodyAd(unsigned int uL, const N *pNode,
+            doublereal dMassTmp, const Vec3& XgcTmp, const Mat3x3& JTmp,
+            flag fOut)
+     : B(uL, pNode, dMassTmp, XgcTmp, JTmp, fOut),
+     pNode(pNode)
 {
      ASSERT(pNode != nullptr);
      ASSERT(pNode->GetNodeType() == Node::STRUCTURAL);
      ASSERT(dMass > 0.);
 }
 
-BodyAd::~BodyAd(void)
+template<class B, class N>
+BodyAd<B, N>::~BodyAd(void)
 {
 }
 
-template <typename T>
+template <class B, class N> 
+template<typename T>
 void
-BodyAd::AssVecRBK_int(const RigidBodyKinematics* const pRBK,
+BodyAd<B, N>::AssVecRBK_int(const RigidBodyKinematics* const pRBK,
                       const sp_grad::SpColVector<T, 3>& X,
                       const sp_grad::SpColVector<T, 3>& V,
                       const sp_grad::SpColVector<T, 3>& W,
@@ -72,10 +72,10 @@ BodyAd::AssVecRBK_int(const RigidBodyKinematics* const pRBK,
 {
      using namespace sp_grad;
 
-     const SpColVector<T, 3> s0 = X * dMass + STmp;
+     const SpColVector<T, 3> s0 = X * B::dMass + STmp;
 
      // force
-     const SpColVector<T, 3> F(pRBK->GetXPP() * -dMass
+     const SpColVector<T, 3> F(pRBK->GetXPP() * -B::dMass
                                - Cross(pRBK->GetWP(), s0, oDofMap)
                                - Cross(pRBK->GetW(), Cross(pRBK->GetW(), s0, oDofMap), oDofMap), oDofMap);
 
@@ -100,16 +100,17 @@ BodyAd::AssVecRBK_int(const RigidBodyKinematics* const pRBK,
      WorkVec.AddItem(iFirstMomentumIndex + 4, M);
 }
 
-void BodyAd::UpdateInertia(const sp_grad::SpColVector<doublereal, 3>& S,
+template<class B, class N>
+void BodyAd<B, N>::UpdateInertia(const sp_grad::SpColVector<doublereal, 3>& S,
                            const sp_grad::SpMatrix<doublereal, 3, 3>& J) const
 {
      for (integer i = 1; i <= 3; ++i) {
-          STmp(i) = S(i);
+          B::STmp(i) = S(i);
      }
 
      for (integer j = 1; j <= 3; ++j) {
           for (integer i = 1; i <= 3; ++i) {
-               JTmp(i, j) = J(i, j);
+               B::JTmp(i, j) = J(i, j);
           }
      }
 }
@@ -120,11 +121,8 @@ DynamicBodyAd::DynamicBodyAd(unsigned int uL,
                              const Vec3& Xgc,
                              const Mat3x3& J,
                              flag fOut)
-     :Elem(uL, fOut),
-      Body(uL, pN, dMass, Xgc, J, fOut),
-      DynamicBody(uL, pN, dMass, Xgc, J, fOut),
-      BodyAd(uL, pN, dMass, Xgc, J, fOut),
-      pNode(pN)
+     : BodyAd<DynamicBody, DynamicStructNodeAd>(uL, pN, dMass, Xgc, J, fOut),
+       pNode(pN)
 {
 }
 
@@ -285,11 +283,8 @@ StaticBodyAd::StaticBodyAd(unsigned int uL,
                            const Vec3& Xgc,
                            const Mat3x3& J,
                            flag fOut)
-     :Elem(uL, fOut),
-      Body(uL, pN, dMass, Xgc, J, fOut),
-      StaticBody(uL, pN, dMass, Xgc, J, fOut),
-      BodyAd(uL, pN, dMass, Xgc, J, fOut),
-      pNode(pN)
+     : BodyAd<StaticBody, StaticStructNodeAd>(uL, pN, dMass, Xgc, J, fOut),
+       pNode(pN)
 {
 }
 
@@ -435,11 +430,7 @@ ModalBodyAd::ModalBodyAd(unsigned int uL,
                          const Vec3& Xgc,
                          const Mat3x3& J,
                          flag fOut)
-     : Elem(uL, fOut),
-       Body(uL, pNode, dMass, Xgc, J, fOut),
-       DynamicBody(uL, pNode, dMass, Xgc, J, fOut),
-       ModalBody(uL, pNode, dMass, Xgc, J, fOut),
-       BodyAd(uL, pNode, dMass, Xgc, J, fOut),
+     : BodyAd<ModalBody, ModalNodeAd>(uL, pNode, dMass, Xgc, J, fOut),
        pNode(pNode)
 {
 }

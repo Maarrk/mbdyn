@@ -39,7 +39,7 @@
 
 /* SphericalHingeJoint - begin */
 
-class SphericalHingeJoint : virtual public Elem, public Joint {
+class SphericalHingeJoint : public Joint {
  private:
    const StructNode* pNode1;
    const StructNode* pNode2;
@@ -160,7 +160,7 @@ class SphericalHingeJoint : virtual public Elem, public Joint {
 
 /* Incastro con liberta' di rotazione sui tre assi */
 
-class PinJoint : virtual public Elem, public Joint {
+class PinJoint : public Joint {
  private:
    const StructNode* pNode;
    Vec3 X0;

@@ -48,7 +48,7 @@
 Electric::Electric(unsigned int uL,
 	const DofOwner* pDO, flag fOut)
 : Elem(uL, fOut),
-ElemWithDofs(uL, pDO, fOut)
+DofOwnerOwner(pDO)
 {
 	NO_OP;
 }

@@ -112,14 +112,13 @@ PiezoActuatorBeam2::PiezoActuatorBeam2(unsigned int uL,
 		const Vec3& F1, const Vec3& F2,
 		const Mat3x3& R1, const Mat3x3& R2,
 		const Mat3x3& r,
-		const ConstitutiveLaw6D* pd,
+		ConstitutiveLaw6D*const pd,
 		int iEl,
 		const ScalarDifferentialNode **pEDof,
 		const Mat3xN& Te, const Mat3xN& Tk,
 		OrientationDescription ood,
 		flag fOut)
-: Elem(uL, fOut),
-Beam2(uL, pN1, pN2, F1, F2, R1, R2, r, pd, ood, fOut),
+: Beam2(uL, pN1, pN2, F1, F2, R1, R2, r, pd, ood, fOut),
 iNumElec(iEl), pvElecDofs(pEDof), V(iEl)
 {
 	ASSERT(iNumElec > 0);
@@ -333,14 +332,13 @@ PiezoActuatorVEBeam2::PiezoActuatorVEBeam2(unsigned int uL,
 		const Vec3& F1, const Vec3& F2,
 		const Mat3x3& R1, const Mat3x3& R2,
 		const Mat3x3& r,
-		const ConstitutiveLaw6D* pD,
+		ConstitutiveLaw6D*const pD,
 		int iEl,
 		const ScalarDifferentialNode **pEDof,
 		const Mat3xN& Te, const Mat3xN& Tk,
 		OrientationDescription ood,
 		flag fOut)
-: Elem(uL, fOut),
-ViscoElasticBeam2(uL, pN1, pN2, F1, F2, R1, R2, r, pD, ood, fOut),
+: ViscoElasticBeam2(uL, pN1, pN2, F1, F2, R1, R2, r, pD, ood, fOut),
 iNumElec(iEl), pvElecDofs(pEDof), V(iEl)
 {
 	ASSERT(iNumElec > 0);

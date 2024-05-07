@@ -40,7 +40,7 @@
 
 /* SwashPlate - begin */
 
-class SwashPlate : virtual public Elem, public Genel {
+class SwashPlate : public Genel {
 protected:
 	const ScalarDifferentialNode* pCollectiveIn;
 	// DriveOwner Collective;

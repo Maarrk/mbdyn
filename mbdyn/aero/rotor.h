@@ -41,7 +41,7 @@ extern const char* psRotorNames[];
 /* Rotor - begin */
 
 class Rotor
-: virtual public Elem, public InducedVelocityElem {
+: public InducedVelocityElem {
 protected:
 	const StructNode* pRotor;
 	const StructNode* pGround;
@@ -213,6 +213,10 @@ public:
 		connectedNodes[1] = pRotor;
 	};
 	// ************************************************
+	
+	virtual const OutputHandler::Dimensions GetEquationDimension(integer) const {
+		return OutputHandler::Dimensions::UnknownDimension; 
+	}
 };
 
 /* Rotor - end */
@@ -220,7 +224,7 @@ public:
 
 /* NoRotor - begin */
 
-class NoRotor : virtual public Elem, public Rotor {
+class NoRotor : public Rotor {
 protected:
 	using Rotor::Init;
 	virtual void Init(const StructNode* pCraft,
@@ -271,7 +275,7 @@ public:
 
 /* UniformRotor - begin */
 
-class UniformRotor : virtual public Elem, public Rotor {
+class UniformRotor : public Rotor {
 protected:
 	using Rotor::Init;
 	virtual void Init(const StructNode* pCraft,
@@ -333,7 +337,7 @@ public:
 		unsigned uLabel, unsigned uPnt, const Vec3& X) const;
 };
 
-class UniformRotor2 : virtual public Elem, public UniformRotor {
+class UniformRotor2 : public UniformRotor {
 protected:
 #if 0 // not needed because identical to UniformRotor::Init()
 	virtual void Init(const StructNode* pCraft,
@@ -385,7 +389,7 @@ public:
 
 /* GlauertRotor - begin */
 
-class GlauertRotor : virtual public Elem, public Rotor {
+class GlauertRotor : public Rotor {
 public:
 	enum Type {
 		UNKNOWN = -1,
@@ -479,7 +483,7 @@ public:
 
 /* ManglerRotor - begin */
 
-class ManglerRotor : virtual public Elem, public Rotor {
+class ManglerRotor : public Rotor {
 protected:
 	using Rotor::Init;
 	virtual void Init(const StructNode* pCraft,
@@ -561,7 +565,7 @@ public:
  * Vertica, Vol 14, No. 2, pp.147-184, 1990
  */
 
-class DynamicInflowRotor : virtual public Elem, public Rotor {
+class DynamicInflowRotor : public Rotor {
 protected:
 	doublereal dVConst;
 	doublereal dVSine;
@@ -694,7 +698,7 @@ public:
  * Vertica, Vol 14, No. 2, pp.147-184, 1990
  */
 
-class PetersHeRotor : virtual public Elem, public Rotor {
+class PetersHeRotor : public Rotor {
 protected:
 	doublereal dVConst;
 	doublereal dVSine;

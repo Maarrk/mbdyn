@@ -55,11 +55,11 @@ BeamAd::BeamAd(unsigned int uL,
                const Mat3x3& R3,
                const Mat3x3& r_I,
                const Mat3x3& rII,
-               const ConstitutiveLaw6D* pD_I,
-               const ConstitutiveLaw6D* pDII,
+               ConstitutiveLaw6D* pD_I,
+               ConstitutiveLaw6D* pDII,
                OrientationDescription ood,
                flag fOut)
-:Elem(uL, fOut),
+:
  Beam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut),
  pNode{pN1, pN2, pN3}
 {
@@ -77,17 +77,17 @@ void BeamAd::WorkSpaceDim(integer* piNumRows, integer* piNumCols) const
 }
 
 void
-BeamAd::AddInternalForces(sp_grad::SpColVector<doublereal, 6>& AzLoc, unsigned int iSez)
+BeamAd::AddInternalForcesAD(sp_grad::SpColVector<doublereal, 6>& AzLoc, unsigned int iSez)
 {
 }
 
 void
-BeamAd::AddInternalForces(sp_grad::SpColVector<sp_grad::SpGradient, 6>& AzLoc, unsigned int iSez)
+BeamAd::AddInternalForcesAD(sp_grad::SpColVector<sp_grad::SpGradient, 6>& AzLoc, unsigned int iSez)
 {
 }
 
 void
-BeamAd::AddInternalForces(sp_grad::SpColVector<sp_grad::GpGradProd, 6>& AzLoc, unsigned int iSez)
+BeamAd::AddInternalForcesAD(sp_grad::SpColVector<sp_grad::GpGradProd, 6>& AzLoc, unsigned int iSez)
 {
 }
 
@@ -316,10 +316,10 @@ BeamAd::UnivAssRes(sp_grad::SpGradientAssVec<T>& WorkVec,
           DEBUGCERR("BeamAd(" << GetLabel() << "): DefLoc[" << iSez << "]=" << DefLoc[iSez] << "\n");
 
           /* Calcola le azioni interne */
-          pD[iSez]->pGetConstLaw()->Update(DefLoc[iSez], AzLoc[iSez], oDofMap);
+          pD[iSez]->Update(DefLoc[iSez], AzLoc[iSez], oDofMap);
 
           /* corregge le azioni interne locali (piezo, ecc) */
-          AddInternalForces(AzLoc[iSez], iSez);
+          AddInternalForcesAD(AzLoc[iSez], iSez);
 
           /* Porta le azioni interne nel sistema globale */
           for (integer i = 1; i <= 3; ++i) {
@@ -411,13 +411,11 @@ ViscoElasticBeamAd::ViscoElasticBeamAd(unsigned int uL,
                                        const Mat3x3& R3,
                                        const Mat3x3& r_I,
                                        const Mat3x3& rII,
-                                       const ConstitutiveLaw6D* pD_I,
-                                       const ConstitutiveLaw6D* pDII,
+                                       ConstitutiveLaw6D* pD_I,
+                                       ConstitutiveLaw6D* pDII,
                                        OrientationDescription ood,
                                        flag fOut)
-:Elem(uL, fOut),
- Beam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut),
- ViscoElasticBeam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut),
+:
  BeamAd(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut)
 {
 }
@@ -658,10 +656,10 @@ ViscoElasticBeamAd::UnivAssRes(sp_grad::SpGradientAssVec<T>& WorkVec,
           DEBUGCERR("ViscoElasticBeamAd(" << GetLabel() << "): DefPrimeLoc[" << iSez << "]=" << DefPrimeLoc[iSez] << "\n");
 
           /* Calcola le azioni interne */
-          pD[iSez]->pGetConstLaw()->Update(DefLoc[iSez], DefPrimeLoc[iSez], AzLoc[iSez], oDofMap);
+          pD[iSez]->Update(DefLoc[iSez], DefPrimeLoc[iSez], AzLoc[iSez], oDofMap);
 
           /* corregge le azioni interne locali (piezo, ecc) */
-          AddInternalForces(AzLoc[iSez], iSez);
+          AddInternalForcesAD(AzLoc[iSez], iSez);
 
           /* Porta le azioni interne nel sistema globale */
           for (index_type i = 1; i <= 3; ++i) {

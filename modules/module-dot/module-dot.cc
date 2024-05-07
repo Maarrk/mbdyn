@@ -37,7 +37,7 @@
 #include "userelem.h"
 
 class ModuleDOT
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 	const DataManager *m_pDM;
 	mutable bool m_bDone;
@@ -80,8 +80,7 @@ public:
 ModuleDOT::ModuleDOT(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 m_pDM(pDM),
 m_bDone(false),
 m_bStructOnly(false)

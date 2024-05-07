@@ -64,7 +64,7 @@
 
 using namespace sp_grad;
 
-class BallBearingContact: virtual public Elem, public UserDefinedElem
+class BallBearingContact: public UserDefinedElem
 {
      using Elem::AssRes;
 public:
@@ -199,8 +199,7 @@ BallBearingContact::rgPrivData[iNumPrivData] = {
 BallBearingContact::BallBearingContact(
      unsigned uLabel, const DofOwner *pDO,
      DataManager* pDM, MBDynParser& HP)
-     :       Elem(uLabel, flag(0)),
-             UserDefinedElem(uLabel, pDO),
+     :       UserDefinedElem(uLabel, pDO),
              pDM(pDM),
              pNode1(0),
              gamma(0.),

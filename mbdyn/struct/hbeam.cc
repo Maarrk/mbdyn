@@ -70,11 +70,9 @@ HBeam::HBeam(unsigned int uL,
 		const Vec3& F1,
 		const Vec3& F2,
 		const Mat3x3& R1, const Mat3x3& R2,
-		const ConstitutiveLaw6D* pd,
+		ConstitutiveLaw6D* const pd,
 		flag fOut)
-: Elem(uL, fOut),
-ElemGravityOwner(uL, fOut),
-InitialAssemblyElem(uL, fOut),
+: InitialAssemblyElem(uL, fOut),
 bFirstRes(true)
 {
 	/* Validazione dati */
@@ -95,10 +93,7 @@ bFirstRes(true)
 	RRef = R = interpolazione di R1 e R2 ;
 	 */
 
-	pD = NULL;
-	SAFENEWWITHCONSTRUCTOR(pD,
-			ConstitutiveLaw6DOwner,
-			ConstitutiveLaw6DOwner(pd));
+	pD = pd;
 
 	Omega = Zero3;
 	Az = Zero6;
@@ -338,7 +333,7 @@ HBeam::Restart_(std::ostream& out) const
 	out << ", reference, global,"
 		<< "1, ", (R.GetVec(1)).Write(out, ", ") << ", "
 		<< "2, ", (R.GetVec(2)).Write(out, ", ") << ", ",
-	pD->pGetConstLaw()->Restart(out);
+	pD->Restart(out);
 
 	return out;
 }
@@ -727,10 +722,9 @@ ViscoElasticHBeam::ViscoElasticHBeam(unsigned int uL,
 		const Vec3& F1,
 		const Vec3& F2,
 		const Mat3x3& r,
-		const ConstitutiveLaw6D* pd,
+		ConstitutiveLaw6D* const pd,
 		flag fOut)
-: Elem(uL, fOut),
-HBeam(uL, pN1, pN2, F1, F2, r, pd, fOut)
+: HBeam(uL, pN1, pN2, F1, F2, r, pd, fOut)
 {
 	LPrimeRef = LPrime = Zero3;
 	gPrime = Zero3;

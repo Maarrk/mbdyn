@@ -48,7 +48,7 @@
 /* Joint_ - begin */
 
 class Joint_
-: virtual public Elem, public Joint {
+: public Joint {
  protected:   
    
  public:
@@ -81,7 +81,7 @@ class Joint_
 /* Joint_1Node - begin */
 
 class Joint_1Node
-: virtual public Elem, public Joint_ {
+: public Joint_ {
  protected:
    StructNode* pNode;
    
@@ -119,7 +119,7 @@ class Joint_1Node
 /* Joint_2Nodes - begin */
 
 class Joint_2Nodes
-: virtual public Elem, public Joint_ {
+: public Joint_ {
  protected:
    StructNode* pNode1;
    StructNode* pNode2;
@@ -158,7 +158,7 @@ class Joint_2Nodes
 /* Joint_NNodes - begin */
 
 class Joint_NNodes
-: virtual public Elem, public Joint {
+: public Joint {
  protected:
    StructNode** pNodes;      
    

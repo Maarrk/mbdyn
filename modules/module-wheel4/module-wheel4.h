@@ -44,7 +44,7 @@
 //#include "joint.h" // to get information on viscoelastic elements
 
 class Wheel4
-: virtual public Elem, public UserDefinedElem
+: public UserDefinedElem
 {
 private:
 
@@ -389,7 +389,7 @@ public:
 #define MODULE_TIMESTEP_H
 
 class TimeStep
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 
 	Elem *pWheelE; // user loadable elem

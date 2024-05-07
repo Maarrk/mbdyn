@@ -42,7 +42,7 @@ extern const char* psGenelNames[];
 
 /* Genel - begin */
 
-class Genel : virtual public Elem, public ElemWithDofs {
+class Genel : public Elem, public DofOwnerOwner {
  public:
    /* Tipi di Genel */
    enum Type {

@@ -41,7 +41,7 @@
 
 /* Control_valve - begin */
 
-class Control_valve : virtual public Elem, public HydraulicElem, public DriveOwner {
+class Control_valve : public HydraulicElem, public DriveOwner {
  private:
    const PressureNode* pNode1;
    const PressureNode* pNode2;
@@ -126,7 +126,7 @@ class Control_valve : virtual public Elem, public HydraulicElem, public DriveOwn
 // #undef VALVE_6
 
 class Control_valve2 
-: virtual public Elem, public HydraulicElem, public DriveOwner {
+: public HydraulicElem, public DriveOwner {
 private:
 	 /*
 	  *
@@ -239,7 +239,7 @@ public:
 
 /* Control_valve_dinamica - begin */
 
-class Dynamic_control_valve : virtual public Elem, public HydraulicElem, public DriveOwner {
+class Dynamic_control_valve : public HydraulicElem, public DriveOwner {
  private:
    const PressureNode* pNode1;
    const PressureNode* pNode2;
@@ -345,7 +345,7 @@ class Dynamic_control_valve : virtual public Elem, public HydraulicElem, public 
 
 /* Pressure flow control_valve_dinamica - begin */
 
-class Pressure_flow_control_valve : virtual public Elem, public HydraulicElem, public DriveOwner {
+class Pressure_flow_control_valve : public HydraulicElem, public DriveOwner {
  private:
    const PressureNode* pNode1;
    const PressureNode* pNode2;
@@ -460,7 +460,7 @@ class Pressure_flow_control_valve : virtual public Elem, public HydraulicElem, p
 
 /* Pressure_valve - begin */
 
-class Pressure_valve : virtual public Elem, public HydraulicElem {
+class Pressure_valve : public HydraulicElem {
  private:
    const PressureNode* pNode1;
    const PressureNode* pNode2;
@@ -553,7 +553,7 @@ class Pressure_valve : virtual public Elem, public HydraulicElem {
 
 /* Flow_valve - begin */
 
-class  Flow_valve : virtual public Elem, public HydraulicElem {
+class  Flow_valve : public HydraulicElem {
  private:
    const PressureNode* pNode1;
    const PressureNode* pNode2;

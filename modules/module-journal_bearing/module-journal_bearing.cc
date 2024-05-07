@@ -61,7 +61,7 @@
 using namespace sp_grad;
 
 
-class JournalBearing: virtual public Elem, public UserDefinedElem
+class JournalBearing: public UserDefinedElem
 {
 public:
         using Elem::AssRes;
@@ -152,8 +152,7 @@ private:
 JournalBearing::JournalBearing(
         unsigned uLabel, const DofOwner *pDO,
         DataManager* pDM, MBDynParser& HP)
-:       Elem(uLabel, flag(0)),
-        UserDefinedElem(uLabel, pDO),
+:       UserDefinedElem(uLabel, pDO),
         pNode1(0),
         o1(Zero3),
         e(Eye3),

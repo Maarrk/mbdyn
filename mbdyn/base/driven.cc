@@ -46,8 +46,7 @@ DrivenElem::DrivenElem(DataManager *pdm,
 		bool b_active,
 		const Elem* pE,
 		SimulationEntity::Hints *ph)
-: Elem(pE->GetLabel(), pE->fToBeOutput()),
-NestedElem(pE),
+: NestedElem(pE),
 DriveOwner(pDC),
 pDM(pdm),
 pHints(ph),
@@ -311,7 +310,7 @@ DrivenElem::AssJac(VariableSubMatrixHandler& WorkMat,
 		WM.ResizeReset(iNumDofs, 0);
 
 		/* NOTE: must not fail, since iNumDofs != 0 */
-		integer iFirstIndex = dynamic_cast<ElemWithDofs *>(pElem)->iGetFirstIndex();
+		integer iFirstIndex = dynamic_cast<DofOwnerOwner *>(pElem)->iGetFirstIndex();
 
   		for (unsigned int iCnt = 1; iCnt <= iNumDofs; iCnt++) {
   			doublereal J;
@@ -359,7 +358,7 @@ DrivenElem::AssMats(VariableSubMatrixHandler& WorkMatA,
 		WM.ResizeReset(iNumDofs, 0);
 
 		/* NOTE: must not fail, since iNumDofs != 0 */
-		integer iFirstIndex = dynamic_cast<ElemWithDofs *>(pElem)->iGetFirstIndex();
+		integer iFirstIndex = dynamic_cast<DofOwnerOwner *>(pElem)->iGetFirstIndex();
 
   		for (unsigned int iCnt = 1; iCnt <= iNumDofs; iCnt++) {
 			WM.PutItem(iCnt, iFirstIndex+iCnt,
@@ -387,7 +386,7 @@ DrivenElem::AssRes(SubVectorHandler& WorkVec,
 		WorkVec.ResizeReset(iNumDofs);
 
 		/* NOTE: must not fail, since iNumDofs != 0 */
-		integer iFirstIndex = dynamic_cast<ElemWithDofs *>(pElem)->iGetFirstIndex();
+		integer iFirstIndex = dynamic_cast<DofOwnerOwner *>(pElem)->iGetFirstIndex();
 
 		for (unsigned int iCnt = 1; iCnt <= iNumDofs; iCnt++) {
 			WorkVec.PutRowIndex(iCnt, iFirstIndex+iCnt);

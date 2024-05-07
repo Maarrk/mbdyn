@@ -37,7 +37,7 @@
 #include "userelem.h"
 
 class ModuleNS1
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 	const StructNode *m_pNode;
 	const Vec3 m_X0;
@@ -84,8 +84,7 @@ public:
 ModuleNS1::ModuleNS1(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 m_dE(0.)
 {
 	// help

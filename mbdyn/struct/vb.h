@@ -41,7 +41,7 @@
 /* ViscousBody - begin */
 
 class ViscousBody :
-virtual public Elem, public Joint, public ConstitutiveLaw6DOwner {
+public Joint {
 protected:
 	const StructNode* pNode;
 	mutable Vec3 tilde_f;
@@ -58,6 +58,8 @@ protected:
 
 	Vec6 F;
 	Mat6x6 FDEPrime;
+	
+	ConstitutiveLaw6D* pDC;
 
 	void AssMats(FullSubMatrixHandler& WMA,
 		FullSubMatrixHandler& WMB,
@@ -73,7 +75,7 @@ public:
 	/* Costruttore non banale */
 	ViscousBody(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw6D* pCL,
+		ConstitutiveLaw6D*const pCL,
 		const StructNode* pN,
 		const Vec3& tilde_f,
 		const Mat3x3& tilde_Rh,

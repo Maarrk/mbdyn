@@ -512,138 +512,138 @@ ConstitutiveLawAd<T, Tder>::UpdateElasticSparse(ConstLaw* pCl, const T& Eps)
 
 /* ConstitutiveLawOwner - begin */
 
-template <class T, class Tder>
-class ConstitutiveLawOwner : public SimulationEntity {
-protected:
-        mutable ConstitutiveLaw<T, Tder>* pConstLaw;
-
-public:
-        ConstitutiveLawOwner(const ConstitutiveLaw<T, Tder>* pCL)
-        : pConstLaw(const_cast<ConstitutiveLaw<T, Tder> *>(pCL)) {
-                ASSERT(pCL != NULL);
-        };
-
-        virtual ~ConstitutiveLawOwner(void) {
-                ASSERT(pConstLaw != NULL);
-                if (pConstLaw != NULL) {
-                        SAFEDELETE(pConstLaw);
-                }
-        };
-
-        inline ConstitutiveLaw<T, Tder>* pGetConstLaw(void) const {
-                ASSERT(pConstLaw != NULL);
-                return pConstLaw;
-        };
-
-	using SimulationEntity::Update;
-        inline void Update(const T& Eps, const T& EpsPrime = mb_zero<T>()) {
-                ASSERT(pConstLaw != NULL);
-                pConstLaw->Update(Eps, EpsPrime);
-        };
-
-	using SimulationEntity::AfterConvergence;
-        inline void AfterConvergence(const T& Eps, const T& EpsPrime = mb_zero<T>()) {
-                ASSERT(pConstLaw != NULL);
-                pConstLaw->AfterConvergence(Eps, EpsPrime);
-        };
-
-        inline const T& GetF(void) const {
-                ASSERT(pConstLaw != NULL);
-                return pConstLaw->GetF();
-        };
-
-        inline const Tder& GetFDE(void) const {
-                ASSERT(pConstLaw != NULL);
-                return pConstLaw->GetFDE();
-        };
-
-        inline const Tder& GetFDEPrime(void) const {
-                ASSERT(pConstLaw != NULL);
-                return pConstLaw->GetFDEPrime();
-        };
-
-        /* simentity */
-        virtual unsigned int iGetNumDof(void) const override {
-                ASSERT(pConstLaw != NULL);
-                return pConstLaw->iGetNumDof();
-        };
-
-        virtual std::ostream& DescribeDof(std::ostream& out,
-                        const char *prefix = "",
-                        bool bInitial = false) const override
-        {
-                return out;
-        };
-
-        virtual void DescribeDof(std::vector<std::string>& desc,
-                        bool bInitial = false, int i = -1) const override
-        {
-                ASSERT(i <= 0);
-                desc.resize(0);
-        };
-
-        virtual std::ostream& DescribeEq(std::ostream& out,
-                        const char *prefix = "",
-                        bool bInitial = false) const override
-        {
-                return out;
-        };
-
-        virtual void DescribeEq(std::vector<std::string>& desc,
-                        bool bInitial = false, int i = -1) const override
-        {
-                ASSERT(i <= 0);
-                desc.resize(0);
-        };
-
-        virtual DofOrder::Order GetDofType(unsigned int i) const override {
-                ASSERT(pConstLaw != NULL);
-                return pConstLaw->GetDofType(i);
-        };
-
-        /*
-         * Metodi per l'estrazione di dati "privati".
-         * Si suppone che l'estrattore li sappia interpretare.
-         * Come default non ci sono dati privati estraibili
-         */
-        virtual unsigned int iGetNumPrivData(void) const override {
-                return pConstLaw->iGetNumPrivData();
-        };
-
-        /*
-         * Maps a string (possibly with substrings) to a private data;
-         * returns a valid index ( > 0 && <= iGetNumPrivData()) or 0
-         * in case of unrecognized data; error must be handled by caller
-         */
-        virtual unsigned int iGetPrivDataIdx(const char *s) const override {
-                return pConstLaw->iGetPrivDataIdx(s);
-        };
-
-        /*
-         * Returns the current value of a private data
-         * with 0 < i <= iGetNumPrivData()
-         */
-        virtual doublereal dGetPrivData(unsigned int i) const override {
-                return pConstLaw->dGetPrivData(i);
-        };
-
-        virtual std::ostream& OutputAppend(std::ostream& out) const override {
-                return pConstLaw->OutputAppend(out);
-        };
-
-        virtual void NetCDFOutputAppend(OutputHandler& OH) const override {
-                return pConstLaw->NetCDFOutputAppend(OH);
-        };
-
-        virtual void OutputAppendPrepare(OutputHandler& OH, const std::string& name) override {
-                pConstLaw->OutputAppendPrepare(OH, name);
-        };
-
-};
-
-typedef ConstitutiveLawOwner<doublereal, doublereal> ConstitutiveLaw1DOwner;
-typedef ConstitutiveLawOwner<Vec3, Mat3x3> ConstitutiveLaw3DOwner;
-typedef ConstitutiveLawOwner<Vec6, Mat6x6> ConstitutiveLaw6DOwner;
+// template <class T, class Tder>
+// class ConstitutiveLawOwner : public SimulationEntity {
+// protected:
+//         mutable ConstitutiveLaw<T, Tder>* pConstLaw;
+// 
+// public:
+//         ConstitutiveLawOwner(const ConstitutiveLaw<T, Tder>* pCL)
+//         : pConstLaw(const_cast<ConstitutiveLaw<T, Tder> *>(pCL)) {
+//                 ASSERT(pCL != NULL);
+//         };
+// 
+//         virtual ~ConstitutiveLawOwner(void) {
+//                 ASSERT(pConstLaw != NULL);
+//                 if (pConstLaw != NULL) {
+//                         SAFEDELETE(pConstLaw);
+//                 }
+//         };
+// 
+//         inline ConstitutiveLaw<T, Tder>* pGetConstLaw(void) const {
+//                 ASSERT(pConstLaw != NULL);
+//                 return pConstLaw;
+//         };
+// 
+// 	using SimulationEntity::Update;
+//         inline void Update(const T& Eps, const T& EpsPrime = mb_zero<T>()) {
+//                 ASSERT(pConstLaw != NULL);
+//                 pConstLaw->Update(Eps, EpsPrime);
+//         };
+// 
+// 	using SimulationEntity::AfterConvergence;
+//         inline void AfterConvergence(const T& Eps, const T& EpsPrime = mb_zero<T>()) {
+//                 ASSERT(pConstLaw != NULL);
+//                 pConstLaw->AfterConvergence(Eps, EpsPrime);
+//         };
+// 
+//         inline const T& GetF(void) const {
+//                 ASSERT(pConstLaw != NULL);
+//                 return pConstLaw->GetF();
+//         };
+// 
+//         inline const Tder& GetFDE(void) const {
+//                 ASSERT(pConstLaw != NULL);
+//                 return pConstLaw->GetFDE();
+//         };
+// 
+//         inline const Tder& GetFDEPrime(void) const {
+//                 ASSERT(pConstLaw != NULL);
+//                 return pConstLaw->GetFDEPrime();
+//         };
+// 
+//         /* simentity */
+//         virtual unsigned int iGetNumDof(void) const override {
+//                 ASSERT(pConstLaw != NULL);
+//                 return pConstLaw->iGetNumDof();
+//         };
+// 
+//         virtual std::ostream& DescribeDof(std::ostream& out,
+//                         const char *prefix = "",
+//                         bool bInitial = false) const override
+//         {
+//                 return out;
+//         };
+// 
+//         virtual void DescribeDof(std::vector<std::string>& desc,
+//                         bool bInitial = false, int i = -1) const override
+//         {
+//                 ASSERT(i <= 0);
+//                 desc.resize(0);
+//         };
+// 
+//         virtual std::ostream& DescribeEq(std::ostream& out,
+//                         const char *prefix = "",
+//                         bool bInitial = false) const override
+//         {
+//                 return out;
+//         };
+// 
+//         virtual void DescribeEq(std::vector<std::string>& desc,
+//                         bool bInitial = false, int i = -1) const override
+//         {
+//                 ASSERT(i <= 0);
+//                 desc.resize(0);
+//         };
+// 
+//         virtual DofOrder::Order GetDofType(unsigned int i) const override {
+//                 ASSERT(pConstLaw != NULL);
+//                 return pConstLaw->GetDofType(i);
+//         };
+// 
+//         /*
+//          * Metodi per l'estrazione di dati "privati".
+//          * Si suppone che l'estrattore li sappia interpretare.
+//          * Come default non ci sono dati privati estraibili
+//          */
+//         virtual unsigned int iGetNumPrivData(void) const override {
+//                 return pConstLaw->iGetNumPrivData();
+//         };
+// 
+//         /*
+//          * Maps a string (possibly with substrings) to a private data;
+//          * returns a valid index ( > 0 && <= iGetNumPrivData()) or 0
+//          * in case of unrecognized data; error must be handled by caller
+//          */
+//         virtual unsigned int iGetPrivDataIdx(const char *s) const override {
+//                 return pConstLaw->iGetPrivDataIdx(s);
+//         };
+// 
+//         /*
+//          * Returns the current value of a private data
+//          * with 0 < i <= iGetNumPrivData()
+//          */
+//         virtual doublereal dGetPrivData(unsigned int i) const override {
+//                 return pConstLaw->dGetPrivData(i);
+//         };
+// 
+//         virtual std::ostream& OutputAppend(std::ostream& out) const override {
+//                 return pConstLaw->OutputAppend(out);
+//         };
+// 
+//         virtual void NetCDFOutputAppend(OutputHandler& OH) const override {
+//                 return pConstLaw->NetCDFOutputAppend(OH);
+//         };
+// 
+//         virtual void OutputAppendPrepare(OutputHandler& OH, const std::string& name) override {
+//                 pConstLaw->OutputAppendPrepare(OH, name);
+//         };
+// 
+// };
+// 
+// typedef ConstitutiveLawOwner<doublereal, doublereal> ConstitutiveLaw1DOwner;
+// typedef ConstitutiveLawOwner<Vec3, Mat3x3> ConstitutiveLaw3DOwner;
+// typedef ConstitutiveLawOwner<Vec6, Mat6x6> ConstitutiveLaw6DOwner;
 
 /* ConstitutiveLawOwner - end */
 

@@ -43,7 +43,7 @@ extern const char* psConstLawNames[];
 /* DeformableHingeJoint - begin */
 
 class DeformableHingeJoint :
-virtual public Elem, public Joint, public ConstitutiveLaw3DOwner {
+public Joint {
 protected:
 	const StructNode* pNode1;
 	const StructNode* pNode2;
@@ -52,6 +52,7 @@ protected:
 
 	OrientationDescription od;
 
+	ConstitutiveLaw3D* pDC;
 private:
 #ifdef USE_NETCDF
 	MBDynNcVar Var_Phi;
@@ -94,13 +95,13 @@ protected:
 	/* priv data helper */
 	doublereal
 	dGetPrivDataInv(unsigned int i) const;
-	virtual void AfterPredict(void) = 0;
+	virtual void AfterPredictHelper(void) = 0;
 
 public:
 	/* Costruttore non banale */
 	DeformableHingeJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw3D* pCL,
+		ConstitutiveLaw3D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Mat3x3& tilde_R1h,
@@ -183,20 +184,19 @@ public:
 
 /* ElasticHingeJoint - begin */
 
-class ElasticHingeJoint : virtual public Elem, public DeformableHingeJoint {
+class ElasticHingeJoint : public DeformableHingeJoint {
 protected:
 	Vec3 ThetaRef;
 	Vec3 ThetaCurr;
 
-	using SimulationEntity::AfterPredict;
-	virtual void AfterPredict(void);
+	virtual void AfterPredictHelper(void);
 	virtual void AssMat(FullSubMatrixHandler& WM, doublereal dCoef);
 	virtual void AssVec(SubVectorHandler& WorkVec);
 
 public:
 	ElasticHingeJoint(unsigned int uL,
 			const DofOwner* pDO,
-			const ConstitutiveLaw3D* pCL,
+			ConstitutiveLaw3D*const pCL,
 			const StructNode* pN1,
 			const StructNode* pN2,
 			const Mat3x3& tilde_R1h,
@@ -293,7 +293,7 @@ public:
 
 /* ElasticHingeJointInv - begin */
 
-class ElasticHingeJointInv : virtual public Elem, public ElasticHingeJoint {
+class ElasticHingeJointInv : public ElasticHingeJoint {
 protected:
 	virtual void
 	AssMatM(FullSubMatrixHandler& WMA, doublereal dCoef);
@@ -301,14 +301,13 @@ protected:
 	/* AssMatMDE is OK as MDE is updated fine by AfterPredict();
 	 * AssMatMDEPrime is not needed */
 
-	using SimulationEntity::AfterPredict;
-	virtual void AfterPredict(void);
+	virtual void AfterPredictHelper(void);
 	virtual void AssVec(SubVectorHandler& WorkVec);
 
 public:
 	ElasticHingeJointInv(unsigned int uL,
 			const DofOwner* pDO,
-			const ConstitutiveLaw3D* pCL,
+			ConstitutiveLaw3D*const pCL,
 			const StructNode* pN1,
 			const StructNode* pN2,
 			const Mat3x3& tilde_R1h,
@@ -329,12 +328,11 @@ public:
 
 /* ViscousHingeJoint - begin */
 
-class ViscousHingeJoint : virtual public Elem, public DeformableHingeJoint {
+class ViscousHingeJoint : public DeformableHingeJoint {
 protected:
 	Vec3 Omega;
 
-	using SimulationEntity::AfterPredict;
-	virtual void AfterPredict(void);
+	virtual void AfterPredictHelper(void);
 	virtual void AssMats(FullSubMatrixHandler& WMA,
 			FullSubMatrixHandler& WMB,
 			doublereal dCoef);
@@ -343,7 +341,7 @@ protected:
 public:
 	ViscousHingeJoint(unsigned int uL,
 			const DofOwner* pDO,
-			const ConstitutiveLaw3D* pCL,
+			ConstitutiveLaw3D*const pCL,
 			const StructNode* pN1,
 			const StructNode* pN2,
 			const Mat3x3& tilde_R1h,
@@ -425,7 +423,7 @@ public:
 
 /* ViscousHingeJointInv - begin */
 
-class ViscousHingeJointInv : virtual public Elem, public ViscousHingeJoint {
+class ViscousHingeJointInv : public ViscousHingeJoint {
 protected:
 	/* AssMatMDEPrime is not needed */
 	virtual void
@@ -434,14 +432,13 @@ protected:
 	AssMatMDEPrime(FullSubMatrixHandler& WMA,
 		FullSubMatrixHandler& WMB, doublereal dCoef);
 
-	using SimulationEntity::AfterPredict;
-	virtual void AfterPredict(void);
+	virtual void AfterPredictHelper(void);
 	virtual void AssVec(SubVectorHandler& WorkVec);
 
 public:
 	ViscousHingeJointInv(unsigned int uL,
 			const DofOwner* pDO,
-			const ConstitutiveLaw3D* pCL,
+			ConstitutiveLaw3D*const pCL,
 			const StructNode* pN1,
 			const StructNode* pN2,
 			const Mat3x3& tilde_R1h,
@@ -462,7 +459,7 @@ public:
 /* ViscoElasticHingeJoint - begin */
 
 class ViscoElasticHingeJoint
-: virtual public Elem, public DeformableHingeJoint {
+: public DeformableHingeJoint {
 protected:
 	Vec3 ThetaRef;
 	Vec3 ThetaCurr;
@@ -473,14 +470,13 @@ protected:
 			FullSubMatrixHandler& WMB,
 			doublereal dCoef);
 
-	using SimulationEntity::AfterPredict;
-	virtual void AfterPredict(void);
+	virtual void AfterPredictHelper(void);
 	virtual void AssVec(SubVectorHandler& WorkVec);
 
 public:
 	ViscoElasticHingeJoint(unsigned int uL,
 			const DofOwner* pDO,
-			const ConstitutiveLaw3D* pCL,
+			ConstitutiveLaw3D*const pCL,
 			const StructNode* pN1,
 			const StructNode* pN2,
 			const Mat3x3& tilde_R1h,
@@ -561,7 +557,7 @@ public:
 /* ViscoElasticHingeJointInv - begin */
 
 class ViscoElasticHingeJointInv
-: virtual public Elem, public ViscoElasticHingeJoint {
+: public ViscoElasticHingeJoint {
 protected:
 	/* AssMatMDEPrime is not needed */
 	virtual void
@@ -570,14 +566,13 @@ protected:
 	AssMatMDEPrime(FullSubMatrixHandler& WMA,
 		FullSubMatrixHandler& WMB, doublereal dCoef);
 
-	using SimulationEntity::AfterPredict;
-	virtual void AfterPredict(void);
+	virtual void AfterPredictHelper(void);
 	virtual void AssVec(SubVectorHandler& WorkVec);
 
 public:
 	ViscoElasticHingeJointInv(unsigned int uL,
 			const DofOwner* pDO,
-			const ConstitutiveLaw3D* pCL,
+			ConstitutiveLaw3D*const pCL,
 			const StructNode* pN1,
 			const StructNode* pN2,
 			const Mat3x3& tilde_R1h,

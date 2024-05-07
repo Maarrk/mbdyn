@@ -40,7 +40,7 @@
 
 /* AbsoluteDispForce - begin */
 
-class AbsoluteDispForce : virtual public Elem, public Force {
+class AbsoluteDispForce : public Force {
 protected:
 	TplDriveOwner<Vec3> f;
 	const StructDispNode* pNode;
@@ -104,7 +104,7 @@ public:
 
 /* AbsoluteInternalDispForce - begin */
 
-class AbsoluteInternalDispForce : virtual public Elem, public Force {
+class AbsoluteInternalDispForce : public Force {
 protected:
 	TplDriveOwner<Vec3> f;
 	const StructDispNode* pNode1;
@@ -170,7 +170,7 @@ public:
 
 /* StructuralForce - begin */
 
-class StructuralForce : virtual public Elem, public Force {
+class StructuralForce : public Force {
 public:
 	enum {
 		OUTPUT_REL = ToBeOutput::OUTPUT_PRIVATE
@@ -206,7 +206,7 @@ public:
 
 /* AbsoluteForce - begin */
 
-class AbsoluteForce : virtual public Elem, public StructuralForce {
+class AbsoluteForce : public StructuralForce {
 protected:
 	const Vec3 Arm;
 
@@ -275,7 +275,7 @@ public:
 
 /* FollowerForce - begin */
 
-class FollowerForce : virtual public Elem, public StructuralForce {
+class FollowerForce : public StructuralForce {
 protected:
 	const Vec3 Arm;
 
@@ -344,7 +344,7 @@ public:
 
 /* AbsoluteCouple - begin */
 
-class AbsoluteCouple : virtual public Elem, public StructuralForce {
+class AbsoluteCouple : public StructuralForce {
 public:
 	/* Costruttore banale */
 	AbsoluteCouple(unsigned int uL, const StructNode* pN,
@@ -394,7 +394,7 @@ public:
 
 /* FollowerCouple - begin */
 
-class FollowerCouple : virtual public Elem, public StructuralForce {
+class FollowerCouple : public StructuralForce {
 public:
 	/* Costruttore banale */
 	FollowerCouple(unsigned int uL, const StructNode* pN,
@@ -456,7 +456,7 @@ public:
 /* StructuralInternalForce - begin */
 
 class StructuralInternalForce
-: virtual public Elem, public Force {
+: public Force {
 protected:
 	TplDriveOwner<Vec3> f;
 	const StructNode* pNode1;
@@ -489,7 +489,7 @@ public:
 /* AbsoluteInternalForce - begin */
 
 class AbsoluteInternalForce
-: virtual public Elem, public StructuralInternalForce {
+: public StructuralInternalForce {
 protected:
 	const Vec3 Arm1;
 	const Vec3 Arm2;
@@ -562,7 +562,7 @@ public:
 /* FollowerInternalForce - begin */
 
 class FollowerInternalForce
-: virtual public Elem, public StructuralInternalForce {
+: public StructuralInternalForce {
 protected:
 	const Vec3 Arm1;
 	const Vec3 Arm2;
@@ -635,7 +635,7 @@ public:
 /* AbsoluteInternalCouple - begin */
 
 class AbsoluteInternalCouple
-: virtual public Elem, public StructuralInternalForce {
+: public StructuralInternalForce {
 public:
 	/* Costruttore banale */
 	AbsoluteInternalCouple(unsigned int uL,
@@ -687,7 +687,7 @@ public:
 /* FollowerInternalCouple - begin */
 
 class FollowerInternalCouple
-: virtual public Elem, public StructuralInternalForce {
+: public StructuralInternalForce {
 public:
 	/* Costruttore banale */
 	FollowerInternalCouple(unsigned int uL,

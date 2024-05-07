@@ -60,7 +60,7 @@
 using namespace sp_grad;
 
 
-class MCPTest1: virtual public Elem, public UserDefinedElem
+class MCPTest1: public UserDefinedElem
 {
      using Elem::AssRes;
 public:
@@ -132,8 +132,7 @@ private:
 
 MCPTest1::MCPTest1(unsigned uLabel, const DofOwner *pDO,
                    DataManager* pDM, MBDynParser& HP)
-     :Elem(uLabel, flag(0)),
-      UserDefinedElem(uLabel, pDO)
+     :UserDefinedElem(uLabel, pDO)
 {
      // help
      if (HP.IsKeyWord("help")) {
@@ -504,7 +503,7 @@ MCPTest1::InitialAssRes(
      return WorkVec;
 }
 
-class MCPTest2: virtual public Elem, public UserDefinedElem
+class MCPTest2: public UserDefinedElem
 {
      using Elem::AssRes;
 public:
@@ -577,8 +576,7 @@ private:
 
 MCPTest2::MCPTest2(unsigned uLabel, const DofOwner *pDO,
                    DataManager* pDM, MBDynParser& HP)
-     :Elem(uLabel, flag(0)),
-      UserDefinedElem(uLabel, pDO)
+     :UserDefinedElem(uLabel, pDO)
 {
      // help
      if (HP.IsKeyWord("help")) {

@@ -84,10 +84,7 @@
 
 Joint::Joint(unsigned int uL, const DofOwner* pDO,
 	flag fOut)
-: Elem(uL, fOut),
-ElemGravityOwner(uL, fOut),
-ElemWithDofs(uL, pDO, fOut),
-InitialAssemblyElem(uL, fOut)
+: InitialAssemblyElem(uL, fOut), DofOwnerOwner(pDO)
 {
 	NO_OP;
 }
@@ -4219,23 +4216,23 @@ ReadJoint(DataManager* pDM,
 		if (HP.IsKeyWord("ergonomy")) {
 			bIsErgonomy = HP.GetYesNoOrBool(bIsErgonomy);
 			if (bIsErgonomy) {
-				ConstLawType::Type type = ConstLawType::UNKNOWN;
-
-				if (const ConstitutiveLaw1DOwner *pCLDO = dynamic_cast<const ConstitutiveLaw1DOwner *>(pEl)) {
-					type = pCLDO->pGetConstLaw()->GetConstLawType();
-				} else if (const ConstitutiveLaw3DOwner *pCLDO = dynamic_cast<const ConstitutiveLaw3DOwner *>(pEl)) {
-					type = pCLDO->pGetConstLaw()->GetConstLawType();
-				} else if (const ConstitutiveLaw6DOwner *pCLDO = dynamic_cast<const ConstitutiveLaw6DOwner *>(pEl)) {
-					type = pCLDO->pGetConstLaw()->GetConstLawType();
-				} else {
-					silent_cerr("Joint(" << uLabel << "): is \"ergonomy\" but cannot infer constitutive law type" << std::endl);
-					throw ErrGeneric(MBDYN_EXCEPT_ARGS);
-				}
-
-				if (type != ConstLawType::ELASTIC) {
-					silent_cerr("Joint(" << uLabel << "): invalid constitutive law type (must be ELASTIC)" << std::endl);
-					throw ErrGeneric(MBDYN_EXCEPT_ARGS);
-				}
+// 				ConstLawType::Type type = ConstLawType::UNKNOWN;
+// 
+// 				if (const ConstitutiveLaw1DOwner *pCLDO = dynamic_cast<const ConstitutiveLaw1DOwner *>(pEl)) {
+// 					type = pCLDO->pGetConstLaw()->GetConstLawType();
+// 				} else if (const ConstitutiveLaw3DOwner *pCLDO = dynamic_cast<const ConstitutiveLaw3DOwner *>(pEl)) {
+// 					type = pCLDO->pGetConstLaw()->GetConstLawType();
+// 				} else if (const ConstitutiveLaw6DOwner *pCLDO = dynamic_cast<const ConstitutiveLaw6DOwner *>(pEl)) {
+// 					type = pCLDO->pGetConstLaw()->GetConstLawType();
+// 				} else {
+// 					silent_cerr("Joint(" << uLabel << "): is \"ergonomy\" but cannot infer constitutive law type" << std::endl);
+// 					throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+// 				}
+// 
+// 				if (type != ConstLawType::ELASTIC) {
+// 					silent_cerr("Joint(" << uLabel << "): invalid constitutive law type (must be ELASTIC)" << std::endl);
+// 					throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+// 				}
 
 				if (bIsRightHandSide) {
 					silent_cerr("warning, Joint(" << uLabel << ") is both \"ergonomy\" and \"right hand side\"" << std::endl);
