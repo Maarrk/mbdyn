@@ -39,7 +39,7 @@
 
 /* GenelClamp - begin */
 
-class GenelClamp : virtual public Elem, public Genel, public DriveOwner {
+class GenelClamp : public Genel, public DriveOwner {
 protected:
 	ScalarDof SD;
 	doublereal dRct;
@@ -108,7 +108,7 @@ public:
 
 /* GenelDistance - begin */
 
-class GenelDistance : virtual public Elem, public Genel, public DriveOwner {
+class GenelDistance : public Genel, public DriveOwner {
 protected:
 	ScalarDof SD1;
 	ScalarDof SD2;
@@ -176,16 +176,17 @@ public:
 /* GenelSpring - begin */
 
 class GenelSpring
-: virtual public Elem, public Genel, public ConstitutiveLaw1DOwner {
+: public Genel {
 protected:
 	ScalarDof SD1;
 	ScalarDof SD2;
 
 	doublereal dVal;
+	ConstitutiveLaw1D * pDC;
 
 public:
 	GenelSpring(unsigned int uLabel, const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const ScalarDof& sd1, const ScalarDof& sd2, flag fOutput);
 
 	virtual ~GenelSpring(void);
@@ -237,14 +238,15 @@ public:
 /* GenelSpringSupport - begin */
 
 class GenelSpringSupport
-: virtual public Elem, public Genel, public ConstitutiveLaw1DOwner {
+: public Genel {
 protected:
 	ScalarDof SD;
 	doublereal dVal;
 	doublereal dInitVal;
+	ConstitutiveLaw1D * pDC;
 public:
 	GenelSpringSupport(unsigned int uLabel, const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const ScalarDof& sd, doublereal X0, flag fOutput);
 
 	virtual ~GenelSpringSupport(void);
@@ -300,15 +302,16 @@ public:
 /* GenelCrossSpringSupport - begin */
 
 class GenelCrossSpringSupport
-: virtual public Elem, public Genel, public ConstitutiveLaw1DOwner {
+: public Genel {
 protected:
 	ScalarDof SDRow;
 	ScalarDof SDCol;
 	doublereal dVal;
+	ConstitutiveLaw1D * pDC;
 
 public:
 	GenelCrossSpringSupport(unsigned int uLabel, const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const ScalarDof& sdrow,
 		const ScalarDof& sdcol,
 		flag fOutput);
@@ -362,16 +365,17 @@ public:
 /* GenelCrossSpringDamperSupport - begin */
 
 class GenelCrossSpringDamperSupport
-: virtual public Elem, public Genel, public ConstitutiveLaw1DOwner {
+: public Genel {
 protected:
 	ScalarDof SDRow;
 	ScalarDof SDCol;
 	doublereal dVal;
 	doublereal dValPrime;
+	ConstitutiveLaw1D * pDC;
 
 public:
 	GenelCrossSpringDamperSupport(unsigned int uLabel, const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const ScalarDof& sdrow,
 		const ScalarDof& sdcol,
 		flag fOutput);
@@ -425,16 +429,17 @@ public:
 /* GenelSpringDamperSupport - begin */
 
 class GenelSpringDamperSupport
-: virtual public Elem, public Genel, public ConstitutiveLaw1DOwner {
+: public Genel {
 protected:
 	ScalarDof SD;
 	doublereal dVal;
 	doublereal dInitVal;
 	doublereal dValPrime;
+	ConstitutiveLaw1D * pDC;
 
 public:
 	GenelSpringDamperSupport(unsigned int uLabel, const DofOwner* pDO,
-		const ConstitutiveLaw1D* pCL,
+		ConstitutiveLaw1D*const pCL,
 		const ScalarDof& sd, doublereal X0, flag fOutput);
 
 	virtual ~GenelSpringDamperSupport(void);
@@ -484,7 +489,7 @@ public:
 
 /* GenelMass - begin */
 
-class GenelMass : virtual public Elem, public Genel, public DriveOwner {
+class GenelMass : public Genel, public DriveOwner {
 protected:
 	ScalarDof SD;
 

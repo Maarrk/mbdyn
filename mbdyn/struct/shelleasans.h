@@ -68,8 +68,7 @@ class MBDynParser;
 // Shell4EASANS - begin
 
 class Shell4EASANS
-: virtual public Elem,
-public Shell
+: public Shell
 {
 #if 0
 protected:

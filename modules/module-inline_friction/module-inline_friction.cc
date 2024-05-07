@@ -59,7 +59,7 @@
 
 #include "module-inline_friction.h"
 
-class InlineFriction: virtual public Elem, public UserDefinedElem
+class InlineFriction: public UserDefinedElem
 {
 public:
 	InlineFriction(unsigned uLabel, const DofOwner *pDO,
@@ -134,8 +134,7 @@ public:
 InlineFriction::InlineFriction(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: 	Elem(uLabel, flag(0)),
-	UserDefinedElem(uLabel, pDO),
+: 	UserDefinedElem(uLabel, pDO),
 	pNode1(0),
 	o1(Zero3),
 	e(Eye3),

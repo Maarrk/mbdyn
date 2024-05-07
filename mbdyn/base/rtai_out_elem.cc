@@ -49,8 +49,7 @@
 RTMBDynOutElem::RTMBDynOutElem(unsigned int uL, const std::string& host,
 	const std::string& m, unsigned long n, bool c, StreamContent *pSC,
 	bool bNonBlocking)
-: Elem(uL, flag(0)),
-StreamOutElem(uL, m, 1),
+: StreamOutElem(uL, m, 1),
 host(host), node(n), create(c), port(-1),
 bNonBlocking(bNonBlocking),
 pSC(pSC),

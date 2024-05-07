@@ -93,7 +93,7 @@ public:
 
 /* BeamSliderJoint - begin */
 
-class BeamSliderJoint: virtual public Elem, public Joint {
+class BeamSliderJoint: public Joint {
 public:
 	enum Type { SPHERICAL, CLASSIC, SPLINE };
 private:

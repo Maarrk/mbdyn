@@ -74,8 +74,7 @@ AirProperties::AirProperties(const TplDriveCaller<Vec3>* pDC,
 		std::vector<const Gust *>& g,
 		const RigidBodyKinematics *pRBK,
 		flag fOut)
-: Elem(1, fOut),
-InitialAssemblyElem(1, fOut),
+: InitialAssemblyElem(1, fOut),
 TplDriveOwner<Vec3>(pDC),
 Velocity(Zero3),
 gust(g),
@@ -314,8 +313,7 @@ AirProperties::dGetPrivData(unsigned int i) const
 BasicAirProperties::BasicAirProperties(const TplDriveCaller<Vec3>* pDC,
 	const DriveCaller *pRho, doublereal dSS, std::vector<const Gust *>& g,
 	const RigidBodyKinematics *pRBK, flag fOut)
-: Elem(1, fOut),
-AirProperties(pDC, g, pRBK, fOut),
+: AirProperties(pDC, g, pRBK, fOut),
 AirDensity(pRho),
 dSoundSpeed(dSS)
 {
@@ -383,8 +381,7 @@ StdAirProperties::StdAirProperties(const TplDriveCaller<Vec3>* pDC,
 	doublereal a, doublereal R, doublereal g0,
 	doublereal z0, doublereal z1, doublereal z2,
 	std::vector<const Gust *>& g, const RigidBodyKinematics *pRBK, flag fOut)
-: Elem(1, fOut),
-AirProperties(pDC, g, pRBK, fOut),
+: AirProperties(pDC, g, pRBK, fOut),
 PRef(PRef),
 RhoRef(RhoRef),
 TRef(TRef),
@@ -768,12 +765,35 @@ AirPropOwner::GetAirProps(const Vec3& X, doublereal& rho,
 /* AirPropOwner - end */
 
 
+/* AerodynamicElemBase - begin */
+
+AerodynamicElemBase::AerodynamicElemBase()
+{
+	NO_OP; 
+}
+   
+AerodynamicElemBase::~AerodynamicElemBase(void)
+{
+	NO_OP; 
+}
+   
+bool
+AerodynamicElemBase::NeedsAirProperties(void) const
+{
+	return true;
+}
+
+const InducedVelocity *
+AerodynamicElemBase::pGetInducedVelocity(void) const
+{
+	return 0;
+}
+
+/* AerodynamicElemBase - end */
+
 /* AerodynamicElem - begin */
 
-AerodynamicElem::AerodynamicElem(unsigned int uL,
-	const DofOwner *pDO, flag fOut)
-: Elem(uL, fOut),
-ElemWithDofs(uLabel, pDO, fOut)
+AerodynamicElem::AerodynamicElem(const DofOwner* pDO) : DofOwnerOwner(pDO)
 {
 	NO_OP; 
 }
@@ -782,18 +802,5 @@ AerodynamicElem::~AerodynamicElem(void)
 {
 	NO_OP; 
 }
-   
-bool
-AerodynamicElem::NeedsAirProperties(void) const
-{
-	return true;
-}
-
-const InducedVelocity *
-AerodynamicElem::pGetInducedVelocity(void) const
-{
-	return 0;
-}
 
 /* AerodynamicElem - end */
-

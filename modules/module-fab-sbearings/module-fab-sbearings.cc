@@ -45,7 +45,7 @@
 #include "constltp.h"
 
 class HydrodynamicBearing01
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
    const StructNode* pNode1;
    const StructNode* pNode2;
@@ -115,8 +115,7 @@ public:
 HydrodynamicBearing01::HydrodynamicBearing01(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 pNode1(0), pNode2(0)
 {
    DEBUGCOUT("Entering HydrodynamicBearing01 constructor" << std::endl);

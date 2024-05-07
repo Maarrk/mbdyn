@@ -38,7 +38,7 @@
 
 /* StructExtEDGEForce - begin */
 
-class StructExtEDGEForce : virtual public Elem, public StructExtForce {
+class StructExtEDGEForce : public StructExtForce {
 protected:
 	// temporary, to avoid recomputing too much
 	std::vector<Vec3> m_x;

@@ -59,8 +59,7 @@
 // Membrane4EAS - begin
 
 class Membrane4EAS
-: virtual public Elem,
-public Membrane
+: public Membrane, public DofOwnerOwner
 {
 public:
 	// numbered according to

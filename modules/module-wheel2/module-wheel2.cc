@@ -42,7 +42,7 @@
 #include "module-wheel2.h"
 
 class Wheel2
-: virtual public Elem, public UserDefinedElem
+: public UserDefinedElem
 {
 private:
 
@@ -129,8 +129,7 @@ public:
 
 Wheel2::Wheel2(unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO)
+: UserDefinedElem(uLabel, pDO)
 {
 	// help
 	if (HP.IsKeyWord("help")) {

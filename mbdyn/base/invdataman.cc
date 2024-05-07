@@ -867,8 +867,8 @@ DataManager::IDDofOwnerSet(void)
 	for (ElemContainerType::iterator j = ElemData[Elem::JOINT].ElemContainer.begin();
                 j != ElemData[Elem::JOINT].ElemContainer.end(); ++j)
         {
-		ElemWithDofs* pEWD = Cast<ElemWithDofs>(j->second);
-		iIDJointTotNumDofs += pEWD->iGetNumDof();
+		//DofOwnerOwner* pEWD = Cast<DofOwnerOwner>(j->second);
+		iIDJointTotNumDofs += j->second->iGetNumDof();
         }
 	
 	/* Setta i DofOwner degli elementi (chi li possiede) */
@@ -882,13 +882,13 @@ DataManager::IDDofOwnerSet(void)
 			for (ElemContainerType::const_iterator p = ElemData[iCnt].ElemContainer.begin();
 				p != ElemData[iCnt].ElemContainer.end(); ++p)
 			{
-				ElemWithDofs* pEWD = Cast<ElemWithDofs>(p->second);
+				DofOwnerOwner* pEWD = Cast<DofOwnerOwner>(p->second);
 
 				DEBUGLCOUT(MYDEBUG_INIT, "    " << psElemNames[pEWD->GetElemType()]
 						<< "(" << pEWD->GetLabel() << ")" << std::endl);
 
 				DofOwner* pDO = const_cast<DofOwner *>(pEWD->pGetDofOwner());
-				pDO->iNumDofs = pEWD->iGetNumDof();
+				pDO->iNumDofs = p->second->iGetNumDof();
 				DEBUGLCOUT(MYDEBUG_INIT, "    num dofs: " << pDO->iNumDofs << std::endl);
 			}
 		}
@@ -1146,8 +1146,8 @@ DataManager::IDSetTest(NonlinearSolverTestRange *pResTest, NonlinearSolverTestRa
 			continue;
 		}
 
-		const ElemWithDofs* pEWD = Cast<ElemWithDofs>(j->second);
-		integer iNumDofs = pEWD->iGetNumDof();
+		const DofOwnerOwner* pEWD = Cast<DofOwnerOwner>(j->second);
+		integer iNumDofs = j->second->iGetNumDof();
 		if (iNumDofs > 0) {
 			integer iIndex = pEWD->iGetFirstIndex();
 

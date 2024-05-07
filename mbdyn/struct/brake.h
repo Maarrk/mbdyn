@@ -39,7 +39,7 @@
 
 /* Brake - begin */
 
-class Brake : virtual public Elem, public Joint {
+class Brake : public Joint {
  private:
 	/*
 	 * Brake

@@ -7,7 +7,6 @@ ThermalSource::ThermalSource(unsigned int uL,
 	const ThermalNode* p1, 
 	const DriveCaller* pDC,
 	flag fOut) : 
-Elem(uL, fOut), 
 Thermal(uL, pDO, fOut), 
 DriveOwner(pDC),
 pNode1(p1) {

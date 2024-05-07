@@ -51,7 +51,7 @@ extern bool PIDSet(void);
 #include "userelem.h"
 #include "drive_.h"
 
-class Pid : virtual public Elem, public UserDefinedElem
+class Pid : public UserDefinedElem
 {
     private:
 

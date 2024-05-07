@@ -38,7 +38,7 @@
 #include "indvel.h"
 
 class ModuleIndVel
-: virtual public Elem, public UserDefinedElem, public InducedVelocity {
+: public UserDefinedElem, public InducedVelocity {
 private:
 	// TODO: define per-point structure
 	struct PointData {
@@ -110,9 +110,8 @@ public:
 ModuleIndVel::ModuleIndVel(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
-InducedVelocity(uLabel, 0, 0, flag(0)),
+: UserDefinedElem(uLabel, pDO),
+InducedVelocity(0, 0),
 iFirstAssembly(2)
 {
 	// help

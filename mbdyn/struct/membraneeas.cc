@@ -123,8 +123,8 @@ Membrane4EAS::Membrane4EAS(unsigned int uL,
 #endif // ! USE_CL_IN_MEMBRANE
 	flag fOut)
 : 
-Elem(uL, fOut), 
 Membrane(uL, pDO, fOut),
+DofOwnerOwner(pDO),
 
 S_alpha_beta_0(2, 2),               // 2x2
 

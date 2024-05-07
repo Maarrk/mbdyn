@@ -42,21 +42,20 @@
 /* Costruttore non banale */
 ViscousBody::ViscousBody(unsigned int uL,
 	const DofOwner* pDO,
-	const ConstitutiveLaw6D* pCL,
+	ConstitutiveLaw6D*const pCL,
 	const StructNode* pN,
 	const Vec3& tilde_f,
 	const Mat3x3& tilde_Rh,
 	const OrientationDescription& od,
 	flag fOut)
-: Elem(uL, fOut),
-Joint(uL, pDO, fOut),
-ConstitutiveLaw6DOwner(pCL),
+: Joint(uL, pDO, fOut),
 pNode(pN),
 tilde_f(tilde_f),
 tilde_Rh(tilde_Rh),
 od(od),
 tilde_kPrime(Zero6),
-bFirstRes(false)
+bFirstRes(false),
+pDC(pCL)
 {
 	ASSERT(pNode != NULL);
 	ASSERT(pNode->GetNodeType() == Node::STRUCTURAL);
@@ -67,14 +66,18 @@ bFirstRes(false)
 	 * Chiede la matrice tangente di riferimento
 	 * e la porta nel sistema globale
 	 */
-	FDEPrime = MultRMRt(ConstitutiveLaw6DOwner::GetFDEPrime(), Rh);
+	FDEPrime = MultRMRt(pDC->GetFDEPrime(), Rh);
 }
 
 
 /* Distruttore */
 ViscousBody::~ViscousBody(void)
 {
-	NO_OP;
+	/* Distrugge il legame costitutivo */
+	ASSERT(pDC != NULL);
+	if (pDC != NULL) {
+		SAFEDELETE(pDC);
+	}
 }
 
 
@@ -87,7 +90,7 @@ ViscousBody::Restart(std::ostream& out) const
 	tilde_f.Write(out, ", ") << ", orientation, reference, node, 1, ",
 	(tilde_Rh.GetVec(1)).Write(out, ", ")
 		<< ", 2, ", (tilde_Rh.GetVec(2)).Write(out, ", ") << ", ";
-	return pGetConstLaw()->Restart(out) << ';' << std::endl;
+	return pDC->Restart(out) << ';' << std::endl;
 }
 
 void
@@ -116,8 +119,8 @@ ViscousBody::Output(OutputHandler& OH) const
 {
 	if (bToBeOutput()) {
 		Mat3x3 Rh(pNode->GetRCurr()*tilde_Rh);
-		Vec3 F(GetF().GetVec1());
-		Vec3 M(GetF().GetVec2());
+		Vec3 F(pDC->GetF().GetVec1());
+		Vec3 M(pDC->GetF().GetVec2());
 
 		if (OH.UseText(OutputHandler::JOINTS)) {
 			Joint::Output(OH.Joints(), "ViscousBody", GetLabel(),
@@ -144,20 +147,20 @@ ViscousBody::SetValue(DataManager *pDM,
 {
 	if (ph) {
 		/* pass to constitutive law */
-		ConstitutiveLaw6DOwner::SetValue(pDM, X, XP, ph);
+		pDC->SetValue(pDM, X, XP, ph);
 	}
 }
 
 Hint *
 ViscousBody::ParseHint(DataManager *pDM, const char *s) const
 {
-	return ConstitutiveLaw6DOwner::ParseHint(pDM, s);
+	return pDC->ParseHint(pDM, s);
 }
 
 unsigned int
 ViscousBody::iGetNumPrivData(void) const
 {
-	return 15 + ConstitutiveLaw6DOwner::iGetNumPrivData();
+	return 15 + pDC->iGetNumPrivData();
 }
 
 unsigned int
@@ -191,7 +194,7 @@ ViscousBody::iGetPrivDataIdx(const char *s) const
 	{
 		size_t l = STRLENOF("constitutiveLaw.");
 		if (strncmp(s, "constitutiveLaw.", l) == 0) {
-			idx = ConstitutiveLaw6DOwner::iGetPrivDataIdx(&s[l]);
+			idx = pDC->iGetPrivDataIdx(&s[l]);
 			if (idx > 0) {
 				return 15 + idx;
 			}
@@ -267,10 +270,10 @@ ViscousBody::dGetPrivData(unsigned int i) const
 	case 13:
 	case 14:
 	case 15:
-		return GetF()(i - 9);
+		return pDC->GetF()(i - 9);
 
 	default:
-		return ConstitutiveLaw6DOwner::dGetPrivData(i - 15);
+		return pDC->dGetPrivData(i - 15);
 	}
 }
 
@@ -466,10 +469,10 @@ ViscousBody::AssVec(SubVectorHandler& WorkVec)
 
 		tilde_kPrime = Vec6(tilde_v, tilde_omega);
 
-		ConstitutiveLaw6DOwner::Update(Zero6, tilde_kPrime);
+		pDC->Update(Zero6, tilde_kPrime);
 	}
 
-	F = MultRV(ConstitutiveLaw6DOwner::GetF(), Rh);
+	F = MultRV(pDC->GetF(), Rh);
 
 	WorkVec.Sub(1, F.GetVec1());
 	WorkVec.Sub(4, f.Cross(F.GetVec1()) + F.GetVec2());
@@ -490,11 +493,11 @@ ViscousBody::AfterPredict(VectorHandler& /* X */ ,
 
 	tilde_kPrime = Vec6(tilde_v, tilde_omega);
 
-	ConstitutiveLaw6DOwner::Update(Zero6, tilde_kPrime);
+	pDC->Update(Zero6, tilde_kPrime);
 
 	/* FIXME: we need to be able to regenerate FDE
 	 * if the constitutive law throws ChangedEquationStructure */
-	FDEPrime = MultRMRt(ConstitutiveLaw6DOwner::GetFDEPrime(), Rh);
+	FDEPrime = MultRMRt(pDC->GetFDEPrime(), Rh);
 
 	bFirstRes = true;
 }
@@ -503,7 +506,7 @@ void
 ViscousBody::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw6DOwner::AfterConvergence(Zero6, tilde_kPrime);
+	pDC->AfterConvergence(Zero6, tilde_kPrime);
 }
 
 /* Contributo allo jacobiano durante l'assemblaggio iniziale */

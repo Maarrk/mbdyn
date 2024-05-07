@@ -42,8 +42,7 @@
 
 /* Mass - begin */
 
-class Mass :
-virtual public Elem, public ElemGravityOwner, public InitialAssemblyElem {
+class Mass : public InitialAssemblyElem, public GravityOwner {
 protected:
         const StructDispNode *pNode;
         doublereal dMass;
@@ -114,8 +113,7 @@ public:
 
 /* DynamicMass - begin */
 
-class DynamicMass :
-virtual public Elem, public Mass {
+class DynamicMass : public Mass {
 private:
 
         virtual Vec3 GetB_int(void) const override;
@@ -187,8 +185,7 @@ public:
 
 /* StaticMass - begin */
 
-class StaticMass :
-virtual public Elem, public Mass {
+class StaticMass : public Mass {
 private:
         /* Assembla le due matrici necessarie per il calcolo degli
          * autovalori e per lo jacobiano */
@@ -267,7 +264,7 @@ public:
 /* Body - begin */
 
 class Body :
-virtual public Elem, public ElemGravityOwner, public InitialAssemblyElem {
+public InitialAssemblyElem, public GravityOwner {
 protected:
         const StructNode *pNode;
 	doublereal dMass;
@@ -349,8 +346,7 @@ public:
 
 /* DynamicBody - begin */
 
-class DynamicBody :
-virtual public Elem, virtual public Body {
+class DynamicBody : public Body {
 private:
 
         Vec3 GetB_int(void) const;
@@ -420,8 +416,7 @@ public:
 
 /* ModalBody - begin */
 
-class ModalBody :
-virtual public Elem, virtual public DynamicBody {
+class ModalBody : public DynamicBody {
 private:
         Vec3 XPP, WP;
 
@@ -472,8 +467,7 @@ public:
 
 /* StaticBody - begin */
 
-class StaticBody :
-virtual public Elem, virtual public Body {
+class StaticBody : public Body {
 private:
         /* Assembla le due matrici necessarie per il calcolo degli
          * autovalori e per lo jacobiano */

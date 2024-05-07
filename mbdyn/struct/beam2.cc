@@ -71,12 +71,10 @@ Beam2::Beam2(unsigned int uL,
 		const Mat3x3& R1,
 		const Mat3x3& R2,
 		const Mat3x3& r,
-		const ConstitutiveLaw6D* pd,
+		ConstitutiveLaw6D* const pd,
 		OrientationDescription ood,
 		flag fOut)
-: Elem(uL, fOut),
-ElemGravityOwner(uL, fOut),
-InitialAssemblyElem(uL, fOut),
+: InitialAssemblyElem(uL, fOut),
 od(ood),
 bFirstRes(false),
 bFirstIDRes(true)
@@ -95,10 +93,7 @@ bFirstIDRes(true)
 	const_cast<Mat3x3&>(RNode[NODE2]) = R2;
 	RPrev = RRef = R = r;
 
-	pD = NULL;
-	SAFENEWWITHCONSTRUCTOR(pD,
-			ConstitutiveLaw6DOwner,
-			ConstitutiveLaw6DOwner(pd));
+	pD = pd;
 
 	Omega = Zero3;
 	Az = Zero6;
@@ -303,7 +298,7 @@ Beam2::Restart_(std::ostream& out) const
 	out << ", reference, global,"
 		<< "1, ", (R.GetVec(1)).Write(out, ", ") << ", "
 		<< "2, ", (R.GetVec(2)).Write(out, ", ") << ", ",
-	pD->pGetConstLaw()->Restart(out);
+	pD->Restart(out);
 
 	return out;
 }
@@ -950,11 +945,10 @@ ViscoElasticBeam2::ViscoElasticBeam2(unsigned int uL,
 		const Mat3x3& R1,
 		const Mat3x3& R2,
 		const Mat3x3& r,
-		const ConstitutiveLaw6D* pd,
+		ConstitutiveLaw6D* const pd,
 		OrientationDescription ood,
 		flag fOut)
-: Elem(uL, fOut),
-Beam2(uL, pN1, pN2, F1, F2, R1, R2, r, pd, ood, fOut)
+: Beam2(uL, pN1, pN2, F1, F2, R1, R2, r, pd, ood, fOut)
 {
 	LPrimeRef = LPrime = Zero3;
 	gPrime = Zero3;

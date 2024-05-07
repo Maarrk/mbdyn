@@ -8,7 +8,6 @@ ThermalResistance::ThermalResistance(unsigned int uL,
 	const ThermalNode* p1, 
 	const ThermalNode* p2, 
 	doublereal r, flag fOut) : 
-Elem(uL, fOut), 
 Thermal(uL, pDO, fOut), 
 pNode1(p1), 
 pNode2(p2), 

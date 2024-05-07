@@ -148,7 +148,7 @@ static const bool bDefaultUseJacobian = false;
 template <unsigned iNN>
 Aerodynamic2DElem<iNN>::Aerodynamic2DElem(unsigned int uLabel,
 	const DofOwner *pDO,
-	InducedVelocity* pR, bool bPassive,
+	InducedVelocityElem* pR, bool bPassive,
 	const Shape* pC, const Shape* pF,
 	const Shape* pV, const Shape* pT,
 	const Shape* pTL,
@@ -157,8 +157,7 @@ Aerodynamic2DElem<iNN>::Aerodynamic2DElem(unsigned int uLabel,
 	bool bUseJacobian,
 	OrientationDescription ood,
 	flag fOut)
-: Elem(uLabel, fOut),
-AerodynamicElem(uLabel, pDO, fOut),
+: AerodynamicElem(pDO),
 InitialAssemblyElem(uLabel, fOut),
 DriveOwner(pDC),
 AerodynamicOutput(fOut, iNN*iN, ood),
@@ -735,7 +734,7 @@ Aerodynamic2DElem<iNN>::AddSectionalForce_int(unsigned uPnt,
 
 AerodynamicBody::AerodynamicBody(unsigned int uLabel,
 	const DofOwner *pDO,
-	const StructNode* pN, InducedVelocity* pR, bool bPassive,
+	const StructNode* pN, InducedVelocityElem* pR, bool bPassive,
 	const Vec3& fTmp, doublereal dS,
 	const Mat3x3& RaTmp,
 	const Shape* pC, const Shape* pF,
@@ -746,8 +745,7 @@ AerodynamicBody::AerodynamicBody(unsigned int uLabel,
 	bool bUseJacobian,
 	OrientationDescription ood,
 	flag fOut)
-: Elem(uLabel, fOut),
-Aerodynamic2DElem<1>(uLabel, pDO, pR, bPassive, pC, pF, pV, pT, pTL, iN,
+: Aerodynamic2DElem<1>(uLabel, pDO, pR, bPassive, pC, pF, pV, pT, pTL, iN,
 	a, pDC, bUseJacobian, ood, fOut),
 pNode(pN),
 f(fTmp),
@@ -1369,7 +1367,7 @@ AerodynamicBody::Output(OutputHandler& OH) const
 static bool
 ReadInducedVelocity(DataManager *pDM, MBDynParser& HP,
 	unsigned uLabel, const char *sElemType,
-	InducedVelocity*& pIndVel, bool &bPassive)
+	InducedVelocityElem*& pIndVel, bool &bPassive)
 {
 	bool bReadIV(false);
 	bool bReadUDIV(false);
@@ -1443,7 +1441,7 @@ ReadInducedVelocity(DataManager *pDM, MBDynParser& HP,
 			}
 		}
 
-		pIndVel = dynamic_cast<InducedVelocity *>(p);
+		pIndVel = dynamic_cast<InducedVelocityElem *>(p);
 		ASSERT(pIndVel != 0);
 	}
 
@@ -1527,7 +1525,7 @@ ReadAerodynamicBody(DataManager* pDM,
 	/* Node */
 	const StructNode* pNode = pDM->ReadNode<const StructNode, Node::STRUCTURAL>(HP);
 
-	InducedVelocity* pIndVel = 0;
+	InducedVelocityElem* pIndVel = 0;
 	bool bPassive(false);
 	(void)ReadInducedVelocity(pDM, HP, uLabel, "AerodynamicBody",
 		pIndVel, bPassive);
@@ -1635,7 +1633,7 @@ ReadAerodynamicBody(DataManager* pDM,
 
 AerodynamicBeam::AerodynamicBeam(unsigned int uLabel,
 	const DofOwner *pDO,
-	const Beam* pB, InducedVelocity* pR, bool bPassive,
+	const Beam* pB, InducedVelocityElem* pR, bool bPassive,
 	const Vec3& fTmp1,
 	const Vec3& fTmp2,
 	const Vec3& fTmp3,
@@ -1650,8 +1648,7 @@ AerodynamicBeam::AerodynamicBeam(unsigned int uLabel,
 	bool bUseJacobian,
 	OrientationDescription ood,
 	flag fOut)
-: Elem(uLabel, fOut),
-Aerodynamic2DElem<3>(uLabel, pDO, pR, bPassive,
+: Aerodynamic2DElem<3>(uLabel, pDO, pR, bPassive,
 	pC, pF, pV, pT, pTL, iN, a, pDC, bUseJacobian, ood, fOut),
 pBeam(pB),
 f1(fTmp1),
@@ -2554,7 +2551,7 @@ ReadAerodynamicBeam(DataManager* pDM,
 
 	/* Eventuale rotore */
 	/* Rotor, if any */
-	InducedVelocity* pIndVel = 0;
+	InducedVelocityElem* pIndVel = 0;
 	bool bPassive(false);
 	(void)ReadInducedVelocity(pDM, HP, uLabel, "AerodynamicBeam3",
 		pIndVel, bPassive);
@@ -2707,9 +2704,9 @@ ReadAerodynamicBeam(DataManager* pDM,
 
 AerodynamicBeam2::AerodynamicBeam2(
 	unsigned int uLabel,
-	const DofOwner* pDO,
+	const DofOwner *pDO,
 	const Beam2* pB,
-	InducedVelocity* pR, bool bPassive,
+	InducedVelocityElem* pR, bool bPassive,
 	const Vec3& fTmp1,
 	const Vec3& fTmp2,
 	const Mat3x3& Ra1Tmp,
@@ -2726,8 +2723,7 @@ AerodynamicBeam2::AerodynamicBeam2(
 	OrientationDescription ood,
 	flag fOut
 )
-: Elem(uLabel, fOut),
-Aerodynamic2DElem<2>(uLabel, pDO, pR, bPassive,
+: Aerodynamic2DElem<2>(uLabel, pDO, pR, bPassive,
 	pC, pF, pV, pT, pTL, iN, a, pDC, bUseJacobian, ood, fOut),
 pBeam(pB),
 f1(fTmp1),
@@ -3549,7 +3545,7 @@ ReadAerodynamicBeam2(DataManager* pDM,
 
 	/* Eventuale rotore */
 	/* Rotor, if any */
-	InducedVelocity* pIndVel = 0;
+	InducedVelocityElem* pIndVel = 0;
 	bool bPassive(false);
 	(void)ReadInducedVelocity(pDM, HP, uLabel, "AerodynamicBeam2",
 		pIndVel, bPassive);

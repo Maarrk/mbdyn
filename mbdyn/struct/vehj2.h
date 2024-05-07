@@ -41,7 +41,7 @@
 /* DeformableDispJoint - begin */
 
 class DeformableDispJoint :
-virtual public Elem, public Joint, public ConstitutiveLaw3DOwner {
+public Joint {
 protected:
 	const StructNode* pNode1;
 	const StructNode* pNode2;
@@ -60,6 +60,8 @@ protected:
 
 	Mat3x3 FDE;
 	Mat3x3 FDEPrime;
+	
+	ConstitutiveLaw3D* pDC;
 
 #ifdef USE_NETCDF
 	MBDynNcVar Var_tilde_d;
@@ -87,7 +89,7 @@ public:
 	/* Costruttore non banale */
 	DeformableDispJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw3D* pCL,
+		ConstitutiveLaw3D* const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Vec3& tilde_f1,
@@ -185,7 +187,7 @@ public:
 
 /* ElasticDispJoint - begin */
 
-class ElasticDispJoint : virtual public Elem, public DeformableDispJoint {
+class ElasticDispJoint : public DeformableDispJoint {
 protected:
 	void AssMats(FullSubMatrixHandler& WMA,
 		FullSubMatrixHandler& WMB,
@@ -195,7 +197,7 @@ protected:
 public:
 	ElasticDispJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw3D* pCL,
+		ConstitutiveLaw3D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Vec3& tilde_f1,
@@ -275,7 +277,7 @@ public:
 
 /* ElasticDispJointInv - begin */
 
-class ElasticDispJointInv : virtual public Elem, public DeformableDispJoint {
+class ElasticDispJointInv : public DeformableDispJoint {
 protected:
 	void AssMats(FullSubMatrixHandler& WMA,
 		FullSubMatrixHandler& WMB,
@@ -285,7 +287,7 @@ protected:
 public:
 	ElasticDispJointInv(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw3D* pCL,
+		ConstitutiveLaw3D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Vec3& tilde_f1,
@@ -351,7 +353,7 @@ public:
 
 /* ViscousDispJoint - begin */
 
-class ViscousDispJoint : virtual public Elem, public DeformableDispJoint {
+class ViscousDispJoint : public DeformableDispJoint {
 protected:
 	using Elem::AssMats;
 	void AssMats(FullSubMatrixHandler& WMA,
@@ -362,7 +364,7 @@ protected:
 public:
 	ViscousDispJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw3D* pCL,
+		ConstitutiveLaw3D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Vec3& tilde_f1,
@@ -430,7 +432,7 @@ public:
 /* ViscoElasticDispJoint - begin */
 
 class ViscoElasticDispJoint
-: virtual public Elem, public DeformableDispJoint {
+: public DeformableDispJoint {
 protected:
 	using Elem::AssMats;
 	void AssMats(FullSubMatrixHandler& WorkMatA,
@@ -441,7 +443,7 @@ protected:
 public:
 	ViscoElasticDispJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw3D* pCL,
+		ConstitutiveLaw3D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Vec3& tilde_f1,

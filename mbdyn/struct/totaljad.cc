@@ -59,8 +59,7 @@ TotalJointAd::TotalJointAd(unsigned int uL,
                            const Mat3x3& R2hTmp,
                            const Mat3x3& R2hrTmp,
                            flag fOut)
-:Elem(uL, fOut),
- TotalJoint(uL, pDO, bPos, bVel, pDCPos, bRot, bAgv, pDCRot, pN1, f1Tmp, R1hTmp, R1hrTmp, pN2, f2Tmp, R2hTmp, R2hrTmp, fOut),
+:TotalJoint(uL, pDO, bPos, bVel, pDCPos, bRot, bAgv, pDCRot, pN1, f1Tmp, R1hTmp, R1hrTmp, pN2, f2Tmp, R2hTmp, R2hrTmp, fOut),
  pNode1(pN1),
  pNode2(pN2)
 {
@@ -332,8 +331,7 @@ TotalPinJointAd::TotalPinJointAd(unsigned int uL,
                                  const Mat3x3& RnhTmp,
                                  const Mat3x3& RnhrTmp,
                                  flag fOut)
-:Elem(uL, fOut),
- TotalPinJoint(uL, pDO, bPos, bVel, pDCPos, bRot, bAgv, pDCRot, XcTmp, RchrTmp, RchrTmp, pN, fnTmp, RnhTmp, RnhrTmp, fOut),
+:TotalPinJoint(uL, pDO, bPos, bVel, pDCPos, bRot, bAgv, pDCRot, XcTmp, RchrTmp, RchrTmp, pN, fnTmp, RnhTmp, RnhrTmp, fOut),
  pNode(pN)
 {
      ASSERT(pN != nullptr);

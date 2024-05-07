@@ -56,7 +56,7 @@
 static bool bHFElem(false);
 
 class HarmonicForcingElem
-: virtual public Elem, public UserDefinedElem, public DriveOwner {
+: public UserDefinedElem, public DriveOwner {
 private:
 	// add private data
 	enum Priv {
@@ -251,8 +251,7 @@ public:
 HarmonicForcingElem::HarmonicForcingElem(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 DriveOwner(0),
 m_pDM(pDM),
 m_dTInit(-std::numeric_limits<doublereal>::max()),

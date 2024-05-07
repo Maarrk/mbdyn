@@ -52,7 +52,7 @@
 class DamperGandhiConstitutiveLaw;
 
 class DamperGandhi
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 	friend class DamperGandhiConstitutiveLaw;
 
 private:
@@ -227,8 +227,7 @@ DamperGandhi::Get(doublereal& f, doublereal& fde, doublereal& fdeprime) const
 DamperGandhi::DamperGandhi(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 m_f(0.),
 m_dot_f(0.),
 m_g(0.),

@@ -38,7 +38,7 @@
 
 /* DispMeasure - begin */
 
-class DispMeasure : virtual public Elem, public Electric {
+class DispMeasure : public Electric {
 private:
 	const StructNode* pStrNode1;
 	const StructNode* pStrNode2;

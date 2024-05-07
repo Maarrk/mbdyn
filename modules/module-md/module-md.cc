@@ -226,7 +226,7 @@ MD_destroy(Data& data)
 }
 
 class MBDynMD
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 	int m_iCoupling;
 	int m_iCouplingCounter;
@@ -270,8 +270,7 @@ public:
 MBDynMD::MBDynMD(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 m_iCoupling(0),
 m_iCouplingCounter(0)
 {

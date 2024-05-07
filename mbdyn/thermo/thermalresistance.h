@@ -4,7 +4,7 @@
 #include "therm.h"
 #include "thermalnode.h"
 
-class ThermalResistance : virtual public Thermal {
+class ThermalResistance : public Thermal {
 private:
 	const ThermalNode* pNode1;
 	const ThermalNode* pNode2;

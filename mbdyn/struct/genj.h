@@ -42,7 +42,7 @@
 #ifndef MBDYN_X_DISTANCE_JOINT
 /* DistanceJoint - begin */
 
-class DistanceJoint : virtual public Elem, public Joint, public DriveOwner {
+class DistanceJoint : public Joint, public DriveOwner {
  private:
    const StructDispNode* pNode1;
    const StructDispNode* pNode2;
@@ -157,7 +157,7 @@ class DistanceJoint : virtual public Elem, public Joint, public DriveOwner {
 /* DistanceJointWithOffset - begin */
 
 class DistanceJointWithOffset :
-virtual public Elem, public Joint, public DriveOwner {
+public Joint, public DriveOwner {
  private:
    const StructNode* pNode1;
    const StructNode* pNode2;
@@ -278,7 +278,7 @@ virtual public Elem, public Joint, public DriveOwner {
 
 /* ClampJoint - begin */
 
-class ClampJoint : virtual public Elem, public Joint {
+class ClampJoint : public Joint {
  private:
    const StructNode* pNode;    /* nodo incastrato */
    Vec3 XClamp;                /* posizione imposta */

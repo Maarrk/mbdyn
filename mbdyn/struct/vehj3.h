@@ -41,7 +41,7 @@
 /* DeformableJoint - begin */
 
 class DeformableJoint :
-virtual public Elem, public Joint, public ConstitutiveLaw6DOwner {
+public Joint {
 protected:
 	const StructNode* pNode1;
 	const StructNode* pNode2;
@@ -68,6 +68,8 @@ protected:
 #endif // USE_NETCDF
 
 	bool bFirstRes;
+
+	ConstitutiveLaw6D* pDC;
 
 	Vec3 d1, d2;
 	Vec3 d1Prime, d2Prime;
@@ -103,7 +105,7 @@ public:
 	/* Costruttore non banale */
 	DeformableJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw6D* pCL,
+		ConstitutiveLaw6D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Vec3& tilde_f1,
@@ -220,7 +222,7 @@ public:
 
 /* ElasticJoint - begin */
 
-class ElasticJoint : virtual public Elem, public DeformableJoint {
+class ElasticJoint : public DeformableJoint {
 protected:
 	Vec3 ThetaRef;
 
@@ -234,7 +236,7 @@ protected:
 public:
 	ElasticJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw6D* pCL,
+		ConstitutiveLaw6D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Vec3& tilde_f1,
@@ -295,7 +297,7 @@ public:
 
 /* ElasticJointInv - begin */
 
-class ElasticJointInv : virtual public Elem, public DeformableJoint {
+class ElasticJointInv : public DeformableJoint {
 protected:
 	Vec3 ThetaRef;
 
@@ -309,7 +311,7 @@ protected:
 public:
 	ElasticJointInv(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw6D* pCL,
+		ConstitutiveLaw6D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Vec3& tilde_f1,
@@ -356,7 +358,7 @@ public:
 
 /* ViscousJoint - begin */
 
-class ViscousJoint : virtual public Elem, public DeformableJoint {
+class ViscousJoint : public DeformableJoint {
 protected:
 	Mat6x6 FDEPrime;
 
@@ -369,7 +371,7 @@ protected:
 public:
 	ViscousJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw6D* pCL,
+		ConstitutiveLaw6D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Vec3& tilde_f1,
@@ -412,7 +414,7 @@ public:
 /* ViscoElasticJoint - begin */
 
 class ViscoElasticJoint
-: virtual public Elem, public DeformableJoint {
+: public DeformableJoint {
 protected:
 	Vec3 ThetaRef;
 
@@ -428,7 +430,7 @@ protected:
 public:
 	ViscoElasticJoint(unsigned int uL,
 		const DofOwner* pDO,
-		const ConstitutiveLaw6D* pCL,
+		ConstitutiveLaw6D*const pCL,
 		const StructNode* pN1,
 		const StructNode* pN2,
 		const Vec3& tilde_f1,

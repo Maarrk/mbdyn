@@ -42,8 +42,7 @@
 
 /* VariableBody - begin */
 
-class VariableBody : 
-virtual public Elem, public ElemGravityOwner, public InitialAssemblyElem {   
+class VariableBody : public InitialAssemblyElem, public GravityOwner  {   
 protected:
 	const StructNode *pNode;
 
@@ -120,8 +119,7 @@ public:
 
 /* DynamicVariableBody - begin */
 
-class DynamicVariableBody : 
-virtual public Elem, public VariableBody {
+class DynamicVariableBody : public VariableBody {
 private:
 
 	Vec3 GetB_int(void) const;
@@ -208,8 +206,7 @@ public:
 
 /* StaticVariableBody - begin */
 
-class StaticVariableBody : 
-virtual public Elem, public VariableBody {   
+class StaticVariableBody : public VariableBody {   
 private:
 	/* Assembla le due matrici necessarie per il calcolo degli
 	 * autovalori e per lo jacobiano */  

@@ -42,8 +42,7 @@
 JointRegularization::JointRegularization(unsigned int uL,
 	const Joint *j,
 	flag fOut)
-: Elem(uL, fOut),
-InitialAssemblyElem(uL, fOut),
+: InitialAssemblyElem(uL, fOut),
 pJ(j)
 {
 	NO_OP;
@@ -69,8 +68,7 @@ TikhonovRegularization::TikhonovRegularization(unsigned int uL,
 	const Joint *j,
 	const std::vector<doublereal>& c,
 	flag fOut)
-: Elem(uL, fOut),
-JointRegularization(uL, j, fOut),
+: JointRegularization(uL, j, fOut),
 dC(c)
 {
 	NO_OP;
@@ -225,8 +223,7 @@ DynamicRegularization::DynamicRegularization(unsigned int uL,
 	const Joint *j,
 	const std::vector<doublereal>& c,
 	flag fOut)
-: Elem(uL, fOut),
-JointRegularization(uL, j, fOut),
+: JointRegularization(uL, j, fOut),
 dC(c),
 dLambda(c.size())
 {
@@ -385,8 +382,7 @@ JacobianRegularization::JacobianRegularization(unsigned int uL,
 	const Joint *j,
 	const std::vector<doublereal>& c,
 	flag fOut)
-: Elem(uL, fOut),
-JointRegularization(uL, j, fOut),
+: JointRegularization(uL, j, fOut),
 dC(c)
 {
 	NO_OP;

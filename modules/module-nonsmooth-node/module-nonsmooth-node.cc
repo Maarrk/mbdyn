@@ -114,7 +114,7 @@ struct NS_subsys {
 };
 
 class ModuleNonsmoothNode
-	: virtual public Elem, public UserDefinedElem
+	: public UserDefinedElem
 {
 private:
 	const DataManager *m_pDM;
@@ -218,8 +218,7 @@ static bool bIRa(false);
 
 ModuleNonsmoothNode::ModuleNonsmoothNode( unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 m_pDM(pDM),
 m_pNode(0),
 bStepToggle(false),

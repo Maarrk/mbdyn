@@ -44,8 +44,7 @@ PrismaticJoint::PrismaticJoint(unsigned int uL, const DofOwner* pDO,
 			       const StructNode* pN1, const StructNode* pN2,
 			       const Mat3x3& R1hTmp, const Mat3x3& R2hTmp,
 			       flag fOut)
-: Elem(uL, fOut), 
-Joint(uL, pDO, fOut), 
+: Joint(uL, pDO, fOut), 
 pNode1(pN1), pNode2(pN2),
 R1h(R1hTmp), R2h(R2hTmp), M(Zero3)
 {

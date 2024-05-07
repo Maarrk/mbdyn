@@ -47,8 +47,7 @@ Pipe::Pipe(unsigned int uL, const DofOwner* pDO, HydraulicFluid* hf,
 		   const PressureNode* p1, const PressureNode* p2,
 		   doublereal Dh, doublereal A, doublereal L, flag transition, 
 		   doublereal q0, flag fOut)
-: Elem(uL, fOut), 
-HydraulicElem(uL, pDO, hf, fOut),
+: HydraulicElem(uL, pDO, hf, fOut),
 pNode1(p1), pNode2(p2),
 diameter(Dh), area(A),
 length(L), turbulent(transition), q0(q0)
@@ -501,8 +500,7 @@ Dynamic_pipe::Dynamic_pipe(unsigned int uL, const DofOwner* pDO, HydraulicFluid*
 			   doublereal Dh, 
 			   doublereal A, doublereal L, flag transition, 
 			   doublereal q0, flag fOut)
-: Elem(uL, fOut), 
-HydraulicElem(uL, pDO, hf, fOut),
+: HydraulicElem(uL, pDO, hf, fOut),
 pNode1(p1), pNode2(p2),
 diameter(Dh), area(A),
 length(L), turbulent(transition), q0(q0)
@@ -1086,8 +1084,7 @@ DynamicPipe::DynamicPipe(unsigned int uL,
 			 flag transition, 
 			 doublereal q0, 
 			 flag fOut)
-: Elem(uL, fOut), 
-HydraulicElem(uL, pDO, hf, fOut),
+: HydraulicElem(uL, pDO, hf, fOut),
 pNode1(p1), 
 pNode2(p2),
 diameter(Dh), 

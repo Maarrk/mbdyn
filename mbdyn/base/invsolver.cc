@@ -348,7 +348,7 @@ InverseSolver::Prepare(void)
 		/* registers scale factors at nonlinear solver */
 		pResTestScale->SetScale(&Scale);
 
-		pResTest = pResTestScale;
+		pResTest = dynamic_cast<NonlinearSolverTest*>(pResTestScale);
 
 
 	} else {

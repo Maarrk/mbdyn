@@ -62,10 +62,8 @@ class MBDynParser;
 
 
 class Membrane
-: virtual public Elem,
-public ElemGravityOwner,
-public ElemWithDofs, 
-public InitialAssemblyElem
+: public InitialAssemblyElem,
+public GravityOwner
 {
 public:
 	// Membrane types
@@ -82,7 +80,7 @@ public:
 	typedef std::vector<vh> vvh;
 	typedef FullMatrixHandler fmh;
 	typedef std::vector<fmh> vfmh;
-	typedef ConstitutiveLawOwner<vh, fmh> ConstitutiveLawOwnerType;
+	typedef ConstitutiveLaw<vh, fmh> ConstitutiveLawType;
 
 	Membrane(unsigned uLabel, const DofOwner* pDO, flag fOut);
 	virtual ~Membrane(void);

@@ -40,7 +40,7 @@
  * user-defined
  */
 class ConvergenceTest
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 	int numIter; 
 	int curIter; 
@@ -78,8 +78,7 @@ public:
 
 ConvergenceTest::ConvergenceTest(unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO)
+: UserDefinedElem(uLabel, pDO)
 {
 	// help
 	if (HP.IsKeyWord("help")) {

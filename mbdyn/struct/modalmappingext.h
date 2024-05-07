@@ -43,7 +43,7 @@
 
 /* ModalMappingExt - begin */
 
-class ModalMappingExt : virtual public Elem, public ExtForce {
+class ModalMappingExt : public ExtForce {
 protected:
 	ExtModalForceBase *pEMF;
 	unsigned uFlags;

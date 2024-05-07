@@ -121,16 +121,15 @@ PiezoActuatorBeam::PiezoActuatorBeam(
 		const Mat3x3& R2,
 		const Mat3x3& R3,
 		const Mat3x3& r_I, const Mat3x3& rII,
-		const ConstitutiveLaw6D* pD_I,
-		const ConstitutiveLaw6D* pDII,
+		ConstitutiveLaw6D* const pD_I,
+		ConstitutiveLaw6D* const pDII,
 		int iEl,
 		const ScalarDifferentialNode **pEDof,
 		const Mat3xN& T_Ie, const Mat3xN& T_Ik,
 		const Mat3xN& TIIe, const Mat3xN& TIIk,
 		OrientationDescription ood,
 		flag fOut
-) : Elem(uL, fOut),
-Beam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut),
+) : Beam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut),
 iNumElec(iEl), pvElecDofs(pEDof), V(iEl)
 {
 #ifdef DEBUG
@@ -361,8 +360,8 @@ PiezoActuatorVEBeam::PiezoActuatorVEBeam(
 		const Mat3x3& R3,
 		const Mat3x3& r_I,
 		const Mat3x3& rII,
-		const ConstitutiveLaw6D* pD_I,
-		const ConstitutiveLaw6D* pDII,
+		ConstitutiveLaw6D*const pD_I,
+		ConstitutiveLaw6D*const pDII,
 		int iEl,
 		const ScalarDifferentialNode **pEDof,
 		const Mat3xN& T_Ie,
@@ -371,10 +370,7 @@ PiezoActuatorVEBeam::PiezoActuatorVEBeam(
 		const Mat3xN& TIIk,
 		OrientationDescription ood,
 		flag fOut
-) : Elem(uL, fOut),
-    Beam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3,
-         r_I, rII, pD_I, pDII, ood, fOut),    
-    ViscoElasticBeam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3,
+) : ViscoElasticBeam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3,
                      r_I, rII, pD_I, pDII, ood, fOut),
 iNumElec(iEl), pvElecDofs(pEDof), V(iEl)
 {
@@ -574,8 +570,8 @@ PiezoBeam::PiezoBeam(
 		const Mat3x3& R3,
 		const Mat3x3& r_I,
 		const Mat3x3& rII,
-		const ConstitutiveLaw6D* pD_I,
-		const ConstitutiveLaw6D* pDII,
+		ConstitutiveLaw6D*const pD_I,
+		ConstitutiveLaw6D*const pDII,
 		int iEl,
 		const ScalarDifferentialNode **pEDof,
 		const Mat3xN& T_Ie,
@@ -590,9 +586,7 @@ PiezoBeam::PiezoBeam(
       const MatNxN& QVII,
 		OrientationDescription ood,
 		flag fOut
-) : Elem(uL, fOut),
-    Beam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut),
-   PiezoActuatorVEBeam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3,
+) : PiezoActuatorVEBeam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3,
 		r_I, rII, pD_I, pDII, iEl, pEDof, T_Ie, T_Ik, TIIe, TIIk, ood, fOut),
    Vdot(iEl),
    Qdot(iEl)

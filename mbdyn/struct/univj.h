@@ -40,7 +40,7 @@
 
 /* UniversalHingeJoint - begin */
 
-class UniversalHingeJoint : virtual public Elem, public Joint {
+class UniversalHingeJoint : public Joint {
 private:
 	/* Giunto universale: l'asse 3 del primo nodo e l'asse 2 del secondo nodo
 	 * rimangono ortogonali (giunto cardanico)
@@ -152,7 +152,7 @@ public:
 
 /* UniversalRotationJoint - begin */
 
-class UniversalRotationJoint : virtual public Elem, public Joint {
+class UniversalRotationJoint : public Joint {
 private:
 	/* Giunto universale: l'asse 3 del primo nodo e l'asse 2 del secondo nodo
 	 * rimangono ortogonali (giunto cardanico)
@@ -269,7 +269,7 @@ public:
 
 /* Incastro con liberta' di rotazione su un asse */
 
-class UniversalPinJoint : virtual public Elem, public Joint {
+class UniversalPinJoint : public Joint {
 private:
 	const StructNode* pNode;
 	Vec3 X0;

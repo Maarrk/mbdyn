@@ -49,8 +49,7 @@
 DistanceJoint::DistanceJoint(unsigned int uL, const DofOwner* pDO,
 			     const StructDispNode* pN1, const StructDispNode* pN2,
 			     const DriveCaller* pDC, flag fOut)
-: Elem(uL, fOut),
-Joint(uL, pDO, fOut),
+: Joint(uL, pDO, fOut),
 DriveOwner(pDC),
 pNode1(pN1), pNode2(pN2), v(Zero3), 
 dAlpha(0.)
@@ -854,8 +853,7 @@ DistanceJointWithOffset::DistanceJointWithOffset(unsigned int uL,
 						 const Vec3& f2Tmp,
 						 const DriveCaller* pDC,
 						 flag fOut)
-: Elem(uL, fOut),
-Joint(uL, pDO, fOut),
+: Joint(uL, pDO, fOut),
 DriveOwner(pDC),
 pNode1(pN1), pNode2(pN2), f1(f1Tmp), f2(f2Tmp), v(Zero3), dAlpha(0.)
 {
@@ -1687,8 +1685,7 @@ ClampJoint::ClampJoint(unsigned int uL, const DofOwner*pD,
 		       const StructNode* pN,
 		       const Vec3& X0, const Mat3x3& R0,
 		       flag fOut)
-: Elem(uL, fOut),
-Joint(uL, pD, fOut),
+: Joint(uL, pD, fOut),
 pNode(pN), XClamp(X0), RClamp(R0), F(Zero3), M(Zero3)
 {
    NO_OP;

@@ -41,8 +41,7 @@
 
 /* ScrewJoint - begin */
 
-class ScrewJoint : 
-virtual public Elem, public Joint {
+class ScrewJoint : public Joint {
 private:      
 
 	integer nTheta;

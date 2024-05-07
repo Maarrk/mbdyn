@@ -134,7 +134,7 @@ private:
      sp_grad::SpColVectorA<doublereal, 2> zPrev, zCurr, zPPrev, zPCurr;
 };
 
-class TriangularContact: virtual public Elem, public UserDefinedElem
+class TriangularContact: public UserDefinedElem
 {
      using Elem::AssRes;
 public:
@@ -518,8 +518,7 @@ TriangularContact::ContactNode::ContactNode(const StructNodeAd* pNode,
 
 TriangularContact::TriangularContact(unsigned uLabel, const DofOwner *pDO,
 				     DataManager* pDM, MBDynParser& HP)
-     :Elem(uLabel, flag(0)),
-      UserDefinedElem(uLabel, pDO),
+     :UserDefinedElem(uLabel, pDO),
       pTargetNode(nullptr),
       dSearchRadius(std::numeric_limits<doublereal>::max()),
       pCL(nullptr),

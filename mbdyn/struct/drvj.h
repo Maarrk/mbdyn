@@ -41,7 +41,7 @@
 /* LinearVelocityJoint - begin */
 
 class LinearVelocityJoint 
-: virtual public Elem, public Joint, public DriveOwner {
+: public Joint, public DriveOwner {
  private:
    const StructNode* pNode;
    Vec3 Dir;
@@ -143,7 +143,7 @@ class LinearVelocityJoint
 /* AngularVelocityJoint - begin */
 
 class AngularVelocityJoint 
-: virtual public Elem, public Joint, public DriveOwner {
+: public Joint, public DriveOwner {
  private:
    const StructNode* pNode;
    Vec3 Dir;

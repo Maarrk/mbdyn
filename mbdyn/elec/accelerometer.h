@@ -36,7 +36,7 @@
 
 /* Accelerometer - begin */
 
-class Accelerometer : virtual public Elem, public Electric {
+class Accelerometer : public Electric {
 private:
 	const StructNode* pStrNode;
 	const ScalarDifferentialNode* pAbsNode;	/* TODO: check if relaxable to ScalarNode */
@@ -108,7 +108,7 @@ public:
 
 /* TranslAccel - begin */
 
-class TranslAccel : virtual public Elem, public Electric {
+class TranslAccel : public Electric {
 private:
 	const StructNode* pStrNode;
 	const ScalarDifferentialNode* pAbsNode;	/* TODO: check if relaxable to ScalarNode */
@@ -175,7 +175,7 @@ public:
 
 /* RotAccel - begin */
 
-class RotAccel : virtual public Elem, public Electric {
+class RotAccel : public Electric {
 private:
 	const StructNode* pStrNode;
 	const ScalarDifferentialNode* pAbsNode;	/* TODO: check if relaxable to ScalarNode */

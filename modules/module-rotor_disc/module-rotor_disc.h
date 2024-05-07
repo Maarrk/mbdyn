@@ -19,8 +19,8 @@ V1 IS CALLED CONSTANT MOMENTUM INDUCED VELOCITY:
 GOOD APPROXIMATION OF INDUCED VELOCITY AT SPEED > 30KT
 */
 
-//class RotorDisc : virtual public Elem, AerodynamicElem, public UserDefinedElem
-class RotorDisc : virtual public Elem, public UserDefinedElem
+//class RotorDisc : AerodynamicElem, public UserDefinedElem
+class RotorDisc : public UserDefinedElem
 {
 private:
 

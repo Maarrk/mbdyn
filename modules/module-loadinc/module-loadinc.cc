@@ -44,7 +44,7 @@
 #include "Rot.hh"
 
 class LoadIncNorm
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 	int m_FirstSteps;
 	doublereal m_dP;
@@ -121,8 +121,7 @@ public:
 LoadIncNorm::LoadIncNorm(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 m_FirstSteps(2),
 m_dS(0.),
 m_dPMax(1.),
@@ -570,7 +569,7 @@ LoadIncNorm::dGetP(void) const
 }
 
 class LoadIncForce
-: virtual public Elem, public UserDefinedElem {
+: public UserDefinedElem {
 private:
 	bool m_bCouple;
 	bool m_bFollower;
@@ -621,8 +620,7 @@ public:
 LoadIncForce::LoadIncForce(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 m_pDrivenLoadIncNorm(0)
 {
 	// help

@@ -40,7 +40,7 @@
 /* DriveDisplacementJoint - begin */
 
 class DriveDisplacementJoint : 
-virtual public Elem, public Joint, public TplDriveOwner<Vec3> {
+public Joint, public TplDriveOwner<Vec3> {
 private:      
    
 protected:
@@ -193,7 +193,7 @@ public:
 /* DriveDisplacementPinJoint - begin */
 
 class DriveDisplacementPinJoint : 
-virtual public Elem, public Joint, public TplDriveOwner<Vec3> {
+public Joint, public TplDriveOwner<Vec3> {
 private:      
    
 protected:

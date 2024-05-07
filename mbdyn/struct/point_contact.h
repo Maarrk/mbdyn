@@ -39,8 +39,7 @@
 
 /* PointSurfaceContact - begin */
 
-class PointSurfaceContact : 
-virtual public Elem, public Joint{		
+class PointSurfaceContact : public Joint{		
 private:      
 protected:
 	/* Punto di contatto */

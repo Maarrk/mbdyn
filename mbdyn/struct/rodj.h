@@ -43,7 +43,7 @@ extern const char* psRodNames[];
 /* Rod - begin */
 
 class Rod :
-virtual public Elem, public Joint, public ConstitutiveLaw1DOwner {
+public Joint {
 protected:
 	const StructDispNode* pNode1;
 	const StructDispNode* pNode2;
@@ -55,6 +55,8 @@ protected:
 	doublereal dEpsilon;
 	doublereal dEpsilonPrime;
 	virtual doublereal dCalcEpsilon(void);
+	
+	ConstitutiveLaw1D* pDC;
 
 #ifdef USE_NETCDF
 	MBDynNcVar Var_v;
@@ -76,7 +78,7 @@ protected:
 public:
 	/* Costruttore non banale */
 	Rod(unsigned int uL, const DofOwner* pDO,
-			const ConstitutiveLaw1D* pCL,
+			ConstitutiveLaw1D* const pCL,
 			const StructDispNode* pN1, const StructDispNode* pN2,
 			doublereal dLength, flag fOut,
 			bool bHasOffsets = 0);
@@ -206,11 +208,11 @@ public:
 
 /* ViscoElasticRod - begin */
 
-class ViscoElasticRod : virtual public Elem, public Rod {
+class ViscoElasticRod : public Rod {
 public:
 	/* Costruttore non banale */
 	ViscoElasticRod(unsigned int uL, const DofOwner* pDO,
-			const ConstitutiveLaw1D* pCL,
+			ConstitutiveLaw1D* const pCL,
 			const StructDispNode* pN1, const StructDispNode* pN2,
 			doublereal dLength, flag fOut);
 
@@ -253,7 +255,7 @@ public:
 
 /* RodWithOffset - begin */
 
-class RodWithOffset : virtual public Elem, public Rod {
+class RodWithOffset : public Rod {
 protected:
 	// NOTE: should be "const"
 	// made modifiable to let derived classes modify them
@@ -263,7 +265,7 @@ protected:
 public:
 	/* Costruttore non banale */
 	RodWithOffset(unsigned int uL, const DofOwner* pDO,
-  			const ConstitutiveLaw1D* pCL,
+  			ConstitutiveLaw1D* const pCL,
   			const StructNode* pN1, const StructNode* pN2,
   			const Vec3& f1Tmp, const Vec3& f2Tmp,
   			doublereal dLength, flag fOut);

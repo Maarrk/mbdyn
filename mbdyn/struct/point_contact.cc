@@ -53,8 +53,7 @@ PointSurfaceContact::PointSurfaceContact(unsigned int uL,
 			const StructNode* pNs,
 			const Vec3& SDir, const doublereal Ek,
 			flag fOut)
-: Elem(uL,fOut),
-Joint(uL, pDO, fOut), pNode1(pN1), pSup(pNs), SupDirection(SDir)		// assegnamento campi
+: Joint(uL, pDO, fOut), pNode1(pN1), pSup(pNs), SupDirection(SDir)		// assegnamento campi
 {
 		ASSERT(pNode1 != NULL);			// esecuzione solo se i nodi sono assegnati e se sono strutturali
 		ASSERT(pSup != NULL);

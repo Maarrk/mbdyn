@@ -47,8 +47,7 @@ Accelerometer::Accelerometer(unsigned int uL, const DofOwner* pDO,
 	doublereal dO, doublereal dT,
 	doublereal dC, doublereal dK,
 	flag fOut)
-: Elem(uL, fOut),
-Electric(uL, pDO, fOut),
+: Electric(uL, pDO, fOut),
 pStrNode(pS), pAbsNode(pA),
 Dir(TmpDir), dOmega(dO), dTau(dT), dCsi(dC), dKappa(dK)
 {
@@ -303,8 +302,7 @@ TranslAccel::TranslAccel(unsigned int uL,
 	const Vec3& TmpDir,
 	const Vec3& Tmpf,
 	flag fOut)
-: Elem(uL, fOut),
-Electric(uL, pDO, fOut),
+: Electric(uL, pDO, fOut),
 pStrNode(pS), pAbsNode(pA),
 Dir(TmpDir), f(Tmpf)
 {
@@ -479,8 +477,7 @@ RotAccel::RotAccel(unsigned int uL,
 	const ScalarDifferentialNode* pA,
 	const Vec3& TmpDir,
 	flag fOut)
-: Elem(uL, fOut),
-Electric(uL, pDO, fOut),
+: Electric(uL, pDO, fOut),
 pStrNode(pS), pAbsNode(pA),
 Dir(TmpDir)
 {

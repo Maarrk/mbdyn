@@ -81,7 +81,7 @@
 /* BasicAirProperties - begin */
 
 class BasicAirProperties 
-: virtual public Elem, public AirProperties {
+: public AirProperties {
 protected:
 	DriveOwner AirDensity;
 	doublereal dSoundSpeed;
@@ -122,7 +122,7 @@ public:
 /* StdAirProperties - begin */
 
 class StdAirProperties 
-: virtual public Elem, public AirProperties {
+: public AirProperties {
 protected:
 	doublereal PRef;
 	const DriveCaller *RhoRef;

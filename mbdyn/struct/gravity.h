@@ -63,9 +63,9 @@
 
 /* Gravity - begin */
 
-class Gravity : virtual public Elem {
-       using Elem::AssRes;
-       using Elem::AssJac;
+class Gravity : public Elem {
+//        using Elem::AssRes;
+//        using Elem::AssJac;
 public:
 	Gravity(flag fOut);
 
@@ -126,7 +126,7 @@ public:
 
 /* UniformGravity - begin */
 
-class UniformGravity : virtual public Elem, public Gravity, public TplDriveOwner<Vec3> {
+class UniformGravity : public Gravity, public TplDriveOwner<Vec3> {
         using Elem::AssRes;
         using Elem::AssJac;
         using Elem::Output;
@@ -178,7 +178,7 @@ public:
 
 /* CentralGravity - begin */
 
-class CentralGravity : virtual public Elem, public Gravity {
+class CentralGravity : public Gravity {
 protected:
 	Vec3 m_X0;
 	doublereal m_dM;
@@ -206,46 +206,26 @@ public:
 /* GravityOwner - begin */
 
 /* Classe base di elementi che generano forze di inerzia */
+class NestedElem;
 
 class GravityOwner {
 protected:
 	mutable Gravity* pGravity;
 
-public:
-	GravityOwner(void);
-	virtual ~GravityOwner(void);
-
-	void PutGravity(const Gravity* pG);
-	virtual bool bGetGravity(const Vec3& X, Vec3& Acc) const;
-};
-
-/* GravityOwner - end */
-
-
-/* ElemGravityOwner - begin */
-
-class ElemGravityOwner : virtual public Elem, public GravityOwner {
-	friend class NestedElem;
-
-protected:
-
-	/*
-	 * momento statico e momento di inerzia nel sistema globale
-	 */
 	virtual Vec3 GetS_int(void) const {
-		pedantic_cerr("ElemGravityOwner(" << GetLabel() << "): "
+		pedantic_cerr("GravityOwner: "
 			"warning, using default GetS_int()" << std::endl);
 		return ::Zero3;
 	};
 
 	virtual Mat3x3 GetJ_int(void) const {
-		pedantic_cerr("ElemGravityOwner(" << GetLabel() << "): "
+		pedantic_cerr("GravityOwner: "
 			"warning, using default GetJ_int()" << std::endl);
 		return ::Zero3x3;
 	};
 
 	virtual Vec3 GetB_int(void) const {
-		pedantic_cerr("ElemGravityOwner(" << GetLabel() << "): "
+		pedantic_cerr("GravityOwner: "
 			"warning, using default GetB_int()" << std::endl);
 		return ::Zero3;
 	};
@@ -253,14 +233,18 @@ protected:
 	// NOTE: gravity owners must provide the momenta moment
 	// with respect to the origin of the global reference frame!
 	virtual Vec3 GetG_int(void) const {
-		pedantic_cerr("ElemGravityOwner(" << GetLabel() << "): "
+		pedantic_cerr("GravityOwner: "
 			"warning, using default GetG_int()" << std::endl);
 		return ::Zero3;
 	};
 
 public:
-	ElemGravityOwner(unsigned int uL, flag fOut);
-	virtual ~ElemGravityOwner(void);
+	GravityOwner(void);
+	virtual ~GravityOwner(void);
+	friend class NestedElem;
+
+	void PutGravity(const Gravity* pG);
+	virtual bool bGetGravity(const Vec3& X, Vec3& Acc) const;
 
 	/* Usata per inizializzare la quantita' di moto */
 	virtual void
@@ -296,7 +280,87 @@ public:
 		return flag(1);
 	};
 #endif // DEBUG
+
 };
+
+/* GravityOwner - end */
+
+
+/* ElemGravityOwner - begin */
+
+// class ElemGravityOwner : virtual public Elem, public GravityOwner {
+// 	friend class NestedElem;
+// 
+// protected:
+// 
+// 	/*
+// 	 * momento statico e momento di inerzia nel sistema globale
+// 	 */
+// 	virtual Vec3 GetS_int(void) const {
+// 		pedantic_cerr("ElemGravityOwner(" << GetLabel() << "): "
+// 			"warning, using default GetS_int()" << std::endl);
+// 		return ::Zero3;
+// 	};
+// 
+// 	virtual Mat3x3 GetJ_int(void) const {
+// 		pedantic_cerr("ElemGravityOwner(" << GetLabel() << "): "
+// 			"warning, using default GetJ_int()" << std::endl);
+// 		return ::Zero3x3;
+// 	};
+// 
+// 	virtual Vec3 GetB_int(void) const {
+// 		pedantic_cerr("ElemGravityOwner(" << GetLabel() << "): "
+// 			"warning, using default GetB_int()" << std::endl);
+// 		return ::Zero3;
+// 	};
+// 
+// 	// NOTE: gravity owners must provide the momenta moment
+// 	// with respect to the origin of the global reference frame!
+// 	virtual Vec3 GetG_int(void) const {
+// 		pedantic_cerr("ElemGravityOwner(" << GetLabel() << "): "
+// 			"warning, using default GetG_int()" << std::endl);
+// 		return ::Zero3;
+// 	};
+// 
+// public:
+// 	ElemGravityOwner(unsigned int uL, flag fOut);
+// 	virtual ~ElemGravityOwner(void);
+// 
+// 	/* Usata per inizializzare la quantita' di moto */
+// 	virtual void
+// 	SetValue(DataManager *pDM,
+// 		VectorHandler& X, VectorHandler& XP,
+// 		SimulationEntity::Hints *ph = 0) = 0;
+// 
+// 	/*
+// 	 * massa
+// 	 */
+// 	virtual doublereal dGetM(void) const {
+// 		return 0.;
+// 	};
+// 
+// 	Vec3 GetS(void) const {
+// 		return GetS_int();
+// 	};
+// 
+// 	Mat3x3 GetJ(void) const {
+// 		return GetJ_int();
+// 	};
+// 
+// 	Vec3 GetB(void) const {
+// 		return GetB_int();
+// 	};
+// 
+// 	Vec3 GetG(void) const {
+// 		return GetG_int();
+// 	};
+// 
+// #ifdef DEBUG
+// 	virtual flag fIsElemGravityOwner(void) const {
+// 		return flag(1);
+// 	};
+// #endif // DEBUG
+// };
 
 /* ElemGravityOwner - end */
 

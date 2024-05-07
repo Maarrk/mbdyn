@@ -62,8 +62,7 @@ temporary variables: mbdynce_xxx (eg. mbdynce_point)
 // functions that introduces methods to handle the simulation ("bsae/simentity.h")
 
 class ChronoInterfaceBaseElem
-    : virtual public Elem,
-      public UserDefinedElem
+    : public UserDefinedElem
 {
 private:
     DataManager *m_pDM;

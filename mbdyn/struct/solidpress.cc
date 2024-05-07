@@ -478,8 +478,7 @@ PressureFromNodes<iNumNodes>::GetNodalPressure(sp_grad::SpColVector<T, iNumNodes
 
 SurfaceLoadElem::SurfaceLoadElem(unsigned uLabel,
                                  flag fOut)
-     :Elem(uLabel, fOut),
-      InitialAssemblyElem(uLabel, fOut),
+     :InitialAssemblyElem(uLabel, fOut),
       Ftot(::Zero3)
 {
 }
@@ -535,8 +534,7 @@ SurfaceLoad<ElementType, CollocationType, PressureSource>::SurfaceLoad(unsigned 
                                                                        const std::array<const StructDispNodeAd*, iNumNodes>& rgNodesTmp,
                                                                        PressureSource&& oPressureTmp,
                                                                        flag fOut)
-     :Elem(uLabel, fOut),
-      SurfaceLoadElem(uLabel, fOut),
+     :SurfaceLoadElem(uLabel, fOut),
       rgNodes(rgNodesTmp),
       oPressure(std::move(oPressureTmp))
 {
@@ -653,8 +651,7 @@ PressureLoad<ElementType, CollocationType, PressureSource>::PressureLoad(unsigne
                                                                          const std::array<const StructDispNodeAd*, iNumNodes>& rgNodesTmp,
                                                                          PressureSource&& oPressureTmp,
                                                                          flag fOut)
-:Elem(uLabel, fOut),
- BaseType(uLabel, rgNodesTmp, std::move(oPressureTmp), fOut)
+:BaseType(uLabel, rgNodesTmp, std::move(oPressureTmp), fOut)
 {
      BaseType::InitCollocData(rgCollocData);
 }
@@ -859,8 +856,7 @@ SurfaceTraction<ElementType, CollocationType, PressureSource, eType>::SurfaceTra
                                                                                       PressureSource&& oPressureTmp,
                                                                                       const std::array<Mat3x3, iNumEvalPoints>& Rf,
                                                                                       flag fOut)
-:Elem(uLabel, fOut),
- BaseType(uLabel, rgNodesTmp, std::move(oPressureTmp), fOut)
+:BaseType(uLabel, rgNodesTmp, std::move(oPressureTmp), fOut)
 {
      using namespace sp_grad;
 

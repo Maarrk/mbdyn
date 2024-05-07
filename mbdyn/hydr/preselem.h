@@ -51,7 +51,7 @@ extern const char* psHydraulicNames[];
 
 /* HydraulicElem - begin */
 
-class HydraulicElem : virtual public Elem, public ElemWithDofs {
+class HydraulicElem : public Elem, public DofOwnerOwner {
  public:
    /* Tipi di elementi idraulici */
    enum Type {

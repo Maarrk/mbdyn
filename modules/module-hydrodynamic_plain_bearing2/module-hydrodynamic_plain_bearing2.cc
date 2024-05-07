@@ -4918,7 +4918,7 @@ namespace {
                                    doublereal dPressScale);
           virtual ~ComplianceModel();
           virtual int GetNumConnectedElements() const;
-          virtual void GetConnectedElements(std::vector<const ElemWithDofs*>& rgElem) const;
+          virtual void GetConnectedElements(std::vector<const DofOwnerOwner*>& rgElem) const;
           virtual int iGetNumNodes() const;
           virtual void SetNode(int iNode, HydroNode* pNode);
           virtual HydroNode* pGetNode(int iNode) const;
@@ -4992,7 +4992,7 @@ namespace {
           virtual ~ComplianceModelNodal();
 
           virtual int GetNumConnectedElements() const override;
-          virtual void GetConnectedElements(std::vector<const ElemWithDofs*>& rgElem) const override;
+          virtual void GetConnectedElements(std::vector<const DofOwnerOwner*>& rgElem) const override;
 
           template <typename T>
           void AssRes(SpGradientAssVec<T>& WorkVec,
@@ -5139,7 +5139,7 @@ namespace {
           virtual ~ComplianceModelNodalDouble();
 
           virtual int GetNumConnectedElements() const override;
-          virtual void GetConnectedElements(std::vector<const ElemWithDofs*>& rgElem) const override;
+          virtual void GetConnectedElements(std::vector<const DofOwnerOwner*>& rgElem) const override;
 
           template <typename T>
           void AssRes(SpGradientAssVec<T>& WorkVec,
@@ -5504,7 +5504,7 @@ namespace {
      };
 
 
-     class HydroRootElement: virtual public Elem, public UserDefinedElem, public HydroRootBase
+     class HydroRootElement: public UserDefinedElem, public HydroRootBase
      {
      public:
           enum OutputFlags {
@@ -5807,8 +5807,7 @@ namespace {
      HydroRootElement::HydroRootElement(
           unsigned uLabel, const DofOwner *pDO,
           DataManager* pDM, MBDynParser& HP)
-          :       Elem(uLabel, flag(0)),
-                  UserDefinedElem(uLabel, pDO),
+          :       UserDefinedElem(uLabel, pDO),
                   pDM(pDM),
                   uOutputFlags(OUTPUT_NOTHING),
                   pFluid(nullptr),
@@ -12204,7 +12203,7 @@ namespace {
           return 0;
      }
 
-     void ComplianceModel::GetConnectedElements(std::vector<const ElemWithDofs*>& rgElem) const
+     void ComplianceModel::GetConnectedElements(std::vector<const DofOwnerOwner*>& rgElem) const
      {
      }
 
@@ -12361,7 +12360,7 @@ namespace {
           return pModalJoint != nullptr ? 1 : 0;
      }
 
-     void ComplianceModelNodal::GetConnectedElements(std::vector<const ElemWithDofs*>& rgElem) const
+     void ComplianceModelNodal::GetConnectedElements(std::vector<const DofOwnerOwner*>& rgElem) const
      {
           if (pModalJoint) {
                rgElem.push_back(pModalJoint);
@@ -12837,7 +12836,7 @@ namespace {
           return iNumConnectedElements;
      }
 
-     void ComplianceModelNodalDouble::GetConnectedElements(std::vector<const ElemWithDofs*>& rgElem) const
+     void ComplianceModelNodalDouble::GetConnectedElements(std::vector<const DofOwnerOwner*>& rgElem) const
      {
           for (auto pModalJoint: rgModalJoints) {
                if (pModalJoint) {

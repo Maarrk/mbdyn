@@ -54,10 +54,11 @@ extern "C" {
 
 /* InducedVelocity - begin */
 
-InducedVelocity::InducedVelocity(unsigned int uL,
+InducedVelocity::InducedVelocity(
 	const StructNode *pCraft,
-	ResForceSet **ppres, flag fOut)
-: Elem(uL, fOut),
+	ResForceSet **ppres)
+: 
+// Elem(uL, fOut),
 #ifdef USE_MPI
 is_parallel(false),
 pBlockLenght(0),
@@ -108,86 +109,86 @@ InducedVelocity::bSectionalForces(void) const
 	return false;
 }
 
-unsigned int
-InducedVelocity::iGetNumPrivData(void) const {
-	return 6;
-}
+// unsigned int
+// InducedVelocity::iGetNumPrivData(void) const {
+// 	return 6;
+// }
+// 
+// unsigned int
+// InducedVelocity::iGetPrivDataIdx(const char *s) const
+// {
+// 	ASSERT(s != 0);
+// 
+// 	unsigned int idx = 0;
+// 
+// 	// sanity check
+// 	if (s[0] == '\0' || s[1] == '\0' || s[2] != '\0' ) {
+// 		return 0;
+// 	}
+// 
+// 	switch (s[0]) {
+// 	case 'M':
+// 		idx += 3;
+// 		// fallthru
+// 
+// 	case 'T':
+// 		switch (s[1]) {
+// 		case 'x':
+// 			return idx + 1;
+// 
+// 		case 'y':
+// 			return idx + 2;
+// 
+// 		case 'z':
+// 			return idx + 3;
+// 		}
+// 	}
+// 
+// 	return 0;
+// }
+// 
+// doublereal
+// InducedVelocity::dGetPrivData(unsigned int i) const
+// {
+// 	ASSERT(i > 0 && i <= 6);
+// 
+// 	switch (i) {
+// 	case 1:
+// 	case 2:
+// 	case 3:
+// 		return Res.Force()(i);
+// 
+// 	case 4:
+// 	case 5:
+// 	case 6:
+// 		return Res.Moment()(i - 3);
+// 	}
+// 
+// 	throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+// }
 
-unsigned int
-InducedVelocity::iGetPrivDataIdx(const char *s) const
-{
-	ASSERT(s != 0);
-
-	unsigned int idx = 0;
-
-	// sanity check
-	if (s[0] == '\0' || s[1] == '\0' || s[2] != '\0' ) {
-		return 0;
-	}
-
-	switch (s[0]) {
-	case 'M':
-		idx += 3;
-		// fallthru
-
-	case 'T':
-		switch (s[1]) {
-		case 'x':
-			return idx + 1;
-
-		case 'y':
-			return idx + 2;
-
-		case 'z':
-			return idx + 3;
-		}
-	}
-
-	return 0;
-}
-
-doublereal
-InducedVelocity::dGetPrivData(unsigned int i) const
-{
-	ASSERT(i > 0 && i <= 6);
-
-	switch (i) {
-	case 1:
-	case 2:
-	case 3:
-		return Res.Force()(i);
-
-	case 4:
-	case 5:
-	case 6:
-		return Res.Moment()(i - 3);
-	}
-
-	throw ErrGeneric(MBDYN_EXCEPT_ARGS);
-}
-
-void
-InducedVelocity::AfterConvergence(const VectorHandler& /* X */ ,
-		const VectorHandler& /* XP */ )
-{
-#if defined(USE_MULTITHREAD) && defined(MBDYN_X_MT_ASSRES)
-	ASSERT(bDone);
-	bDone = false;
-#endif // USE_MULTITHREAD && MBDYN_X_MT_ASSRES
-}
-
-/* assemblaggio jacobiano (nullo per tutti tranne che per il DynamicInflow) */
-VariableSubMatrixHandler&
-InducedVelocity::AssJac(VariableSubMatrixHandler& WorkMat,
-	doublereal /* dCoef */ ,
-	const VectorHandler& /* XCurr */ ,
-	const VectorHandler& /* XPrimeCurr */ )
-{
-	DEBUGCOUT("Entering InducedVelocity::AssJac()" << std::endl);
-	WorkMat.SetNullMatrix();
-
-	return WorkMat;
-}
+// void
+// InducedVelocity::AfterConvergence(const VectorHandler& /* X */ ,
+// 		const VectorHandler& /* XP */ )
+// {
+// #if defined(USE_MULTITHREAD) && defined(MBDYN_X_MT_ASSRES)
+// 	ASSERT(bDone);
+// 	bDone = false;
+// #endif // USE_MULTITHREAD && MBDYN_X_MT_ASSRES
+// }
+// 
+// /* assemblaggio jacobiano (nullo per tutti tranne che per il DynamicInflow) */
+// VariableSubMatrixHandler&
+// InducedVelocity::AssJac(VariableSubMatrixHandler& WorkMat,
+// 	doublereal /* dCoef */ ,
+// 	const VectorHandler& /* XCurr */ ,
+// 	const VectorHandler& /* XPrimeCurr */ )
+// {
+// 	DEBUGCOUT("Entering InducedVelocity::AssJac()" << std::endl);
+// 	WorkMat.SetNullMatrix();
+// 
+// 	return WorkMat;
+// }
 
 #ifdef USE_MPI
 void
@@ -308,12 +309,84 @@ InducedVelocity::Done(void) const
 
 /* InducedVelocityElem - begin */
 
-InducedVelocityElem::InducedVelocityElem(unsigned int uL, const DofOwner* pDO,
+/* assemblaggio jacobiano (nullo per tutti tranne che per il DynamicInflow) */
+VariableSubMatrixHandler&
+InducedVelocityElem::AssJac(VariableSubMatrixHandler& WorkMat,
+	doublereal /* dCoef */ ,
+	const VectorHandler& /* XCurr */ ,
+	const VectorHandler& /* XPrimeCurr */ )
+{
+	DEBUGCOUT("Entering InducedVelocityElem::AssJac()" << std::endl);
+	WorkMat.SetNullMatrix();
+
+	return WorkMat;
+}
+
+unsigned int
+InducedVelocityElem::iGetNumPrivData(void) const {
+	return 6;
+}
+
+unsigned int
+InducedVelocityElem::iGetPrivDataIdx(const char *s) const
+{
+	ASSERT(s != 0);
+
+	unsigned int idx = 0;
+
+	// sanity check
+	if (s[0] == '\0' || s[1] == '\0' || s[2] != '\0' ) {
+		return 0;
+	}
+
+	switch (s[0]) {
+	case 'M':
+		idx += 3;
+		// fallthru
+
+	case 'T':
+		switch (s[1]) {
+		case 'x':
+			return idx + 1;
+
+		case 'y':
+			return idx + 2;
+
+		case 'z':
+			return idx + 3;
+		}
+	}
+
+	return 0;
+}
+
+doublereal
+InducedVelocityElem::dGetPrivData(unsigned int i) const
+{
+	ASSERT(i > 0 && i <= 6);
+
+	switch (i) {
+	case 1:
+	case 2:
+	case 3:
+		return Res.Force()(i);
+
+	case 4:
+	case 5:
+	case 6:
+		return Res.Moment()(i - 3);
+	}
+
+	throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+}
+
+InducedVelocityElem::InducedVelocityElem(unsigned int uL, 
+	const DofOwner* pDO,
 	const StructNode *pCraft,
 	ResForceSet **ppres, flag fOut)
-: Elem(uL, fOut),
-AerodynamicElem(uL, pDO, fOut),
-InducedVelocity(uL, pCraft, ppres, fOut)
+: AerodynamicElem(pDO),
+InducedVelocity(pCraft, ppres),
+Elem(uL, fOut)
 {
 	NO_OP;
 }
@@ -331,10 +404,10 @@ InducedVelocityElem::GetElemType(void) const
 }
 
 /* Tipo dell'elemento (usato per debug ecc.) */
-AerodynamicElem::Type
+AerodynamicElemBase::Type
 InducedVelocityElem::GetAerodynamicElemType(void) const
 {
-	return AerodynamicElem::INDUCEDVELOCITY;
+	return AerodynamicElemBase::INDUCEDVELOCITY;
 }
 
 const OutputHandler::Dimensions 

@@ -41,7 +41,7 @@
 
 /* Actuator - begin */
 
-class Actuator : virtual public Elem, public HydraulicElem {
+class Actuator : public HydraulicElem {
  private:
    const PressureNode* pNodeHyd1;
    const PressureNode* pNodeHyd2;

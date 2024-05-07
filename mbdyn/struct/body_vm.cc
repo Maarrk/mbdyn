@@ -47,14 +47,12 @@ VariableBody::VariableBody(unsigned int uL,
 	const TplDriveCaller<Mat3x3> *pDCJgc_vm,
 	const TplDriveCaller<Mat3x3> *pDCJgc_vg,
 	flag fOut)
-: Elem(uL, fOut),
-ElemGravityOwner(uL, fOut),
-InitialAssemblyElem(uL, fOut),
-pNode(pNode),
-m_Mass(pDCMass),
-m_Xgc(pDCXgc),
-m_Jgc_vm(pDCJgc_vm),
-m_Jgc_vg(pDCJgc_vg)
+: InitialAssemblyElem(uL, fOut),
+  pNode(pNode),
+  m_Mass(pDCMass),
+  m_Xgc(pDCXgc),
+  m_Jgc_vm(pDCJgc_vm),
+  m_Jgc_vg(pDCJgc_vg)
 {
 	ASSERT(pNode != 0);
 	ASSERT(pNode->GetNodeType() == Node::STRUCTURAL);
@@ -317,8 +315,7 @@ DynamicVariableBody::DynamicVariableBody(unsigned int uL,
 	const TplDriveCaller<Mat3x3> *pDCJgc_vm,
 	const TplDriveCaller<Mat3x3> *pDCJgc_vg,
 	flag fOut)
-: Elem(uL, fOut),
-VariableBody(uL, pNode, pDCMass, pDCXgc, pDCJgc_vm, pDCJgc_vg, fOut)
+: VariableBody(uL, pNode, pDCMass, pDCXgc, pDCJgc_vm, pDCJgc_vg, fOut)
 {
 	NO_OP;
 }
@@ -743,8 +740,7 @@ StaticVariableBody::StaticVariableBody(unsigned int uL,
 	const TplDriveCaller<Mat3x3> *pDCJgc_vm,
 	const TplDriveCaller<Mat3x3> *pDCJgc_vg,
 	flag fOut)
-: Elem(uL, fOut),
-VariableBody(uL, pNode, pDCMass, pDCXgc, pDCJgc_vm, pDCJgc_vg, fOut)
+: VariableBody(uL, pNode, pDCMass, pDCXgc, pDCJgc_vm, pDCJgc_vg, fOut)
 {
 	NO_OP;
 }

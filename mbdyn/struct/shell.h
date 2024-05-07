@@ -61,10 +61,9 @@ class MBDynParser;
 
 
 class Shell
-: virtual public Elem,
-public ElemGravityOwner,
-public ElemWithDofs, 
-public InitialAssemblyElem
+: public InitialAssemblyElem,
+public GravityOwner,
+public DofOwnerOwner
 {
 public:
 	// Shell types
@@ -81,7 +80,7 @@ public:
 	typedef std::vector<vh> vvh;
 	typedef FullMatrixHandler fmh;
 	typedef std::vector<fmh> vfmh;
-	typedef ConstitutiveLawOwner<vh, fmh> ConstitutiveLawOwnerType;
+	typedef ConstitutiveLaw<vh, fmh> ConstitutiveLawType;
 
 	Shell(unsigned uLabel, const DofOwner* pDO, flag fOut);
 	virtual ~Shell(void);

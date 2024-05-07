@@ -41,8 +41,7 @@ GenelClamp::GenelClamp(unsigned int uLabel,
 	const DriveCaller* pDC,
 	const ScalarDof& sd,
 	flag fOutput)
-: Elem(uLabel, fOutput),
-Genel(uLabel, pDO, fOutput),
+: Genel(uLabel, pDO, fOutput),
 DriveOwner(pDC), SD(sd), dRct(0.)
 {
 	NO_OP;
@@ -232,8 +231,7 @@ GenelDistance::GenelDistance(unsigned int uLabel,
 	const ScalarDof& sd1,
 	const ScalarDof& sd2,
 	flag fOutput)
-: Elem(uLabel, fOutput),
-Genel(uLabel, pDO, fOutput),
+: Genel(uLabel, pDO, fOutput),
 DriveOwner(pDC), SD1(sd1), SD2(sd2), dRct(0.)
 {
 	NO_OP;
@@ -435,13 +433,12 @@ GenelDistance::DescribeEq(std::ostream& out, const char *prefix, bool bInitial) 
 
 GenelSpring::GenelSpring(unsigned int uLabel,
 	const DofOwner* pDO,
-	const ConstitutiveLaw1D* pCL,
+	ConstitutiveLaw1D*const pCL,
 	const ScalarDof& sd1,
 	const ScalarDof& sd2,
 	flag fOutput)
-: Elem(uLabel, fOutput),
-Genel(uLabel, pDO, fOutput),
-ConstitutiveLaw1DOwner(pCL), SD1(sd1), SD2(sd2), dVal(0.)
+: Genel(uLabel, pDO, fOutput),
+SD1(sd1), SD2(sd2), dVal(0.), pDC(pCL)
 {
 	NO_OP;
 }
@@ -459,6 +456,12 @@ GenelSpring::~GenelSpring(void)
 	if (pn2s) {
 		SAFEDELETE(pn2s);
 	}
+
+	/* Distrugge il legame costitutivo */
+	ASSERT(pDC != NULL);
+	if (pDC != NULL) {
+		SAFEDELETE(pDC);
+	}
 }
 
 /* Scrive il contributo dell'elemento al file di restart */
@@ -472,7 +475,7 @@ void
 GenelSpring::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw1DOwner::AfterConvergence(dVal, 0.);
+	pDC->AfterConvergence(dVal, 0.);
 }
 
 /* Tipo di Genel */
@@ -512,7 +515,7 @@ GenelSpring::AssJac(VariableSubMatrixHandler& WorkMat,
 	WM.PutRowIndex(2, iNode2RowIndex);
 	WM.PutColIndex(2, iNode2ColIndex);
 
-	doublereal dFDE = GetFDE();
+	doublereal dFDE = pDC->GetFDE();
 
 	if (SD1.iOrder == 1) {
 		WM.PutCoef(1, 1, dFDE);
@@ -551,9 +554,9 @@ GenelSpring::AssRes(SubVectorHandler& WorkVec,
 	doublereal dVal2 = SD2.pNode->dGetDofValue(1, SD2.iOrder);
 
 	dVal = dVal2 - dVal1;
-	ConstitutiveLaw1DOwner::Update(dVal, 0.);
+	pDC->Update(dVal, 0.);
 
-	doublereal d = GetF();
+	doublereal d = pDC->GetF();
 
 	WorkVec.PutItem(1, iNode1RowIndex, d);
 	WorkVec.PutItem(2, iNode2RowIndex, -d);
@@ -594,11 +597,10 @@ GenelSpring::DescribeEq(std::ostream& out, const char *prefix, bool bInitial) co
 
 GenelSpringSupport::GenelSpringSupport(unsigned int uLabel,
 	const DofOwner* pDO,
-	const ConstitutiveLaw1D* pCL,
+	ConstitutiveLaw1D*const pCL,
 	const ScalarDof& sd, doublereal X0, flag fOutput)
-: Elem(uLabel, fOutput),
-Genel(uLabel, pDO, fOutput),
-ConstitutiveLaw1DOwner(pCL), SD(sd), dVal(0.), dInitVal(X0)
+: Genel(uLabel, pDO, fOutput),
+SD(sd), dVal(0.), dInitVal(X0), pDC(pCL)
 {
 	ASSERT(SD.iOrder == 0);
 }
@@ -610,6 +612,12 @@ GenelSpringSupport::~GenelSpringSupport(void)
 	pn2s = dynamic_cast<const Node2Scalar *>(SD.pNode);
 	if (pn2s) {
 		SAFEDELETE(pn2s);
+	}
+
+	/* Distrugge il legame costitutivo */
+	ASSERT(pDC != NULL);
+	if (pDC != NULL) {
+		SAFEDELETE(pDC);
 	}
 }
 
@@ -624,7 +632,7 @@ void
 GenelSpringSupport::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw1DOwner::AfterConvergence(dVal, 0.);
+	pDC->AfterConvergence(dVal, 0.);
 }
 
 /* Tipo di Genel */
@@ -660,7 +668,7 @@ GenelSpringSupport::AssJac(VariableSubMatrixHandler& WorkMat,
 	WM.PutRowIndex(1, iNodeRowIndex);
 	WM.PutColIndex(1, iNodeColIndex);
 
-	WM.PutCoef(1, 1, GetFDE()*dCoef);
+	WM.PutCoef(1, 1, pDC->GetFDE()*dCoef);
 
 	return WorkMat;
 }
@@ -679,9 +687,9 @@ GenelSpringSupport::AssRes(SubVectorHandler& WorkVec,
 	integer iNodeRowIndex = SD.pNode->iGetFirstRowIndex() + 1;
 
 	dVal = SD.pNode->dGetX() - dInitVal;
-	ConstitutiveLaw1DOwner::Update(dVal, 0.);
+	pDC->Update(dVal, 0.);
 
-	WorkVec.PutItem(1, iNodeRowIndex, -GetF());
+	WorkVec.PutItem(1, iNodeRowIndex, -pDC->GetF());
 
 	return WorkVec;
 }
@@ -719,7 +727,7 @@ doublereal GenelSpringSupport::dGetPrivData(unsigned int i) const
 {
 	switch (i) {
 	case 1u:
-		return GetF();
+		return pDC->GetF();
 	case 2u:
 		return dVal;
 	default:
@@ -751,14 +759,12 @@ GenelSpringSupport::DescribeEq(std::ostream& out, const char *prefix, bool bInit
 
 GenelCrossSpringSupport::GenelCrossSpringSupport(unsigned int uLabel,
 	const DofOwner* pDO,
-	const ConstitutiveLaw1D* pCL,
+	ConstitutiveLaw1D*const pCL,
 	const ScalarDof& sdrow,
 	const ScalarDof& sdcol,
 	flag fOutput)
-: Elem(uLabel, fOutput),
-Genel(uLabel, pDO, fOutput),
-ConstitutiveLaw1DOwner(pCL),
-SDRow(sdrow), SDCol(sdcol), dVal(0.)
+: Genel(uLabel, pDO, fOutput),
+SDRow(sdrow), SDCol(sdcol), dVal(0.), pDC(pCL)
 {
 	ASSERT(SDCol.iOrder == 0);
 }
@@ -776,6 +782,12 @@ GenelCrossSpringSupport::~GenelCrossSpringSupport(void)
 	if (pn2s) {
 		SAFEDELETE(pn2s);
 	}
+
+	/* Distrugge il legame costitutivo */
+	ASSERT(pDC != NULL);
+	if (pDC != NULL) {
+		SAFEDELETE(pDC);
+	}
 }
 
 /* Scrive il contributo dell'elemento al file di restart */
@@ -789,7 +801,7 @@ void
 GenelCrossSpringSupport::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw1DOwner::AfterConvergence(dVal, 0.);
+	pDC->AfterConvergence(dVal, 0.);
 }
 
 /* Tipo di Genel */
@@ -825,7 +837,7 @@ GenelCrossSpringSupport::AssJac(VariableSubMatrixHandler& WorkMat,
 	WM.PutRowIndex(1, iNodeRowIndex);
 	WM.PutColIndex(1, iNodeColIndex);
 
-	WM.PutCoef(1, 1, GetFDE()*dCoef);
+	WM.PutCoef(1, 1, pDC->GetFDE()*dCoef);
 
 	return WorkMat;
 }
@@ -844,9 +856,9 @@ GenelCrossSpringSupport::AssRes(SubVectorHandler& WorkVec,
 	integer iNodeRowIndex = SDRow.pNode->iGetFirstRowIndex()+1;
 
 	dVal = SDCol.pNode->dGetX();
-	ConstitutiveLaw1DOwner::Update(dVal, 0.);
+	pDC->Update(dVal, 0.);
 
-	WorkVec.PutItem(1, iNodeRowIndex, -GetF());
+	WorkVec.PutItem(1, iNodeRowIndex, -pDC->GetF());
 
 	return WorkVec;
 }
@@ -885,14 +897,13 @@ GenelCrossSpringSupport::DescribeEq(std::ostream& out, const char *prefix, bool 
 
 GenelCrossSpringDamperSupport::GenelCrossSpringDamperSupport(
 	unsigned int uLabel, const DofOwner* pDO,
-	const ConstitutiveLaw1D* pCL,
+	ConstitutiveLaw1D*const pCL,
 	const ScalarDof& sdrow,
 	const ScalarDof& sdcol,
 	flag fOutput)
-: Elem(uLabel, fOutput),
-Genel(uLabel, pDO, fOutput),
-ConstitutiveLaw1DOwner(pCL), SDRow(sdrow), SDCol(sdcol),
-dVal(0.), dValPrime(0.)
+: Genel(uLabel, pDO, fOutput),
+SDRow(sdrow), SDCol(sdcol),
+dVal(0.), dValPrime(0.), pDC(pCL)
 {
 	ASSERT(SDCol.iOrder == 0);
 }
@@ -910,6 +921,12 @@ GenelCrossSpringDamperSupport::~GenelCrossSpringDamperSupport(void)
 	if (pn2s) {
 		SAFEDELETE(pn2s);
 	}
+
+	/* Distrugge il legame costitutivo */
+	ASSERT(pDC != NULL);
+	if (pDC != NULL) {
+		SAFEDELETE(pDC);
+	}
 }
 
 /* Scrive il contributo dell'elemento al file di restart */
@@ -923,7 +940,7 @@ void
 GenelCrossSpringDamperSupport::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw1DOwner::AfterConvergence(dVal, dValPrime);
+	pDC->AfterConvergence(dVal, dValPrime);
 }
 
 /* Tipo di Genel */
@@ -960,7 +977,7 @@ GenelCrossSpringDamperSupport::AssJac(VariableSubMatrixHandler& WorkMat,
 	WM.PutRowIndex(1, iNodeRowIndex);
 	WM.PutColIndex(1, iNodeColIndex);
 
-	WM.PutCoef(1, 1, GetFDE()*dCoef+GetFDEPrime());
+	WM.PutCoef(1, 1, pDC->GetFDE()*dCoef+pDC->GetFDEPrime());
 
 	return WorkMat;
 }
@@ -980,9 +997,9 @@ GenelCrossSpringDamperSupport::AssRes(SubVectorHandler& WorkVec,
 
 	dVal = SDCol.pNode->dGetX();
 	dValPrime = SDCol.pNode->dGetXPrime();
-	ConstitutiveLaw1DOwner::Update(dVal, dValPrime);
+	pDC->Update(dVal, dValPrime);
 
-	WorkVec.PutItem(1, iNodeRowIndex, -GetF());
+	WorkVec.PutItem(1, iNodeRowIndex, -pDC->GetF());
 
 	return WorkVec;
 }
@@ -1021,12 +1038,10 @@ GenelCrossSpringDamperSupport::DescribeEq(std::ostream& out, const char *prefix,
 
 GenelSpringDamperSupport::GenelSpringDamperSupport(unsigned int uLabel,
 	const DofOwner* pDO,
-	const ConstitutiveLaw1D* pCL,
+	ConstitutiveLaw1D*const pCL,
 	const ScalarDof& sd, doublereal X0, flag fOutput)
-: Elem(uLabel, fOutput),
-Genel(uLabel, pDO, fOutput),
-ConstitutiveLaw1DOwner(pCL),
-SD(sd), dVal(0.), dInitVal(X0), dValPrime(0.)
+: Genel(uLabel, pDO, fOutput),
+SD(sd), dVal(0.), dInitVal(X0), dValPrime(0.), pDC(pCL)
 {
 	ASSERT(sd.pNode->GetDofType(0) == DofOrder::DIFFERENTIAL);
 	ASSERT(sd.iOrder == 0);
@@ -1039,6 +1054,12 @@ GenelSpringDamperSupport::~GenelSpringDamperSupport(void)
 	pn2s = dynamic_cast<const Node2Scalar *>(SD.pNode);
 	if (pn2s) {
 		SAFEDELETE(pn2s);
+	}
+
+	/* Distrugge il legame costitutivo */
+	ASSERT(pDC != NULL);
+	if (pDC != NULL) {
+		SAFEDELETE(pDC);
 	}
 }
 
@@ -1053,7 +1074,7 @@ void
 GenelSpringDamperSupport::AfterConvergence(const VectorHandler& X,
 	const VectorHandler& XP)
 {
-	ConstitutiveLaw1DOwner::AfterConvergence(dVal, dValPrime);
+	pDC->AfterConvergence(dVal, dValPrime);
 }
 
 /* Tipo di Genel */
@@ -1090,7 +1111,7 @@ GenelSpringDamperSupport::AssJac(VariableSubMatrixHandler& WorkMat,
 	WM.PutRowIndex(1, iNodeRowIndex);
 	WM.PutColIndex(1, iNodeColIndex);
 
-	WM.PutCoef(1, 1, GetFDE()*dCoef + GetFDEPrime());
+	WM.PutCoef(1, 1, pDC->GetFDE()*dCoef + pDC->GetFDEPrime());
 
 	return WorkMat;
 }
@@ -1111,9 +1132,9 @@ GenelSpringDamperSupport::AssRes(SubVectorHandler& WorkVec,
 	dVal = SD.pNode->dGetX() - dInitVal;
 	dValPrime = SD.pNode->dGetXPrime();
 
-	ConstitutiveLaw1DOwner::Update(dVal, dValPrime);
+	pDC->Update(dVal, dValPrime);
 
-	WorkVec.PutItem(1, iNodeRowIndex, -GetF());
+	WorkVec.PutItem(1, iNodeRowIndex, -pDC->GetF());
 
 	return WorkVec;
 }
@@ -1152,8 +1173,7 @@ GenelSpringDamperSupport::DescribeEq(std::ostream& out, const char *prefix, bool
 GenelMass::GenelMass(unsigned int uLabel,
 	const DofOwner* pDO, const DriveCaller* pDC,
 	const ScalarDof& sd, flag fOutput)
-: Elem(uLabel, fOutput),
-Genel(uLabel, pDO, fOutput),
+: Genel(uLabel, pDO, fOutput),
 DriveOwner(pDC), SD(sd)
 {
 	NO_OP;

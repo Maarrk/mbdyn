@@ -67,7 +67,6 @@
 /* AerodynamicModal - begin */
 
 class AerodynamicModal :
-	virtual public Elem,
 	public AerodynamicElem,
 	public InitialAssemblyElem
 {
@@ -210,8 +209,8 @@ public:
 	InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr);
 
 	/* Tipo di elemento aerodinamico */
-	AerodynamicElem::Type GetAerodynamicElemType(void) const {
-		return AerodynamicElem::AEROMODAL;
+	AerodynamicElemBase::Type GetAerodynamicElemType(void) const {
+		return AerodynamicElemBase::AEROMODAL;
 	};
 
 	/* *******PER IL SOLUTORE PARALLELO******** */

@@ -44,8 +44,7 @@ extern unsigned int total_iGetPrivDataIdx(const char *s_in);
 
 /* TotalJoint - begin */
 
-class TotalJoint :
-virtual public Elem, public Joint {
+class TotalJoint : public Joint {
 protected:
 	const StructNode* pNode1;
 	const StructNode* pNode2;
@@ -264,8 +263,7 @@ public:
 
 /* TotalPinJoint - begin */
 
-class TotalPinJoint :
-virtual public Elem, public Joint {
+class TotalPinJoint : public Joint {
 protected:
 	const StructNode* pNode;
 	Vec3 Xc;
@@ -492,7 +490,7 @@ public:
 #include "force.h"
 
 /* Total Force: begin */
-class TotalForce : virtual public Elem, public Force	{
+class TotalForce : public Force	{
 private:
 	const StructNode* pNode1;
 	const StructNode* pNode2;

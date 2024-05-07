@@ -210,7 +210,7 @@ struct StructNodeTraits<StructDispNodeAd> {
 };
 
 template <typename StructNodeType1>
-class UniInPlaneFriction: virtual public Elem, public UserDefinedElem
+class UniInPlaneFriction: public UserDefinedElem
 {
      using Elem::AssRes;
 public:
@@ -460,8 +460,7 @@ template <typename StructNodeType1>
 UniInPlaneFriction<StructNodeType1>::UniInPlaneFriction(
      unsigned uLabel, const DofOwner *pDO,
      DataManager* pDM, MBDynParser& HP)
-     :       Elem(uLabel, flag(0)),
-             UserDefinedElem(uLabel, pDO),
+     :       UserDefinedElem(uLabel, pDO),
              pDM(pDM),
              pNode1(0),
              pNode2(0),

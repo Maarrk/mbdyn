@@ -43,7 +43,7 @@
 
 /* StructMappingExtForce - begin */
 
-class StructMappingExtForce : virtual public Elem, public ExtForce {
+class StructMappingExtForce : public ExtForce {
 protected:
 	const StructNode *pRefNode;
 	bool bUseReferenceNodeForces;
@@ -148,7 +148,7 @@ public:
 
 /* StructMembraneMappingExtForce - begin */
 
-class StructMembraneMappingExtForce : virtual public Elem, public StructMappingExtForce {
+class StructMembraneMappingExtForce : public StructMappingExtForce {
 public:
 	struct NodeConnData {
 		const StructDispNode *pNode[4];

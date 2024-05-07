@@ -66,7 +66,7 @@ CenterOfMass::Collect_int(void)
      B = Zero3;
      G_cm = Zero3;
 
-     for (const ElemGravityOwner* pElem: elements)
+     for (const GravityOwner* pElem: elements)
      {
           dMass += pElem->dGetM();
           S += pElem->GetS();
@@ -102,7 +102,7 @@ CenterOfMass::Collect_int(void)
 }
 
 /* Costruttore definitivo (da mettere a punto) */
-CenterOfMass::CenterOfMass(std::set<const ElemGravityOwner *>&& elements) :
+CenterOfMass::CenterOfMass(std::set<const GravityOwner *>&& elements) :
      elements(std::move(elements)),
      dMass(0.), S(Zero3), J(Zero3x3), X_cm(Zero3), Omega_cm(Zero3),
      J_cm(Zero3x3), B(Zero3), G_cm(Zero3)
@@ -164,11 +164,9 @@ Inertia::Output_int(std::ostream& out) const
 }
 
 /* Costruttore definitivo (da mettere a punto) */
-Inertia::Inertia(unsigned int uL, const std::string& sN, std::set<const ElemGravityOwner *>&& elements,
+Inertia::Inertia(unsigned int uL, const std::string& sN, std::set<const GravityOwner *>&& elements,
                  const Vec3& x0, const Mat3x3& r0, flag fOut)
-     : Elem(uL, fOut),
-       ElemGravityOwner(uL, fOut),
-       InitialAssemblyElem(uL, fOut),
+     : InitialAssemblyElem(uL, fOut),
        CenterOfMass(std::move(elements)),
        X0(x0), R0(r0), J0(Zero3x3), R_princ(Zero3x3), J_princ(Zero3)
 {

@@ -47,7 +47,7 @@
 #include "strnodead.h"
 #include "sp_matvecass.h"
 
-class BeamAd: virtual public Beam {
+class BeamAd: public Beam {
 public:
      using Beam::AssRes;
      using Beam::AssJac;
@@ -59,13 +59,13 @@ public:
             const Vec3& F1, const Vec3& F2, const Vec3& F3,
             const Mat3x3& R1, const Mat3x3& R2, const Mat3x3& R3,
             const Mat3x3& r_I, const Mat3x3& rII,
-            const ConstitutiveLaw6D* pD_I, const ConstitutiveLaw6D* pDII,
+            ConstitutiveLaw6D* const pD_I, ConstitutiveLaw6D* const pDII,
             OrientationDescription ood,
             flag fOut);
 
      virtual ~BeamAd();
 
-     using Beam::AddInternalForces;
+//     using Beam::AddInternalForces;
 
      virtual void WorkSpaceDim(integer* piNumRows, integer* piNumCols) const override;
 
@@ -118,13 +118,13 @@ protected:
                 enum sp_grad::SpFunctionCall func);
 
      virtual void
-     AddInternalForces(sp_grad::SpColVector<doublereal, 6>& AzLoc, unsigned int iSez);
+     AddInternalForcesAD(sp_grad::SpColVector<doublereal, 6>& AzLoc, unsigned int iSez);
 
      virtual void
-     AddInternalForces(sp_grad::SpColVector<sp_grad::SpGradient, 6>& AzLoc, unsigned int iSez);
+     AddInternalForcesAD(sp_grad::SpColVector<sp_grad::SpGradient, 6>& AzLoc, unsigned int iSez);
 
      virtual void
-     AddInternalForces(sp_grad::SpColVector<sp_grad::GpGradProd, 6>& AzLoc, unsigned int iSez);
+     AddInternalForcesAD(sp_grad::SpColVector<sp_grad::GpGradProd, 6>& AzLoc, unsigned int iSez);
 
      template <typename T>
      inline void
@@ -183,12 +183,12 @@ protected:
      const std::array<const StructNodeAd*, NUMNODES> pNode;
 };
 
-class ViscoElasticBeamAd: public ViscoElasticBeam, public BeamAd {
+class ViscoElasticBeamAd: public BeamAd {
 public:
-     using ViscoElasticBeam::AssRes;
-     using ViscoElasticBeam::AssJac;
-     using ViscoElasticBeam::InitialAssRes;
-     using ViscoElasticBeam::InitialAssJac;
+     using Beam::AssRes;
+     using Beam::AssJac;
+     using Beam::InitialAssRes;
+     using Beam::InitialAssJac;
 
      ViscoElasticBeamAd(unsigned int uL,
                         const StructNodeAd* pN1,
@@ -202,8 +202,8 @@ public:
                         const Mat3x3& R3,
                         const Mat3x3& r_I,
                         const Mat3x3& rII,
-                        const ConstitutiveLaw6D* pD_I,
-                        const ConstitutiveLaw6D* pDII,
+                        ConstitutiveLaw6D* const pD_I,
+                        ConstitutiveLaw6D* const pDII,
                         OrientationDescription ood,
                         flag fOut);
 
@@ -250,6 +250,12 @@ public:
                    const sp_grad::SpGradientVectorHandler<T>& XCurr,
                    sp_grad::SpFunctionCall func);
 protected:
+     Vec3 LPrime[NUMSEZ];
+     Vec3 gPrime[NUMSEZ];
+
+     Vec3 LPrimeRef[NUMSEZ];
+     Vec6 DefPrimeLocRef[NUMSEZ];
+
      template <typename T>
      inline void
      UnivAssRes(sp_grad::SpGradientAssVec<T>& WorkVec,

@@ -42,7 +42,7 @@
 
 /* StreamOutElem - begin */
 
-class StreamOutElem : virtual public Elem {
+class StreamOutElem : public Elem {
 public:
 	enum Type {
 		UNDEFINED = -1,

@@ -49,7 +49,7 @@
  * di contatto ed il corpo a moltiplicato per la forza.
  */
 
-class InPlaneJoint : virtual public Elem, public Joint {
+class InPlaneJoint : public Joint {
  private:
    const StructNode* pNode1;
    const StructNode* pNode2;
@@ -161,7 +161,7 @@ class InPlaneJoint : virtual public Elem, public Joint {
  * applicata nel punto di contatto. 
  */
 
-class InPlaneWithOffsetJoint : virtual public Elem, public Joint {
+class InPlaneWithOffsetJoint : public Joint {
  private:
    const StructNode* pNode1;
    const StructNode* pNode2;

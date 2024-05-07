@@ -50,8 +50,7 @@ UniversalHingeJoint::UniversalHingeJoint(unsigned int uL,
 	const Mat3x3& R1hTmp,
 	const Mat3x3& R2hTmp,
 	flag fOut)
-: Elem(uL, fOut),
-Joint(uL, pDO, fOut),
+: Joint(uL, pDO, fOut),
 pNode1(pN1), pNode2(pN2),
 d1(dTmp1), R1h(R1hTmp), d2(dTmp2), R2h(R2hTmp), F(Zero3), dM(0.)
 {
@@ -684,8 +683,7 @@ UniversalRotationJoint::UniversalRotationJoint(unsigned int uL,
 	const Mat3x3& R2hTmp,
 	const OrientationDescription& od,
 	flag fOut)
-: Elem(uL, fOut),
-Joint(uL, pDO, fOut),
+: Joint(uL, pDO, fOut),
 pNode1(pN1), pNode2(pN2),
 R1h(R1hTmp), R2h(R2hTmp), dM(0.), od(od)
 {
@@ -1220,8 +1218,7 @@ UniversalPinJoint::UniversalPinJoint(unsigned int uL, const DofOwner* pDO,
 	const Vec3& X0Tmp, const Mat3x3& R0Tmp,
 	const Vec3& dTmp, const Mat3x3& RhTmp,
 	flag fOut)
-: Elem(uL, fOut),
-Joint(uL, pDO, fOut),
+: Joint(uL, pDO, fOut),
 pNode(pN),
 X0(X0Tmp), R0(R0Tmp), d(dTmp), Rh(RhTmp), F(Zero3), dM(0.)
 {

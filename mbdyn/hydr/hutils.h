@@ -41,7 +41,7 @@
 
 /* Accumulator - begin */
 
-class  Accumulator : virtual public Elem, public HydraulicElem {
+class  Accumulator : public HydraulicElem {
  private:
    const PressureNode* pNode1;
    doublereal stroke;     /* corsa pistone */
@@ -144,7 +144,7 @@ class  Accumulator : virtual public Elem, public HydraulicElem {
 
 /* Tank - begin */
 
-class Tank : virtual public Elem, public HydraulicElem {
+class Tank : public HydraulicElem {
  private:
    const PressureNode* pNode1;
    const PressureNode* pNode2;

@@ -42,7 +42,7 @@
 
 /* DistanceJoint - begin */
 
-class DistanceJoint : virtual public Elem, public Joint, public DriveOwner {
+class DistanceJoint : public Joint, public DriveOwner {
 protected:
 	const StructDispNode	*pNode1;
 	const StructDispNode	*pNode2;
@@ -175,8 +175,7 @@ public:
 
 /* DistanceJointWithOffset - begin */
 
-class DistanceJointWithOffset :
-virtual public Elem, public DistanceJoint {
+class DistanceJointWithOffset : public DistanceJoint {
 private:
 	Vec3 f1;
 	Vec3 f2;

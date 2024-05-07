@@ -57,7 +57,7 @@ RotorDisc::RotorDisc( unsigned int uLabel, const DofOwner *pDO,
                                 DataManager* pDM, MBDynParser& HP)
 //: AerodynamicElem(uLabel, pDO, flag(0))
 //: Elem(uLabel, flag(0)), AerodynamicElem(uLabel, pDO, flag(0)), UserDefinedElem(uLabel, pDO)
-: Elem(uLabel, flag(0)), UserDefinedElem(uLabel, pDO)
+: UserDefinedElem(uLabel, pDO)
 {
     if (HP.IsKeyWord("help")) {
         silent_cout("\nModule: rotor disc\n"

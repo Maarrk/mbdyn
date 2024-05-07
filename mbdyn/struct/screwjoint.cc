@@ -81,8 +81,7 @@ ScrewJoint::ScrewJoint(unsigned int uL,
 				BasicShapeCoefficient *const sh,
 				BasicFriction *const f
 			)
-: Elem(uL, fOut),
-Joint(uL, pDO, fOut),
+: Joint(uL, pDO, fOut),
 nTheta(0),
 dThetaPrev(0.), dThetaCurr(0.), dTheta(0.), dD(0.), dTheta0(0.), dD0(0.),
 dLambda(0.),

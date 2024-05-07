@@ -706,7 +706,7 @@ struct OctaveCLR : public ConstitutiveLawRead<T, Tder>, public OctaveBaseDCR {
         };
 };
 
-class OctaveElement: virtual public Elem, public UserDefinedElem {
+class OctaveElement: public UserDefinedElem {
 public:
         OctaveElement(unsigned uLabel, const DofOwner *pDO,
                 DataManager* pDM, MBDynParser& HP);
@@ -4595,8 +4595,7 @@ const std::string OctaveElement::strRestart("Restart");
 OctaveElement::OctaveElement(
         unsigned uLabel, const DofOwner *pDO,
         DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-  UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
   haveMethod(HAVE_DEFAULT)
 {
         // help

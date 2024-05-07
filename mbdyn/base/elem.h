@@ -64,8 +64,11 @@ extern const char* psReadControlElems[];
 extern const char* psReadElemsElems[];
 
 /* classi dichiarate */
-class ElemWithDofs;
-class ElemGravityOwner;
+//class ElemWithDofs;
+//class ElemGravityOwner;
+class DofOwnerOwner;
+class GravityOwner;
+
 class AerodynamicElem;
 class InitialAssemblyElem;
 class InducedVelocity;
@@ -287,13 +290,13 @@ extern void DestroyElem(void);
 
 /* ElemWithDofs - begin */
 
-class ElemWithDofs : virtual public Elem, public DofOwnerOwner {
-public:
-	ElemWithDofs(unsigned int uL,
-		const DofOwner* pDO, flag fOut);
-
-	virtual ~ElemWithDofs(void);
-};
+// class ElemWithDofs : public Elem, public DofOwnerOwner {
+// public:
+// 	ElemWithDofs(unsigned int uL,
+// 		const DofOwner* pDO, flag fOut);
+// 
+// 	virtual ~ElemWithDofs(void);
+// };
 
 /* ElemWithDofs - end */
 
@@ -301,7 +304,7 @@ public:
 /* InitialAssemblyElem - begin */
 
 class InitialAssemblyElem
-: virtual public Elem {
+: public Elem {
 public:
 	InitialAssemblyElem(unsigned int uL, flag fOut);
 

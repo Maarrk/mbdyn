@@ -55,7 +55,7 @@
 	dMu // from drive?
  */
 
-class RotorTrimBase : virtual public Elem, public Genel {
+class RotorTrimBase : public Genel {
 protected:
 	doublereal dRadius;
 	const ScalarDifferentialNode* pvNodes[3];
@@ -141,7 +141,7 @@ public:
 	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
 };
 
-class RotorTrim : virtual public Elem, public RotorTrimBase {
+class RotorTrim : public RotorTrimBase {
 protected:
 	const Rotor* pRotor;
 
@@ -187,7 +187,7 @@ public:
 	/* ************************************************ */
 };
 
-class RotorTrimGeneric : virtual public Elem, public RotorTrimBase {
+class RotorTrimGeneric : public RotorTrimBase {
 protected:
 	const StructNode *pStrNode;
 	DriveOwner Thrust, RollMoment, PitchMoment;

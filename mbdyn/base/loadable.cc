@@ -232,8 +232,7 @@ LoadableElem::LoadableElem(unsigned int uLabel,
 			   const DofOwner* pDO,
 			   DataManager* pDM,
 			   MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 priv_data(0),
 module_name(0),
 #ifdef USE_RUNTIME_LOADING
@@ -252,8 +251,7 @@ LoadableElem::LoadableElem(unsigned int uLabel,
 			   const LoadableCalls *c,
 			   DataManager* pDM,
 			   MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 priv_data(0),
 module_name(0),
 #ifdef USE_RUNTIME_LOADING

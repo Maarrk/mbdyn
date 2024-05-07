@@ -59,8 +59,7 @@ static const doublereal dVTipTreshold = 1e-6;
 /* Rotor - begin */
 
 Rotor::Rotor(unsigned int uL, const DofOwner* pDO)
-: Elem(uL, flag(0)),
-InducedVelocityElem(uL, pDO, 0, 0, flag(0)),
+: InducedVelocityElem(uL, pDO, 0, 0, flag(0)),
 pRotor(0), pGround(0),
 dOmegaRef(0.), dRadius(0), dVTipRef(0.), dArea(0.),
 dUMean(0.), dUMeanRef(0.), dUMeanPrev(0.),
@@ -88,8 +87,7 @@ Rotor::Rotor(unsigned int uL, const DofOwner* pDO,
 	const doublereal& dR,
 	unsigned int iMaxIt, const doublereal& dTol, const doublereal& dE,
 	flag fOut)
-: Elem(uL, fOut),
-InducedVelocityElem(uL, pDO, 0, 0, flag(0)),
+: InducedVelocityElem(uL, pDO, 0, 0, flag(0)),
 pRotor(0), pGround(0),
 dOmegaRef(0.), dRadius(0), dVTipRef(0.), dArea(0.),
 dUMean(0.), dUMeanRef(0.), dUMeanPrev(0.),
@@ -178,7 +176,7 @@ Rotor::AfterConvergence(const VectorHandler& X,
 		}
 	}
 
-	InducedVelocity::AfterConvergence(X, XP);
+	//InducedVelocity::AfterConvergence(X, XP);
 }
 
 void
@@ -686,8 +684,7 @@ Rotor::Restart(std::ostream& out) const
 
 NoRotor::NoRotor(unsigned int uLabel,
 	const DofOwner* pDO)
-: Elem(uLabel, flag(0)),
-Rotor(uLabel, pDO)
+: Rotor(uLabel, pDO)
 {
 	NO_OP;
 }
@@ -700,8 +697,7 @@ NoRotor::NoRotor(unsigned int uLabel,
 	ResForceSet **ppres,
 	const doublereal& dR,
 	flag fOut)
-: Elem(uLabel, flag(0)),
-Rotor(uLabel, pDO)
+: Rotor(uLabel, pDO)
 {
 	Init(pCraft, rrot, pRotor, ppres, dR, fOut);
 }
@@ -832,8 +828,7 @@ NoRotor::GetInducedVelocity(Elem::Type type,
 /* UniformRotor - begin */
 
 UniformRotor::UniformRotor(unsigned int uLabel, const DofOwner* pDO)
-: Elem(uLabel, flag(0)),
-Rotor(uLabel, pDO)
+: Rotor(uLabel, pDO)
 {
 	NO_OP;
 }
@@ -854,8 +849,7 @@ UniformRotor::UniformRotor(unsigned int uLabel,
 	const doublereal& dCH,
 	const doublereal& dCFF,
 	flag fOut)
-: Elem(uLabel, flag(0)),
-Rotor(uLabel, pDO)
+: Rotor(uLabel, pDO)
 {
 	Init(pCraft, rrot, pRotor, pGround, ppres, dOR, dR,
 		pdW, iMaxIt, dTol, dE, dCH, dCFF, fOut);
@@ -1032,8 +1026,7 @@ UniformRotor::GetInducedVelocity(Elem::Type type,
 };
 
 UniformRotor2::UniformRotor2(unsigned int uLabel, const DofOwner* pDO)
-: Elem(uLabel, flag(0)),
-UniformRotor(uLabel, pDO)
+: UniformRotor(uLabel, pDO)
 {
 	NO_OP;
 }
@@ -1054,8 +1047,7 @@ UniformRotor2::UniformRotor2(unsigned int uLabel,
 	const doublereal& dCH,
 	const doublereal& dCFF,
 	flag fOut)
-: Elem(uLabel, fOut),
-UniformRotor(uLabel, pDO, pCraft, rrot, pRotor, pGround, ppres, dOR, dR, pdW, iMaxIt, dTol, dE, dCH, dCFF, fOut)
+: UniformRotor(uLabel, pDO, pCraft, rrot, pRotor, pGround, ppres, dOR, dR, pdW, iMaxIt, dTol, dE, dCH, dCFF, fOut)
 {
 	NO_OP;
 }
@@ -1114,8 +1106,7 @@ UniformRotor2::AddSectionalForce(Elem::Type type,
 /* GlauertRotor - begin */
 
 GlauertRotor::GlauertRotor(unsigned int uLabel, const DofOwner* pDO)
-: Elem(uLabel, flag(0)),
-Rotor(uLabel, pDO),
+: Rotor(uLabel, pDO),
 gtype(GlauertRotor::UNKNOWN)
 {
 	NO_OP;
@@ -1138,8 +1129,7 @@ GlauertRotor::GlauertRotor(unsigned int uLabel,
 	const doublereal& dCFF,
 	GlauertRotor::Type gtype,
 	flag fOut)
-: Elem(uLabel, flag(0)),
-Rotor(uLabel, pDO),
+: Rotor(uLabel, pDO),
 gtype(gtype)
 {
 	Init(pCraft, rrot, pRotor, pGround, ppres, dOR, dR,
@@ -1430,8 +1420,7 @@ GlauertRotor::GetInducedVelocity(Elem::Type type,
 /* ManglerRotor - begin */
 
 ManglerRotor::ManglerRotor(unsigned int uLabel, const DofOwner* pDO)
-: Elem(uLabel, flag(0)),
-Rotor(uLabel, pDO)
+: Rotor(uLabel, pDO)
 {
 	NO_OP;
 }
@@ -1452,8 +1441,7 @@ ManglerRotor::ManglerRotor(unsigned int uLabel,
 	const doublereal& dCH,
 	const doublereal& dCFF,
 	flag fOut)
-: Elem(uLabel, flag(0)),
-Rotor(uLabel, pDO)
+: Rotor(uLabel, pDO)
 {
 	Init(pCraft, rrot, pRotor, pGround, ppres, dOR, dR, pdW, iMaxIt, dTol, dE, dCH, dCFF, fOut);
 }
@@ -1706,8 +1694,7 @@ static const doublereal dM33 = -16./(45.*M_PI);
 /* DynamicInflowRotor - begin */
 
 DynamicInflowRotor::DynamicInflowRotor(unsigned int uLabel, const DofOwner* pDO)
-: Elem(uLabel, flag(0)),
-Rotor(uLabel, pDO),
+: Rotor(uLabel, pDO),
 dVConst(0), dVSine(0), dVCosine(0),
 dL11(0.), dL13(0.), dL22(0.), dL31(0.), dL33(0.)
 {
@@ -1732,8 +1719,7 @@ DynamicInflowRotor::DynamicInflowRotor(unsigned int uLabel,
 	const doublereal& dVSineTmp,
 	const doublereal& dVCosineTmp,
 	flag fOut)
-: Elem(uLabel, flag(0)),
-Rotor(uLabel, pDO),
+: Rotor(uLabel, pDO),
 dVConst(0), dVSine(0), dVCosine(0),
 dL11(0.), dL13(0.), dL22(0.), dL31(0.), dL33(0.)
 {
@@ -2309,8 +2295,7 @@ DynamicInflowRotor::GetInducedVelocity(Elem::Type type,
 /* PetersHeRotor - begin */
 
 PetersHeRotor::PetersHeRotor(unsigned int uLabel, const DofOwner* pDO)
-: Elem(uLabel, flag(0)),
-Rotor(uLabel, pDO),
+: Rotor(uLabel, pDO),
 dVConst(0), dVSine(0), dVCosine(0),
 dL11(0.), dL13(0.), dL22(0.), dL31(0.), dL33(0.)
 {
@@ -2335,8 +2320,7 @@ PetersHeRotor::PetersHeRotor(unsigned int uLabel,
 	const doublereal& dVSineTmp,
 	const doublereal& dVCosineTmp,
 	flag fOut)
-: Elem(uLabel, flag(0)),
-Rotor(uLabel, pDO),
+: Rotor(uLabel, pDO),
 dVConst(0), dVSine(0), dVCosine(0),
 dL11(0.), dL13(0.), dL22(0.), dL31(0.), dL33(0.)
 {

@@ -141,7 +141,7 @@ protected:
 
 /* ModalExt - begin */
 
-class ModalExt : virtual public Elem, public ExtForce {
+class ModalExt : public ExtForce {
 protected:
 	const Modal *pModal;
 	// if pModal != 0 then pNode == pModal->pGetModalNode()

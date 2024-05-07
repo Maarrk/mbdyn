@@ -45,7 +45,7 @@ InLineJoint::InLineJoint(unsigned int uL, const DofOwner* pDO,
           const doublereal pref,
           BasicShapeCoefficient *const sh,
           BasicFriction *const f)
-: Elem(uL, fOut), Joint(uL, pDO, fOut),
+: Joint(uL, pDO, fOut),
 pNode1(pN1), pNode2(pN2), Rv(RvTmp), p(pTmp), F(Zero3),
 Sh_c(sh),
 fc(f),
@@ -632,7 +632,7 @@ InLineWithOffsetJoint::InLineWithOffsetJoint(unsigned int uL,
 					     const Vec3& pTmp,
 					     const Vec3& qTmp, 
 					     flag fOut)
-: Elem(uL, fOut), Joint(uL, pDO, fOut),
+: Joint(uL, pDO, fOut),
 pNode1(pN1), pNode2(pN2), Rv(RvTmp), p(pTmp), q(qTmp), F(Zero3)
 {
    NO_OP;

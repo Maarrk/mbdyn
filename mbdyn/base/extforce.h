@@ -197,7 +197,7 @@ public:
 
 /* ExtForce - begin */
 
-class ExtForce : virtual public Elem, public Force {
+class ExtForce : public Force {
 protected:
 	Converged c;
 	ExtFileHandlerBase *pEFH;

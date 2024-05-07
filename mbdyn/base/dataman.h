@@ -1077,7 +1077,7 @@ DataManager::ReadElem(MBDynParser& HP) const
 	ASSERT(pElemBase != 0);
 
 	Tder *pElemDer = dynamic_cast<Tder *>(pElemBase);
-	if (pElemBase == 0) {
+	if (pElemDer == 0) {
 		silent_cerr("DataManager::ReadElem: unable to cast " << psElemNames[type] << "(" << pElemBase->GetLabel() << ") "
 			"from \"" << mbdyn_demangle<Tbase>() << "\" "
 			"to \"" << mbdyn_demangle<Tder>() << "\" at line " << HP.GetLineData() << std::endl);

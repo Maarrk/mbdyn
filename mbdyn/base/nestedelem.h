@@ -41,10 +41,10 @@
 
 #include "except.h"
 
-class NestedElem : virtual public Elem,
+class NestedElem : 
 public InitialAssemblyElem,
-public AerodynamicElem,
-public ElemGravityOwner
+public AerodynamicElemBase,
+public GravityOwner
 {
 protected:
 	Elem* pElem;
@@ -225,7 +225,7 @@ public:
 
 	/* AerodynamicElem */
 public:
-	virtual AerodynamicElem::Type GetAerodynamicElemType(void) const;
+	virtual AerodynamicElemBase::Type GetAerodynamicElemType(void) const;
 	virtual bool NeedsAirProperties(void) const;
 	virtual const InducedVelocity *pGetInducedVelocity(void) const;
 	virtual void PutAirProperties(const AirProperties* pAP);

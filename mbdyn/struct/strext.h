@@ -43,7 +43,7 @@
 
 /* StructExtForce - begin */
 
-class StructExtForce : virtual public Elem, public ExtForce {
+class StructExtForce : public ExtForce {
 	// hack to recycle SendToStream for echo
 	friend Elem* ReadStructExtForce(DataManager* pDM, MBDynParser& HP, unsigned int uLabel);
 

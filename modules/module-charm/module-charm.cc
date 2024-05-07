@@ -272,8 +272,7 @@ azimuth_unwrap(doublereal azimuth)
 }
 
 class ModuleCHARM
-: virtual public Elem,
-	public UserDefinedElem,
+: 	public UserDefinedElem,
 	public InducedVelocity
 {
 private:
@@ -473,8 +472,7 @@ public:
 ModuleCHARM::ModuleCHARM(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 InducedVelocity(uLabel, 0, 0, flag(0)),
 pDM(pDM),
 bFreezeVortexStrength(false),

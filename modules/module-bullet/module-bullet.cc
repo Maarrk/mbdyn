@@ -59,7 +59,7 @@
 
 // ModuleBullet: begin
 
-class ModuleBullet: virtual public Elem, public UserDefinedElem
+class ModuleBullet: public UserDefinedElem
 {private:
 	// add private data
     const StructNode *pNodeA;
@@ -117,7 +117,8 @@ public:
     SubVectorHandler& InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr);
 };
 
-ModuleBullet::ModuleBullet(unsigned uLabel, const DofOwner *pDO,DataManager* pDM, MBDynParser& HP): Elem(uLabel, flag(0)),UserDefinedElem(uLabel, pDO)
+ModuleBullet::ModuleBullet(unsigned uLabel, const DofOwner *pDO,DataManager* pDM, MBDynParser& HP)
+: UserDefinedElem(uLabel, pDO)
 {
     
 	// help

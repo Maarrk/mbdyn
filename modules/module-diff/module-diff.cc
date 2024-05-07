@@ -38,7 +38,7 @@
 #include "userelem.h"
 
 class ModuleDiffDrive 
-: virtual public Elem, public UserDefinedElem, public DriveOwner {
+: public UserDefinedElem, public DriveOwner {
 public:
 	enum Method 
 	{
@@ -100,8 +100,7 @@ public:
 ModuleDiffDrive::ModuleDiffDrive(
 	unsigned uLabel, const DofOwner *pDO,
 	DataManager* pDM, MBDynParser& HP)
-: Elem(uLabel, flag(0)),
-UserDefinedElem(uLabel, pDO),
+: UserDefinedElem(uLabel, pDO),
 DriveOwner(0),
 iNumDrives(0),  
 m_pDM(pDM),

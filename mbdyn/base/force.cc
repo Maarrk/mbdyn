@@ -63,8 +63,7 @@ Force::Restart(std::ostream& out) const
 
 AbstractForce::AbstractForce(unsigned int uL, const Node* pN,
 	const DriveCaller* pDC, flag fOut)
-: Elem(uL, fOut),
-Force(uL, fOut),
+: Force(uL, fOut),
 DriveOwner(pDC),
 pNode(pN)
 {
@@ -148,8 +147,7 @@ AbstractForce::InitialAssRes(SubVectorHandler& WorkVec,
 AbstractInternalForce::AbstractInternalForce(unsigned int uL,
 	const Node* pN1, const Node *pN2,
 	const DriveCaller* pDC, flag fOut)
-: Elem(uL, fOut),
-Force(uL, fOut),
+: Force(uL, fOut),
 DriveOwner(pDC),
 pNode1(pN1), pNode2(pN2)
 {

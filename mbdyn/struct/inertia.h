@@ -42,7 +42,7 @@
 
 class CenterOfMass {
 protected:
-     std::set<const ElemGravityOwner *> elements;
+     std::set<const GravityOwner *> elements;
 
      mutable doublereal dMass;
      mutable Vec3 S;
@@ -61,7 +61,7 @@ protected:
 
 public:
      /* Costruttore definitivo (da mettere a punto) */
-     CenterOfMass(std::set<const ElemGravityOwner *>&& elements);
+     CenterOfMass(std::set<const GravityOwner *>&& elements);
      virtual ~CenterOfMass(void);
 };
 
@@ -70,7 +70,7 @@ public:
 /* Inertia - begin */
 
 class Inertia :
-     virtual public Elem, public ElemGravityOwner, public InitialAssemblyElem, public CenterOfMass {
+     public InitialAssemblyElem, public GravityOwner, public CenterOfMass {
 public:
      enum {
           OUTPUT_LOG = ToBeOutput::OUTPUT_PRIVATE,
@@ -121,7 +121,7 @@ private:
      void Collect(CollectType eCollectType);
 public:
      /* Costruttore definitivo (da mettere a punto) */
-     Inertia(unsigned int uL, const std::string& sN, std::set<const ElemGravityOwner *>&& elements,
+     Inertia(unsigned int uL, const std::string& sN, std::set<const GravityOwner *>&& elements,
              const Vec3& x0, const Mat3x3& r0, flag fOut);
 
      virtual ~Inertia(void);
