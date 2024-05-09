@@ -3843,7 +3843,9 @@ The ``deformable'' elements at present are:
 \item \htmlref{\kw{deformable joint}}{sec:EL:JOINT:DEFORMABLEJOINT}, \htmlref{\kw{beam}}{sec:EL:BEAM} and \htmlref{\kw{solid}}{sec:EL:SOLID}
         elements (6D).
 \item \htmlref{\kw{solid}}{sec:EL:SOLID}
-	elements for incompressible constitutive laws (7D).
+  elements for incompressible constitutive laws (7D).
+\item \htmlref{\kw{solid}}{sec:EL:SOLID}
+	elements for constitutive laws subject to finite strain (9D).
 \end{itemize}
 
 Constitutive laws are also used in non-structural components,
@@ -3884,63 +3886,67 @@ in Section~\ref{sec:CONSTITUTIVE-LAW}.
     \setlength{\constlawwidth}{70mm}
     \centering
     \caption{Constitutive laws dimensionality}\label{tab:CONST-LAW-DIM}
-    \begin{tabular}{l|c|c|c|c} 
+    \begin{tabular}{l|c|c|c|c|c} 
         \hline
         \multicolumn{1}{c}{\textbf{Constitutive law}} &
 	\multicolumn{1}{c}{\textbf{1D}} &
 	\multicolumn{1}{c}{\textbf{3D}} &
 	\multicolumn{1}{c}{\textbf{6D}} &
-        \multicolumn{1}{c}{\textbf{7D}} \\ 
+        \multicolumn{1}{c}{\textbf{7D}} &
+        \multicolumn{1}{c}{\textbf{9D}} \\
 	\hline
-	\kw{linear elastic}, \kw{linear elastic isotropic}			& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{linear elastic generic}						& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{linear elastic generic axial torsion coupling}			&         &         & $\surd$ &         \\
-	\kw{cubic elastic generic}						& $\surd$ & $\surd$ &         &         \\
-	\kw{inverse square elastic}						& $\surd$ &         &         &         \\
-	\kw{log elastic}							& $\surd$ &         &         &         \\
-	\kw{linear elastic bistop}						& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{double linear elastic}						& $\surd$ & $\surd$ &         &         \\
-	\kw{isotropic hardening elastic}					& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{scalar function elastic}, \kw{scalar function elastic isotropic}	& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{scalar function elastic orthotropic}				& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{linear viscous}, \kw{linear viscous isotropic}			& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{linear viscous generic}						& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{linear viscoelastic}, \kw{linear viscoelastic isotropic}		& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{linear viscoelastic generic}					& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{linear time variant viscoelastic generic}				& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{linear viscoelastic generic axial torsion coupling}			&         &         & $\surd$ &         \\
-	\kw{cubic viscoelastic generic}						& $\surd$ & $\surd$ &         &         \\
-	\kw{double linear viscoelastic}						& $\surd$ & $\surd$ &         &         \\
-	\kw{turbulent viscoelastic}						& $\surd$ &         &         &         \\
-	\kw{linear viscoelastic bistop}						& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{shock absorber}							& $\surd$ &         &         &         \\
-	\kw{symbolic elastic}							& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{symbolic viscous}							& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{symbolic viscoelastic}						& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{ann elastic}							& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{ann viscoelastic}							& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{nlsf elastic}							& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{nlsf viscous}							& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{nlsf viscoelastic}							& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{nlp elastic}							& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{nlp viscous}							& $\surd$ & $\surd$ & $\surd$ &         \\
-	\kw{nlp viscoelastic}							& $\surd$ & $\surd$ & $\surd$ &         \\
-        \kw{hookean linear elastic isotropic}                                   &         &         & $\surd$ & $\surd$ \\
-        \kw{hookean linear viscoelastic isotropic}                              &         &         & $\surd$ &         \\        
-        \kw{neo hookean elastic}                                                &         &         & $\surd$ &         \\
-        \kw{neo hookean viscoelastic}                                           &         &         & $\surd$ &         \\
-        \kw{mooney rivlin elastic}                                              &         &         & $\surd$ & $\surd$ \\
-        \kw{bilinear isotropic hardening}                                       &         &         & $\surd$ & $\surd$ \\
-        \kw{linear viscoelastic maxwell 1}                                      &         & $\surd$ & $\surd$ &         \\
-        \kw{linear viscoelastic maxwell n}                                      &         & $\surd$ & $\surd$ &         \\
+	\kw{linear elastic}, \kw{linear elastic isotropic}			& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{linear elastic generic}						& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{linear elastic generic axial torsion coupling}			&         &         & $\surd$ &         & \\
+	\kw{cubic elastic generic}						& $\surd$ & $\surd$ &         &         & \\
+	\kw{inverse square elastic}						& $\surd$ &         &         &         & \\
+	\kw{log elastic}							& $\surd$ &         &         &         & \\
+	\kw{linear elastic bistop}						& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{double linear elastic}						& $\surd$ & $\surd$ &         &         & \\
+	\kw{isotropic hardening elastic}					& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{scalar function elastic}, \kw{scalar function elastic isotropic}	& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{scalar function elastic orthotropic}				& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{linear viscous}, \kw{linear viscous isotropic}			& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{linear viscous generic}						& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{linear viscoelastic}, \kw{linear viscoelastic isotropic}		& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{linear viscoelastic generic}					& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{linear time variant viscoelastic generic}				& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{linear viscoelastic generic axial torsion coupling}			&         &         & $\surd$ &         & \\
+	\kw{cubic viscoelastic generic}						& $\surd$ & $\surd$ &         &         & \\
+	\kw{double linear viscoelastic}						& $\surd$ & $\surd$ &         &         & \\
+	\kw{turbulent viscoelastic}						& $\surd$ &         &         &         & \\
+	\kw{linear viscoelastic bistop}						& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{shock absorber}							& $\surd$ &         &         &         & \\
+	\kw{symbolic elastic}							& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{symbolic viscous}							& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{symbolic viscoelastic}						& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{ann elastic}							& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{ann viscoelastic}							& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{nlsf elastic}							& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{nlsf viscous}							& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{nlsf viscoelastic}							& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{nlp elastic}							& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{nlp viscous}							& $\surd$ & $\surd$ & $\surd$ &         & \\
+	\kw{nlp viscoelastic}							& $\surd$ & $\surd$ & $\surd$ &         & \\
+        \kw{hookean linear elastic isotropic}                                   &         &         & $\surd$ & $\surd$ & \\
+        \kw{hookean linear viscoelastic isotropic}                              &         &         & $\surd$ &         & \\        
+        \kw{neo hookean elastic}                                                &         &         & $\surd$ &         & \\
+        \kw{neo hookean viscoelastic}                                           &         &         & $\surd$ &         & \\
+        \kw{mooney rivlin elastic}                                              &         &         & $\surd$ & $\surd$ & $\surd$ \\
+        \kw{bilinear isotropic hardening}                                       &         &         & $\surd$ & $\surd$ & \\
+        \kw{linear viscoelastic maxwell 1}                                      &         & $\surd$ & $\surd$ &         & \\
+        \kw{linear viscoelastic maxwell n}                                      &         & $\surd$ & $\surd$ &         & \\
+        \kw{mfront small strain}                                                &         &         & $\surd$ &         & \\
+        \kw{mfront finite strain}                                               &         &         &         &         & $\surd$ \\
         \hline
-	\multicolumn{5}{c}{} \\
+	\multicolumn{6}{c}{} \\
 	\hline
         \multicolumn{1}{c}{\textbf{Constitutive law wrapper}} &
 	\multicolumn{1}{c}{\textbf{1D}} &
 	\multicolumn{1}{c}{\textbf{3D}} &
 	\multicolumn{1}{c}{\textbf{6D}} &
-        \multicolumn{1}{c}{\textbf{7D}} \\ 
+        \multicolumn{1}{c}{\textbf{7D}} &
+        \multicolumn{1}{c}{\textbf{9D}} \\
 	\hline
 	\kw{array} (wrapper)							& $\surd$ & $\surd$ & $\surd$ &         \\
 	\kw{axial} (wrapper)							&         & $\surd$ &         &         \\
@@ -5149,6 +5155,89 @@ during an Eigenanalysis according section~\ref{sec:IVP:eigenanalysis}.
                  E1, 1.8900000000000000e+05,
                  eta1, 3.7800000000000000e+05,
                  C, eye;
+\end{verbatim}
+
+\subsection{MFront code generator}
+\label{sec:CL:mfront}
+\emph{Author: Reinhard Resch}
+
+MFront is a code generator, developed by Thomas Helfer et al., which can be used to generate constitutive laws, also called ``behaviours'', for several commercial and open-source solvers\cite{helfer_introducing_2015}.
+See also the following references:
+\begin{itemize}
+\item \href{https://thelfer.github.io/tfel/web/index.html}{TFEL/MFront}
+\item \href{https://thelfer.github.io/mgis/web/index.html}{MFrontGenericInterfaceSupport}
+\item \href{https://thelfer.github.io/MFrontGallery/web/index.html}{MFrontGallery}
+\end{itemize}
+Most of the constitutive laws developed with MFront may be used also with MBDyn, provided that MBDyn was compiled using the ``--with-mfront'' flag.
+\subsection{mfront small strain/mfront finite strain}
+\label{sec:CL:mfront-small-strain-finite-strain}
+MFront distinguishes between different types of constitutive laws:
+\begin{itemize}
+\item \kw{mfront small strain} is a (\htybkw{ConstitutiveLaw}{6D}) applicable only to small strains
+\item \kw{mfront finite strain} is a (\htybkw{ConstitutiveLaw}{9D}) applicable also to finite strains
+\end{itemize}
+Those constitutive laws can be used only with solid elements. See also section~\ref{sec:EL:SOLID} and section~\ref{sec:EL:SOLID:constlaw:F}.
+\paragraph{Remark}
+Since MFront is a powerful tool with many options, the following section should be considered just as a simple tutorial instead of a comprehensive manual on how to use MFront.
+\paragraph{Syntax.}
+\begin{Verbatim}[commandchars=\\\{\}]
+    \bnt{specific_const_law} ::= \{ \kw{mfront small strain} | \kw{mfront finite strain} \},
+            \kw{library path} , " \bnt{mfront_library_path} " ,
+            \kw{name}, " \bnt{mfront_behaviour_name} "
+            [  \kw{parameters} (\ty{integer}) \bnt{num_parameters} , \bnt{mfront_parameter} [ , ... ]   ]
+            [  \kw{properties} (\ty{integer}) \bnt{num_properties} , \bnt{mfront_property} [ , ... ]   ]
+
+            \bnt{mfront_parameter} :: = " \bnt{mfront_parameter_name} ", (\ty{real}) \bnt{mfront_parameter_value}
+            \bnt{mfront_property} :: = " \bnt{mfront_property_name} ", (\ty{real}) \bnt{mfront_property_value}
+\end{Verbatim}
+
+\paragraph{Example.} \
+\begin{verbatim}
+    constitutive law: 1, name, "mfront_linear_elastic_demo1", 6,
+                      mfront small strain,
+                      library path, "src/libBehaviour.so",
+                      name, "MFrontLinearElasticDemo1",
+                      parameters, 2,
+                      "YoungModulus", 210e9,
+                      "PoissonRatio", 0.26;
+\end{verbatim}
+
+\paragraph{Create an MFront source file}
+The following code shows an example, on how to define a linear elastic constitutive law using MFront's domain specific language.
+It will be equivalent to the Hookean linear elastic isotropic constitutive law defined in section~\ref{sec:CL:hookean:linear:elastic:isotropic}.
+\begin{verbatim}
+@DSL Implicit;
+@Behaviour MFrontLinearElasticDemo1;
+@Description {
+  "This file implements a linear elastic constitutive law "
+  "and it's purpose is just for demonstration"
+}
+
+@Brick "StandardElasticity"{
+  young_modulus: 150e9,
+  poisson_ratio: 0.3
+};
+\end{verbatim}
+\paragraph{Compile an MFront source file into a shared library}
+In order to use such a constitutive law in MBDyn, it will be necessary to build a shared library
+from one or more MFront source files using the MFront code generator.
+\begin{verbatim}
+mfront --interface=generic --build MFrontLinearElasticDemo1.mfront
+\end{verbatim}
+\paragraph{Locate the shared library}
+The parameter \bnt{mfront\_library\_path} must point to the generated library which will be located under ``src/libBehaviour.so'' by default.
+\paragraph{How to define material properties}
+All the default values for material properties and parameters will be taken from the MFront source file.
+However, those default values may be overridden by means of an \bnt{mfront\_property} or \bnt{mfront\_parameter} entry.
+In order to get a description of all the available properties and parameters, the following command may be used:
+\begin{verbatim}
+mfront-query --parameters --material-properties MFrontLinearElasticDemo1.mfront
+\end{verbatim}
+In case of the previous example, the following output will be printed:
+\begin{verbatim}
+- YoungModulus (young): the Young's modulus of an isotropic material
+- PoissonRatio (nu): the Poisson ratio of an isotropic material
+...
 \end{verbatim}
 
 \subsection{array}

@@ -206,11 +206,13 @@ friend struct C81DataDR;
         typedef std::map<unsigned, std::unique_ptr<const ConstitutiveLaw1D>> CL1DType;
         typedef std::map<unsigned, std::unique_ptr<const ConstitutiveLaw3D>> CL3DType;
         typedef std::map<unsigned, std::unique_ptr<const ConstitutiveLaw6D>> CL6DType;
-        typedef std::map<unsigned, std::unique_ptr<const ConstitutiveLaw7D>> CL7DType;     
+        typedef std::map<unsigned, std::unique_ptr<const ConstitutiveLaw7D>> CL7DType;
+        typedef std::map<unsigned, std::unique_ptr<const ConstitutiveLaw9D>> CL9DType;
 	CL1DType CL1D;
 	CL3DType CL3D;
 	CL6DType CL6D;
         CL7DType CL7D;
+        CL9DType CL9D;
 	bool ConstitutiveLaw_int(void);
 friend struct ConstLawDR;
 
@@ -417,7 +419,8 @@ public:
 	ConstitutiveLaw1D* GetConstLaw1D(ConstLawType::Type& clt);
 	ConstitutiveLaw3D* GetConstLaw3D(ConstLawType::Type& clt);
 	ConstitutiveLaw6D* GetConstLaw6D(ConstLawType::Type& clt);
-	ConstitutiveLaw7D* GetConstLaw7D(ConstLawType::Type& clt);     
+	ConstitutiveLaw7D* GetConstLaw7D(ConstLawType::Type& clt);
+        ConstitutiveLaw9D* GetConstLaw9D(ConstLawType::Type& clt);
 	const DriveCaller* GetDrive(unsigned uLabel) const;
 	void SetDrive(unsigned uLabel, const DriveCaller *pDC);
 

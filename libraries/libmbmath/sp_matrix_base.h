@@ -6004,35 +6004,4 @@ Write(std::ostream& out, const sp_grad::SpMatElemExprBase<ValueType, DerivedType
      return out;
 }
 
-// Required for ConstitutiveLaw7D
-template <>
-inline const sp_grad::SpColVector<doublereal, 7>&
-mb_zero<sp_grad::SpColVector<doublereal, 7>>() {
-     static const sp_grad::SpColVector<doublereal, 7> Zero7(7, 0);
-
-     return Zero7;
-}
-
-template <>
-inline const sp_grad::SpMatrix<doublereal, 7, 7>&
-mb_zero<sp_grad::SpMatrix<doublereal, 7, 7>>() {
-     static const sp_grad::SpMatrix<doublereal, 7, 7> Zero7x7(7, 7, 0);
-
-     return Zero7x7;
-}
-
-template <>
-inline sp_grad::SpMatrix<doublereal, 7, 7>
-mb_deye<sp_grad::SpMatrix<doublereal, 7, 7>>(const doublereal d) {
-     using namespace sp_grad;
-
-     SpMatrix<doublereal, 7, 7> A(7, 7, 0);
-
-     for (index_type i = 1; i <= A.iGetNumRows(); ++i) {
-          A(i, i) = d;
-     }
-
-     return A;
-}
-
 #endif

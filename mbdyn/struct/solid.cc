@@ -51,19 +51,83 @@
 #include "constltp.h"
 
 #include "solid.h"
+#include "tensorformat.h"
 #include "solidinteg.h"
 #include "solidshape.h"
 #include "dataman.h"
+
+class SolidConstLawPrivateData {
+     enum CSLPrivateDataIndex {
+          CSL_REQUESTED_TIME_STEP,
+          CSL_STORED_ENERGY,
+          CSL_DISSIPATED_ENERGY,
+          CSL_PRIVATE_DATA_COUNT
+     };
+public:
+     void SetConstLaw(const ConstitutiveLawCommon& oCSL) {
+          static constexpr struct {
+               char name[18];
+               CSLPrivateDataIndex index;
+          } rgCSLPrivateData[] = {
+               {"requested" "time" "step", CSL_REQUESTED_TIME_STEP},
+               {"stored" "energy",         CSL_STORED_ENERGY},
+               {"dissipated" "energy",     CSL_DISSIPATED_ENERGY}
+          };
+
+          for (const auto& oCSLData: rgCSLPrivateData) {
+               rgCSLPrivateDataIdx[oCSLData.index] = oCSL.iGetPrivDataIdx(oCSLData.name);
+          }
+     }
+
+     bool bGetRequestedTimeStep(const ConstitutiveLawCommon& oCSL, doublereal& dRequestedTimeStep) const {
+          const unsigned int uIndex = rgCSLPrivateDataIdx[CSL_REQUESTED_TIME_STEP];
+
+          if (uIndex == 0) {
+               return false;
+          }
+
+          dRequestedTimeStep = std::min(dRequestedTimeStep, oCSL.dGetPrivData(uIndex));
+
+          return true;
+     }
+
+     bool bAddStoredEnergy(const ConstitutiveLawCommon& oCSL, doublereal& dStoredEnergy, const doublereal dV) const {
+          const unsigned int uIndex = rgCSLPrivateDataIdx[CSL_STORED_ENERGY];
+
+          if (uIndex == 0) {
+               return false;
+          }
+
+          dStoredEnergy += oCSL.dGetPrivData(uIndex) * dV;
+
+          return true;
+     }
+
+     bool bAddDissipatedEnergy(const ConstitutiveLawCommon& oCSL, doublereal& dDissipatedEnergy, const doublereal dV) const {
+          const unsigned uIndex = rgCSLPrivateDataIdx[CSL_DISSIPATED_ENERGY];
+
+          if (uIndex == 0) {
+               return false;
+          }
+
+          dDissipatedEnergy += oCSL.dGetPrivData(uIndex) * dV;
+
+          return true;
+     }
+private:
+     std::array<unsigned int, CSL_PRIVATE_DATA_COUNT> rgCSLPrivateDataIdx;
+};
 
 template <typename CSL>
 class SolidConstLaw {
 public:
      typedef std::unique_ptr<CSL> ConstLawPtr;
-     static constexpr sp_grad::index_type iDim = CSL::iDim;
+     static constexpr sp_grad::index_type iDim = CSL::iDimStress;
 
      void SetConstLaw(ConstLawPtr&& pConstLawTmp) {
           pConstLaw = std::move(pConstLawTmp);
           ASSERT(pConstLaw != nullptr);
+          oPrivateData.SetConstLaw(*pConstLaw);
      }
 
      ConstLawType* operator->() {
@@ -77,8 +141,27 @@ public:
 
           pConstLaw->AfterConvergence(pConstLaw->GetEpsilon(), pConstLaw->GetEpsilonPrime());
      }
+
+     bool bGetRequestedTimeStep(doublereal& dRequestedTimeStep) const {
+          ASSERT(pConstLaw != nullptr);
+
+          return oPrivateData.bGetRequestedTimeStep(*pConstLaw, dRequestedTimeStep);
+     }
+
+     bool bAddStoredEnergy(doublereal& dStoredEnergy, const doublereal dV) const {
+          ASSERT(pConstLaw != nullptr);
+
+          return oPrivateData.bAddStoredEnergy(*pConstLaw, dStoredEnergy, dV);
+     }
+
+     bool bAddDissipatedEnergy(doublereal& dDissipatedEnergy, const doublereal dV) const {
+          ASSERT(pConstLaw != nullptr);
+
+          return oPrivateData.bAddDissipatedEnergy(*pConstLaw, dDissipatedEnergy, dV);
+     }
 protected:
      ConstLawPtr pConstLaw;
+     SolidConstLawPrivateData oPrivateData;
 };
 
 class SolidConstLawElastic: public SolidConstLaw<ConstitutiveLaw6D> {
@@ -124,6 +207,28 @@ public:
           const SpColVector<T, 6> epsP{GP(1, 1), GP(2, 2), GP(3, 3), 2. * GP(1, 2), 2. * GP(2, 3), 2. * GP(3, 1)};
 
           pConstLaw->Update(eps, epsP, sigma, oDofMap);
+     }
+};
+
+class SolidConstLawDefGrad: public SolidConstLaw<ConstitutiveLaw9D> {
+public:
+     static constexpr ConstLawType::Type eConstLawType = ConstLawType::ELASTIC;
+
+     template <typename T>
+     void
+     Update(const sp_grad::SpMatrix<T, 3, 3>& F, sp_grad::SpColVector<T, 9>& sigma, const sp_grad::SpGradExpDofMapHelper<T>& oDofMap) {
+          using namespace sp_grad;
+
+          // https://thelfer.github.io/tfel/web/tensors.html#general-non-symmetric-second-order-tensors
+          SpColVector<T, 9> epsilon(9, 0);
+
+          using TFU = TensorFormat::Unsymmetric3x3;
+
+          for (index_type i = 0; i < 9; ++i) {
+               epsilon(i + 1) = F(TFU::i1[i], TFU::i2[i]);
+          }
+
+          pConstLaw->Update(epsilon, sigma, oDofMap);
      }
 };
 
@@ -180,41 +285,43 @@ private:
 template <bool bEnableUPC, typename ElementType>
 struct CollocDataPressureUPC {
      static inline void
-     Init(const sp_grad::SpColVector<doublereal, 3>& r, const sp_grad::SpMatrix<doublereal, 3, ElementType::iNumNodes>& x0, const SolidElem* pElem) {}
+     Init(const sp_grad::SpColVector<doublereal, 3>& r, const sp_grad::SpMatrix<doublereal, 3, ElementType::ElemTypeDisplacement::iNumNodes>& x0, const SolidElem* pElem) {}
 };
 
 template <typename ElementType>
 struct CollocDataPressureUPC<true, ElementType> {
-     typedef typename ElementType::ElemTypePressureUPC ElemTypeUPC;
+     typedef typename ElementType::ElemTypePressure ElemTypeUPC;
 
      inline void
-     Init(const sp_grad::SpColVector<doublereal, 3>& r, const sp_grad::SpMatrix<doublereal, 3, ElementType::iNumNodes>& x0, const SolidElem* pElem) {
+     Init(const sp_grad::SpColVector<doublereal, 3>& r, const sp_grad::SpMatrix<doublereal, 3, ElementType::ElemTypeDisplacement::iNumNodes>& x0, const SolidElem* pElem) {
           ElemTypeUPC::ShapeFunction(r, g);
      }
 
-     sp_grad::SpColVectorA<doublereal, ElementType::iNumNodesPressure> g;
+     sp_grad::SpColVectorA<doublereal, ElementType::ElemTypePressure::iNumNodes> g;
 };
 
 template <typename ElementType, typename CollocationType, typename SolidCSLType, typename StructNodeType = StructDispNodeAd>
-class SolidElemStatic: public SolidElem, public IncomprSolidElemStatic<SolidCSLType::eConstLawType == ConstLawType::ELASTICINCOMPR, ElementType::iNumNodesPressure> {
+class SolidElemStatic: public SolidElem, public IncomprSolidElemStatic<SolidCSLType::eConstLawType == ConstLawType::ELASTICINCOMPR, ElementType::ElemTypePressure::iNumNodes> {
 public:
      using SolidElem::AssRes;
      using SolidElem::AssJac;
      using SolidElem::InitialAssRes;
      using SolidElem::InitialAssJac;
-     
-     typedef IncomprSolidElemStatic<SolidCSLType::eConstLawType == ConstLawType::ELASTICINCOMPR, ElementType::iNumNodesPressure> IncomprSolidElemType;
+
+     typedef IncomprSolidElemStatic<SolidCSLType::eConstLawType == ConstLawType::ELASTICINCOMPR, ElementType::ElemTypePressure::iNumNodes> IncomprSolidElemType;
 
      static constexpr ConstLawType::Type eConstLawType = SolidCSLType::eConstLawType;
-     static constexpr sp_grad::index_type iNumNodes = ElementType::iNumNodes;
+     static constexpr sp_grad::index_type iNumNodes = ElementType::ElemTypeDisplacement::iNumNodes;
      static constexpr sp_grad::index_type iNumNodesPressure = IncomprSolidElemType::iNumNodesPressure;
-     static constexpr sp_grad::index_type iNumNodesExtrap = ElementType::iNumNodesExtrap;
+     static constexpr sp_grad::index_type iNumNodesExtrap = ElementType::ElemTypeDisplacement::iNumNodesExtrap;
      static constexpr sp_grad::index_type iNumEvalPointsStiffness = CollocationType::iNumEvalPointsStiffness;
      static constexpr sp_grad::index_type iNumEvalPointsMassLumped = CollocationType::iNumEvalPointsMassLumped;
      static constexpr sp_grad::index_type iNumDof = iNumNodes * 3;
      static constexpr sp_grad::index_type iNumDofPressure = iNumNodesPressure;
 
-     static_assert(ElementType::eElemFlags == SolidElemFlags::DISPLACEMENT || ElementType::eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE);
+     static_assert(ElementType::eElemFlags == SolidElemFlags::DISPLACEMENT_PK2GL ||
+                   ElementType::eElemFlags == SolidElemFlags::DISPLACEMENT_PK1F ||
+                   ElementType::eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE_PK2GL);
      static_assert(iNumNodesPressure <= iNumNodes);
      static_assert(eConstLawType == ConstLawType::ELASTICINCOMPR ? iNumNodesPressure > 0 : iNumNodesPressure == 0);
 
@@ -244,6 +351,12 @@ public:
      AssResElastic(sp_grad::SpGradientAssVec<T>& WorkVec,
                    doublereal dCoef,
                    enum sp_grad::SpFunctionCall func);
+
+     template <typename T>
+     inline void
+     AssResElasticDefGrad(sp_grad::SpGradientAssVec<T>& WorkVec,
+                                      doublereal dCoef,
+                                      enum sp_grad::SpFunctionCall func);
 
      template <typename T>
      inline void
@@ -308,6 +421,12 @@ public:
      virtual doublereal dGetM() const override;
      virtual Vec3 GetS_int() const override;
      virtual Mat3x3 GetJ_int() const override;
+
+     virtual doublereal dGetU() const override;
+
+     virtual doublereal dGetDissipatedEnergy() const override;
+
+     virtual doublereal dGetRequestedTimeStep() const override;
 protected:
      template <typename T>
      inline void
@@ -337,6 +456,14 @@ protected:
                             doublereal dCoef,
                             sp_grad::SpFunctionCall func,
                             const sp_grad::SpGradExpDofMapHelper<T>& oDofMap);
+
+     template <typename T>
+     inline void
+     AssStiffnessVecElasticDefGrad(const sp_grad::SpMatrix<T, 3, iNumNodes>& u,
+                                   sp_grad::SpColVector<T, iNumDof>& R,
+                                   const doublereal dCoef,
+                                   const sp_grad::SpFunctionCall func,
+                                   const sp_grad::SpGradExpDofMapHelper<T>& oDofMap);
 
      template <typename T>
      inline void
@@ -415,7 +542,48 @@ protected:
                                const sp_grad::SpGradExpDofMapHelper<T>& oDofMap,
                                const SolidElemStatic* pElem) {
                oConstLaw.Update(G, sigma, oDofMap);
-               UpdateStressStrain(G, sigma, F, pElem);
+               UpdateStressStrain(sigma, F, pElem);
+          }
+
+          template <typename T>
+          inline void
+          ComputeStressElasticDefGrad(const sp_grad::SpMatrix<T, 3, 3>& F,
+                                      sp_grad::SpColVector<T, SolidCSLType::iDim>& sigma,
+                                      const sp_grad::SpGradExpDofMapHelper<T>& oDofMap,
+                                      const SolidElemStatic* pElem) {
+               using namespace sp_grad;
+
+               oConstLaw.Update(F, sigma, oDofMap);
+
+               T detF;
+
+               Det(F, detF, oDofMap);
+
+               SpMatrix<T, 3, 3> invF(3, 3, 0);
+
+               Inv(F, invF, detF, oDofMap);
+
+               using TFS = TensorFormat::Symmetric3x3;
+               using TFU = TensorFormat::Unsymmetric3x3;
+
+               SpMatrix<T, 3, 3> PK1(3, 3, 0);
+
+               for (index_type i = 0; i < 9; ++i) {
+                    PK1(TFU::i1[i], TFU::i2[i]) = sigma(i + 1);
+               }
+
+               const SpMatrix<T, 3, 3> PK2(invF * PK1, oDofMap);
+
+               for (index_type i = 0; i < 6; ++i) {
+                    sigma(i + 1) = PK2(TFS::i1[i], TFS::i2[i]);
+               }
+
+#ifdef DEBUG
+               for (index_type i = 7; i <= 9; ++i) {
+                    SpGradientTraits<T>::ResizeReset(sigma(i), std::numeric_limits<doublereal>::max(), 0);
+               }
+#endif
+               UpdateStressStrain(sigma, F, pElem);
           }
 
           template <typename T>
@@ -427,7 +595,7 @@ protected:
                                       const sp_grad::SpGradExpDofMapHelper<T>& oDofMap,
                                       const SolidElemStatic* pElem) {
                oConstLaw.Update(G, sigma, ptilde, oDofMap);
-               UpdateStressStrain(G, sigma, F, pElem);
+               UpdateStressStrain(sigma, F, pElem);
           }
 
           template <typename T>
@@ -439,25 +607,22 @@ protected:
                                     const sp_grad::SpGradExpDofMapHelper<T>& oDofMap,
                                     const SolidElemStatic* pElem) {
                oConstLaw.Update(G, GP, sigma, oDofMap);
-               UpdateStressStrain(G, sigma, F, pElem);
+               UpdateStressStrain(sigma, F, pElem);
           }
 
           inline void
-          UpdateStressStrain(const sp_grad::SpMatrix<doublereal, 3, 3>& G_tmp,
-                             const sp_grad::SpColVector<doublereal, SolidCSLType::iDim>& sigma_tmp,
+          UpdateStressStrain(const sp_grad::SpColVector<doublereal, SolidCSLType::iDim>& sigma_tmp,
                              const sp_grad::SpMatrix<doublereal, 3, 3>& F_tmp,
                              const SolidElemStatic* pElem);
 
           inline void
-          UpdateStressStrain(const sp_grad::SpMatrix<sp_grad::SpGradient, 3, 3>& G,
-                             const sp_grad::SpColVector<sp_grad::SpGradient, SolidCSLType::iDim>& sigma,
+          UpdateStressStrain(const sp_grad::SpColVector<sp_grad::SpGradient, SolidCSLType::iDim>& sigma,
                              const sp_grad::SpMatrix<sp_grad::SpGradient, 3, 3>& F,
                              const SolidElemStatic* pElem) {
           }
 
           inline void
-          UpdateStressStrain(const sp_grad::SpMatrix<sp_grad::GpGradProd, 3, 3>& G,
-                             const sp_grad::SpColVector<sp_grad::GpGradProd, SolidCSLType::iDim>& sigma,
+          UpdateStressStrain(const sp_grad::SpColVector<sp_grad::GpGradProd, SolidCSLType::iDim>& sigma,
                              const sp_grad::SpMatrix<sp_grad::GpGradProd, 3, 3>& F,
                              const SolidElemStatic* pElem) {
           }
@@ -470,7 +635,6 @@ protected:
           sp_grad::SpColVectorA<doublereal, iNumNodes> h;
           sp_grad::SpMatrixA<doublereal, iNumNodes, 3> h0d;
           doublereal detJ;
-          sp_grad::SpMatrixA<doublereal, 3, 3> G;
           sp_grad::SpMatrixA<doublereal, 3, 3> F;
           sp_grad::SpColVectorA<doublereal, 6> sigma;
      };
@@ -553,7 +717,7 @@ public:
      using SolidElem::AssJac;
      using SolidElem::InitialAssRes;
      using SolidElem::InitialAssJac;
-     
+
      typedef SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructDispNodeAd> SolidElemStaticType;
      using SolidElemStaticType::eConstLawType;
      using SolidElemStaticType::iNumNodes;
@@ -699,13 +863,25 @@ unsigned int SolidElem::iGetInitialNumDof() const
 
 unsigned int SolidElem::iGetNumPrivData() const
 {
-     return 1;
+     return 4u;
 }
 
 unsigned int SolidElem::iGetPrivDataIdx(const char *s) const
 {
-     if (strcmp(s, "E") == 0) {
-          return 1u;
+     static constexpr struct {
+          char name[18];
+          unsigned index;
+     } rgPrivData[] = {
+          {"E", 1u},
+          {"U", 2u},
+          {"dissipated" "energy", 3u},
+          {"requested" "time" "step", 4u}
+     };
+
+     for (const auto& oPrivData: rgPrivData) {
+          if (0 == strcmp(oPrivData.name, s)) {
+               return oPrivData.index;
+          }
      }
 
      throw ErrGeneric(MBDYN_EXCEPT_ARGS);
@@ -716,6 +892,12 @@ doublereal SolidElem::dGetPrivData(unsigned int i) const
      switch (i) {
      case 1u:
           return dGetE();
+     case 2u:
+          return dGetU();
+     case 3u:
+          return dGetDissipatedEnergy();
+     case 4u:
+          return dGetRequestedTimeStep();
 
      default:
           throw ErrGeneric(MBDYN_EXCEPT_ARGS);
@@ -727,11 +909,11 @@ doublereal SolidElem::dGetE() const
      return 0.; // Used for all static elements
 }
 
-template <ConstLawType::Type SolidCSLType>
+template <ConstLawType::Type SolidCSLType, SolidElemFlags eElemFlags>
 struct SolidElemCSLHelper;
 
 template <>
-struct SolidElemCSLHelper<ConstLawType::ELASTIC> {
+struct SolidElemCSLHelper<ConstLawType::ELASTIC, SolidElemFlags::DISPLACEMENT_PK2GL> {
      template <typename SolidElementType, typename T>
      static inline void AssRes(SolidElementType* pElem,
                                sp_grad::SpGradientAssVec<T>& WorkVec,
@@ -742,7 +924,7 @@ struct SolidElemCSLHelper<ConstLawType::ELASTIC> {
 };
 
 template <>
-struct SolidElemCSLHelper<ConstLawType::ELASTICINCOMPR> {
+struct SolidElemCSLHelper<ConstLawType::ELASTICINCOMPR, SolidElemFlags::DISPLACEMENT_PRESSURE_PK2GL> {
      template <typename SolidElementType, typename T>
      static inline void AssRes(SolidElementType* pElem,
                                sp_grad::SpGradientAssVec<T>& WorkVec,
@@ -753,13 +935,24 @@ struct SolidElemCSLHelper<ConstLawType::ELASTICINCOMPR> {
 };
 
 template <>
-struct SolidElemCSLHelper<ConstLawType::VISCOELASTIC> {
+struct SolidElemCSLHelper<ConstLawType::VISCOELASTIC, SolidElemFlags::DISPLACEMENT_PK2GL> {
      template <typename SolidElementType, typename T>
      static inline void AssRes(SolidElementType* pElem,
                                sp_grad::SpGradientAssVec<T>& WorkVec,
                                doublereal dCoef,
                                enum sp_grad::SpFunctionCall func) {
           pElem->AssResViscoElastic(WorkVec, dCoef, func);
+     }
+};
+
+template <>
+struct SolidElemCSLHelper<ConstLawType::ELASTIC, SolidElemFlags::DISPLACEMENT_PK1F> {
+     template <typename SolidElementType, typename T>
+     static inline void AssRes(SolidElementType* pElem,
+                               sp_grad::SpGradientAssVec<T>& WorkVec,
+                               doublereal dCoef,
+                               enum sp_grad::SpFunctionCall func) {
+          pElem->AssResElasticDefGrad(WorkVec, dCoef, func);
      }
 };
 
@@ -864,7 +1057,7 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Ass
                                                                                     const sp_grad::SpGradientVectorHandler<T>& XPrimeCurr,
                                                                                     enum sp_grad::SpFunctionCall func)
 {
-     return SolidElemCSLHelper<eConstLawType>::AssRes(this, WorkVec, dCoef, func);
+     return SolidElemCSLHelper<eConstLawType, ElementType::eElemFlags>::AssRes(this, WorkVec, dCoef, func);
 }
 
 template <typename ElementType, typename CollocationType, typename SolidCSLType, typename StructNodeType>
@@ -879,7 +1072,7 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Ini
                       "initial assembly with incompressible constitutive laws is not yet implemented!\n");
           throw ErrNotImplementedYet(MBDYN_EXCEPT_ARGS); // because of hydraulic nodes
      } else {
-          return SolidElemCSLHelper<eConstLawType>::AssRes(this, WorkVec, 1., func);
+          return SolidElemCSLHelper<eConstLawType, ElementType::eElemFlags>::AssRes(this, WorkVec, 1., func);
      }
 }
 
@@ -906,6 +1099,47 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Ass
      SpColVector<T, iNumDof> R(iNumDof, oDofMap);
 
      AssStiffnessVecElastic(u, R, dCoef, func, oDofMap);
+
+     ASSERT(R.iGetMaxSize() == oDofMap.iGetLocalSize());
+
+     if (pRBK) {
+          AssInertiaVecRBK(u, R, oDofMap);
+     }
+
+     ASSERT(R.iGetMaxSize() == oDofMap.iGetLocalSize());
+
+     if (pGravity) {
+          AssGravityLoadVec(R, dCoef, func);
+     }
+
+     ASSERT(R.iGetMaxSize() == oDofMap.iGetLocalSize());
+
+     AssVector(WorkVec, R, &StructDispNode::iGetFirstMomentumIndex);
+}
+
+template <typename ElementType, typename CollocationType, typename SolidCSLType, typename StructNodeType>
+template <typename T>
+inline void
+SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::AssResElasticDefGrad(sp_grad::SpGradientAssVec<T>& WorkVec,
+                                                                                                  doublereal dCoef,
+                                                                                                  enum sp_grad::SpFunctionCall func)
+{
+     using namespace sp_grad;
+
+     SpMatrix<T, 3, iNumNodes> u(3, iNumNodes, 1);
+
+     GetNodalDeformations(u, dCoef, func);
+
+     SpGradExpDofMapHelper<T> oDofMap;
+
+     oDofMap.GetDofStat(u);
+     oDofMap.Reset();
+     oDofMap.InsertDof(u);
+     oDofMap.InsertDone();
+
+     SpColVector<T, iNumDof> R(iNumDof, oDofMap);
+
+     AssStiffnessVecElasticDefGrad(u, R, dCoef, func, oDofMap);
 
      ASSERT(R.iGetMaxSize() == oDofMap.iGetLocalSize());
 
@@ -1078,6 +1312,40 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Ass
 template <typename ElementType, typename CollocationType, typename SolidCSLType, typename StructNodeType>
 template <typename T>
 void
+SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::AssStiffnessVecElasticDefGrad(const sp_grad::SpMatrix<T, 3, iNumNodes>& u,
+                                                                                                           sp_grad::SpColVector<T, iNumDof>& R,
+                                                                                                           const doublereal dCoef,
+                                                                                                           const sp_grad::SpFunctionCall func,
+                                                                                                           const sp_grad::SpGradExpDofMapHelper<T>& oDofMap)
+{
+     using namespace sp_grad;
+
+     SpMatrix<T, 3, 3> F(3, 3, oDofMap);
+     SpColVector<T, 9> sigma(9, oDofMap);
+
+     for (index_type iColloc = 0; iColloc < iNumEvalPointsStiffness; ++iColloc) {
+          const doublereal alpha = CollocationType::dGetWeightStiffness(iColloc);
+          const auto& h0d = rgCollocData[iColloc].h0d;
+
+          F.MapAssign(u * h0d, oDofMap);
+
+          for (index_type i = 1; i <= 3; ++i) {
+               F(i, i) += 1.;
+          }
+
+          ASSERT(F.iGetMaxSize() <= iNumDof);
+
+          rgCollocData[iColloc].ComputeStressElasticDefGrad(F, sigma, oDofMap, this);
+
+          rgCollocData[iColloc].AddInternalForceVector(F, sigma, alpha, R, oDofMap);
+
+          ASSERT(R.iGetMaxSize() <= iNumDof);
+     }
+}
+
+template <typename ElementType, typename CollocationType, typename SolidCSLType, typename StructNodeType>
+template <typename T>
+void
 SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::AssStiffnessVecElasticIncompr(const sp_grad::SpMatrix<T, 3, iNumNodes>& u,
                                                                                                            const sp_grad::SpColVector<T, iNumDofPressure>& p,
                                                                                                            sp_grad::SpColVector<T, iNumDof>& FU,
@@ -1212,8 +1480,8 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Ass
           const doublereal alpha = CollocationType::dGetWeightMass(iColloc);
 
           CollocationType::GetPositionMass(iColloc, r);
-          ElementType::ShapeFunction(r, h);
-          ElementType::ShapeFunctionDeriv(r, hd);
+          ElementType::ElemTypeDisplacement::ShapeFunction(r, h);
+          ElementType::ElemTypeDisplacement::ShapeFunctionDeriv(r, hd);
 
           const SpMatrix<doublereal, 3, 3> J = Transpose(x0 * hd);
 
@@ -1414,8 +1682,8 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::dGe
 
      for (index_type iColloc = 0; iColloc < CollocationType::iNumEvalPointsMass; ++iColloc) {
           CollocationType::GetPositionMass(iColloc, r);
-          ElementType::ShapeFunction(r, h);
-          ElementType::ShapeFunctionDeriv(r, hd);
+          ElementType::ElemTypeDisplacement::ShapeFunction(r, h);
+          ElementType::ElemTypeDisplacement::ShapeFunctionDeriv(r, hd);
 
           const doublereal alpha = CollocationType::dGetWeightMass(iColloc);
           const SpMatrix<doublereal, 3, 3> J = Transpose(x0 * hd);
@@ -1450,8 +1718,8 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Get
 
      for (index_type iColloc = 0; iColloc < CollocationType::iNumEvalPointsMass; ++iColloc) {
           CollocationType::GetPositionMass(iColloc, r);
-          ElementType::ShapeFunction(r, h);
-          ElementType::ShapeFunctionDeriv(r, hd);
+          ElementType::ElemTypeDisplacement::ShapeFunction(r, h);
+          ElementType::ElemTypeDisplacement::ShapeFunctionDeriv(r, hd);
 
           const doublereal alpha = CollocationType::dGetWeightMass(iColloc);
           const SpMatrix<doublereal, 3, 3> J = Transpose(x0 * hd);
@@ -1490,8 +1758,8 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Get
 
      for (index_type iColloc = 0; iColloc < CollocationType::iNumEvalPointsMass; ++iColloc) {
           CollocationType::GetPositionMass(iColloc, r);
-          ElementType::ShapeFunction(r, h);
-          ElementType::ShapeFunctionDeriv(r, hd);
+          ElementType::ElemTypeDisplacement::ShapeFunction(r, h);
+          ElementType::ElemTypeDisplacement::ShapeFunctionDeriv(r, hd);
 
           const doublereal alpha = CollocationType::dGetWeightMass(iColloc);
           const SpMatrix<doublereal, 3, 3> J = Transpose(x0 * hd);
@@ -1509,6 +1777,65 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Get
      }
 
      return dJ;
+}
+
+template <typename ElementType, typename CollocationType, typename SolidCSLType, typename StructNodeType>
+doublereal
+SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::dGetU() const
+{
+     using namespace sp_grad;
+
+     doublereal U = 0.;
+
+     for (index_type iColloc = 0; iColloc < CollocationType::iNumEvalPointsStiffness; ++iColloc) {
+          const doublereal alpha = CollocationType::dGetWeightStiffness(iColloc);
+          const doublereal detJ = rgCollocData[iColloc].detJ;
+          const doublereal dV0 = detJ * alpha;
+
+          if (!rgCollocData[iColloc].oConstLaw.bAddStoredEnergy(U, dV0)) {
+               return 0.;
+          }
+     }
+
+     return U;
+}
+
+template <typename ElementType, typename CollocationType, typename SolidCSLType, typename StructNodeType>
+doublereal
+SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::dGetDissipatedEnergy() const
+{
+     using namespace sp_grad;
+
+     doublereal W = 0.;
+
+     for (index_type iColloc = 0; iColloc < CollocationType::iNumEvalPointsStiffness; ++iColloc) {
+          const doublereal alpha = CollocationType::dGetWeightStiffness(iColloc);
+          const doublereal detJ = rgCollocData[iColloc].detJ;
+          const doublereal dV0 = detJ * alpha;
+
+          if (!rgCollocData[iColloc].oConstLaw.bAddDissipatedEnergy(W, dV0)) {
+               return 0.;
+          }
+     }
+
+     return W;
+}
+
+template <typename ElementType, typename CollocationType, typename SolidCSLType, typename StructNodeType>
+doublereal
+SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::dGetRequestedTimeStep() const
+{
+     using namespace sp_grad;
+
+     doublereal rdt = std::numeric_limits<doublereal>::max();
+
+     for (const auto& oColloc: rgCollocData) {
+          if (!oColloc.oConstLaw.bGetRequestedTimeStep(rdt)) {
+               return std::numeric_limits<doublereal>::max();
+          }
+     }
+
+     return rdt;
 }
 
 template <typename ElementType, typename CollocationType, typename SolidCSLType, typename StructNodeType>
@@ -1612,7 +1939,7 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Gau
 
      for (index_type i = 1; i <= iNumEvalPointsStiffness; ++i) {
           CollocationType::GetPositionStiffness(i - 1, r);
-          ElementType::ShapeFunctionExtrap(r, h);
+          ElementType::ElemTypeDisplacement::ShapeFunctionExtrap(r, h);
 
           for (index_type j = 1; j <= iNumNodesExtrap; ++j) {
                H(i, j) = h(j); // FIXME: select only a subset of available nodes
@@ -1649,7 +1976,7 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Gau
           throw ErrGeneric(MBDYN_EXCEPT_ARGS);
      }
 
-     ElementType::GaussToNodalInterp(taun, B);
+     ElementType::ElemTypeDisplacement::GaussToNodalInterp(taun, B);
 #else
      silent_cerr("Output of solid element data is not available because LAPACK's dgelsd function was not found.\n"
                  "It may be disabled by means of a \"default output:\" statement within the control data section.\n");
@@ -1679,8 +2006,8 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Ass
 
      for (index_type iColloc = 0; iColloc < CollocationType::iNumEvalPointsMass; ++iColloc) {
           CollocationType::GetPositionMass(iColloc, r);
-          ElementType::ShapeFunction(r, h);
-          ElementType::ShapeFunctionDeriv(r, hd);
+          ElementType::ElemTypeDisplacement::ShapeFunction(r, h);
+          ElementType::ElemTypeDisplacement::ShapeFunctionDeriv(r, hd);
 
           const SpMatrix<doublereal, 3, 3> J = Transpose(x0 * hd);
 
@@ -1727,38 +2054,33 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Com
 {
      using namespace sp_grad;
 
-     static constexpr index_type idxr[6] = {1, 2, 3, 1, 2, 3};
-     static constexpr index_type idxc[6] = {1, 2, 3, 2, 3, 1};
+     using TFS = TensorFormat::Symmetric3x3;
 
      SpMatrixA<doublereal, 3, 3> S;
 
      for (index_type iColloc = 0; iColloc < iNumEvalPointsStiffness; ++iColloc) {
           const auto& sigma = rgCollocData[iColloc].sigma;
 
-          for (index_type i = 1; i <= 6; ++i) {
-               S(idxr[i - 1], idxc[i - 1]) = sigma(i);
-          }
-
-          for (index_type i = 4; i <= 6; ++i) {
-               S(idxc[i - 1], idxr[i - 1]) = sigma(i);
+          for (index_type i = 0; i < 9; ++i) {
+               S(TFS::i1[i], TFS::i2[i]) = sigma(TFS::iv[i]);
           }
 
           const auto& F = rgCollocData[iColloc].F;
 
           const SpMatrixA<doublereal, 3, 3> taui = F * S * Transpose(F) / Det(F);
 
-          const auto& G = rgCollocData[iColloc].G;
+          const SpMatrix<doublereal, 3, 3> G = 0.5 * (Transpose(F) * F - ::Eye3);
 
           for (index_type i = 1; i <= 3; ++i) {
                epsilon(iColloc + 1, i) = sqrt(1. + 2. * G(i, i)) - 1.;
           }
 
           for (index_type i = 4; i <= 6; ++i) {
-               epsilon(iColloc + 1, i) = 2. * G(idxr[i - 1], idxc[i - 1]) / ((1. + epsilon(iColloc + 1, idxr[i - 1])) * (1. + epsilon(iColloc + 1, idxc[i - 1])));
+               epsilon(iColloc + 1, i) = 2. * G(TFS::i1[i - 1], TFS::i2[i - 1]) / ((1. + epsilon(iColloc + 1, TFS::i1[i - 1])) * (1. + epsilon(iColloc + 1, TFS::i2[i - 1])));
           }
 
           for (index_type i = 1; i <= 6; ++i) {
-               tau(iColloc + 1, i) = taui(idxr[i - 1], idxc[i - 1]);
+               tau(iColloc + 1, i) = taui(TFS::i1[i - 1], TFS::i2[i - 1]);
           }
      }
 }
@@ -1775,11 +2097,11 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Col
      oConstLaw.SetConstLaw(std::move(pConstLawTmp));
 
      SpColVectorA<doublereal, 3> r;
-     SpMatrixA<doublereal, ElementType::iNumNodes, 3> hd;
+     SpMatrixA<doublereal, ElementType::ElemTypeDisplacement::iNumNodes, 3> hd;
 
      CollocationType::GetPositionStiffness(iColloc, r);
-     ElementType::ShapeFunction(r, h);
-     ElementType::ShapeFunctionDeriv(r, hd);
+     ElementType::ElemTypeDisplacement::ShapeFunction(r, h);
+     ElementType::ElemTypeDisplacement::ShapeFunctionDeriv(r, hd);
      CollocDataUPC::Init(r, x0, pElem);
 
      const SpMatrix<doublereal, 3, 3> J = Transpose(x0 * hd);
@@ -1799,14 +2121,12 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Col
 
 template <typename ElementType, typename CollocationType, typename SolidCSLType, typename StructNodeType>
 inline void
-SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::CollocData::UpdateStressStrain(const sp_grad::SpMatrix<doublereal, 3, 3>& G_tmp,
-                                                                                                            const sp_grad::SpColVector<doublereal, SolidCSLType::iDim>& sigma_tmp,
+SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::CollocData::UpdateStressStrain(const sp_grad::SpColVector<doublereal, SolidCSLType::iDim>& sigma_tmp,
                                                                                                             const sp_grad::SpMatrix<doublereal, 3, 3>& F_tmp,
                                                                                                             const SolidElemStatic* const pElem)
 {
      using namespace sp_grad;
 
-     G = G_tmp;
      sigma = SubColVector<1,1,6>(sigma_tmp);
      F = F_tmp;
 
@@ -1836,6 +2156,8 @@ SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>::Col
           {4, 2, 5},
           {6, 5, 3}
      };
+
+     static_assert(SolidCSLType::iDim >= 6);
 
      T a4, a5;
 
@@ -1885,8 +2207,8 @@ void SolidElemDynamic<ElementType, CollocationType, SolidCSLType, eMassMatrix>::
 
      for (index_type iColloc = 0; iColloc < CollocationType::iNumEvalPointsMass; ++iColloc) {
           CollocationType::GetPositionMass(iColloc, r);
-          ElementType::ShapeFunction(r, h);
-          ElementType::ShapeFunctionDeriv(r, hd);
+          ElementType::ElemTypeDisplacement::ShapeFunction(r, h);
+          ElementType::ElemTypeDisplacement::ShapeFunctionDeriv(r, hd);
 
           const doublereal alpha = CollocationType::dGetWeightMass(iColloc);
           const SpMatrix<doublereal, 3, 3> J = Transpose(this->x0 * hd);
@@ -1923,8 +2245,8 @@ SolidElemDynamic<ElementType, CollocationType, SolidCSLType, eMassMatrix>::AssMa
           const doublereal alpha = CollocationType::dGetWeightMass(iColloc);
 
           CollocationType::GetPositionMass(iColloc, r);
-          ElementType::ShapeFunction(r, h);
-          ElementType::ShapeFunctionDeriv(r, hd);
+          ElementType::ElemTypeDisplacement::ShapeFunction(r, h);
+          ElementType::ElemTypeDisplacement::ShapeFunctionDeriv(r, hd);
 
           const SpMatrix<doublereal, 3, 3> J = Transpose(this->x0 * hd);
           const doublereal detJ = Det(J);
@@ -2218,7 +2540,7 @@ SolidElemDynamic<ElementType, CollocationType, SolidCSLType, eMassMatrix>::AssRe
                                                                                   const sp_grad::SpGradientVectorHandler<T>& XPrimeCurr,
                                                                                   enum sp_grad::SpFunctionCall func)
 {
-     return SolidElemCSLHelper<eConstLawType>::AssRes(this, WorkVec, dCoef, func);
+     return SolidElemCSLHelper<eConstLawType, ElementType::eElemFlags>::AssRes(this, WorkVec, dCoef, func);
 }
 
 template <typename ElementType, typename CollocationType, typename SolidCSLType, MassMatrixType eMassMatrix>
@@ -2299,8 +2621,8 @@ SolidElemDynamic<ElementType, CollocationType, SolidCSLType, eMassMatrix>::GetB_
 
      for (index_type iColloc = 0; iColloc < CollocationType::iNumEvalPointsMass; ++iColloc) {
           CollocationType::GetPositionMass(iColloc, r);
-          ElementType::ShapeFunction(r, h);
-          ElementType::ShapeFunctionDeriv(r, hd);
+          ElementType::ElemTypeDisplacement::ShapeFunction(r, h);
+          ElementType::ElemTypeDisplacement::ShapeFunctionDeriv(r, hd);
 
           const doublereal alpha = CollocationType::dGetWeightMass(iColloc);
           const SpMatrix<doublereal, 3, 3> J = Transpose(this->x0 * hd);
@@ -2339,8 +2661,8 @@ SolidElemDynamic<ElementType, CollocationType, SolidCSLType, eMassMatrix>::dGetE
 
      for (index_type iColloc = 0; iColloc < CollocationType::iNumEvalPointsMass; ++iColloc) {
           CollocationType::GetPositionMass(iColloc, r);
-          ElementType::ShapeFunction(r, h);
-          ElementType::ShapeFunctionDeriv(r, hd);
+          ElementType::ElemTypeDisplacement::ShapeFunction(r, h);
+          ElementType::ElemTypeDisplacement::ShapeFunctionDeriv(r, hd);
 
           const doublereal alpha = CollocationType::dGetWeightMass(iColloc);
           const SpMatrix<doublereal, 3, 3> J = Transpose(this->x0 * hd);
@@ -2379,8 +2701,8 @@ SolidElemDynamic<ElementType, CollocationType, SolidCSLType, eMassMatrix>::GetG_
 
      for (index_type iColloc = 0; iColloc < CollocationType::iNumEvalPointsMass; ++iColloc) {
           CollocationType::GetPositionMass(iColloc, r);
-          ElementType::ShapeFunction(r, h);
-          ElementType::ShapeFunctionDeriv(r, hd);
+          ElementType::ElemTypeDisplacement::ShapeFunction(r, h);
+          ElementType::ElemTypeDisplacement::ShapeFunctionDeriv(r, hd);
 
           const doublereal alpha = CollocationType::dGetWeightMass(iColloc);
           const SpMatrix<doublereal, 3, 3> J = Transpose(this->x0 * hd);
@@ -2405,6 +2727,26 @@ SolidElemDynamic<ElementType, CollocationType, SolidCSLType, eMassMatrix>::GetG_
      return dGamma;
 }
 
+namespace {
+     template <SolidElemFlags eElemFlags>
+     struct SolidElemConstLawHelper;
+
+     template <>
+     struct SolidElemConstLawHelper<SolidElemFlags::DISPLACEMENT_PK2GL> {
+          typedef ConstitutiveLaw6D ConstLawType;
+     };
+
+     template <>
+     struct SolidElemConstLawHelper<SolidElemFlags::DISPLACEMENT_PRESSURE_PK2GL> {
+          typedef ConstitutiveLaw7D ConstLawType;
+     };
+
+     template <>
+     struct SolidElemConstLawHelper<SolidElemFlags::DISPLACEMENT_PK1F> {
+          typedef ConstitutiveLaw9D ConstLawType;
+     };
+}
+
 template <typename ElementType, typename CollocationType>
 SolidElem*
 ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
@@ -2416,19 +2758,22 @@ ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
      typedef SolidElemStatic<ElementType, CollocationType, SolidConstLawElastic> SolidStaticElemTypeElastic;
      typedef SolidElemStatic<ElementType, CollocationType, SolidConstLawElasticIncompr> SolidStaticElemTypeElasticIncompr;
      typedef SolidElemStatic<ElementType, CollocationType, SolidConstLawViscoelastic> SolidStaticElemTypeViscoElastic;
+     typedef SolidElemStatic<ElementType, CollocationType, SolidConstLawDefGrad> SolidStaticElemTypeDefGrad;
 
      typedef SolidElemDynamic<ElementType, CollocationType, SolidConstLawElastic, MassMatrixType::CONSISTENT>      SolidDynamicElemTypeElasticConMass;
      typedef SolidElemDynamic<ElementType, CollocationType, SolidConstLawViscoelastic, MassMatrixType::CONSISTENT> SolidDynamicElemTypeViscoElasticConMass;
      typedef SolidElemDynamic<ElementType, CollocationType, SolidConstLawElasticIncompr, MassMatrixType::CONSISTENT> SolidDynamicElemTypeElasticIncomprConMass;
+     typedef SolidElemDynamic<ElementType, CollocationType, SolidConstLawDefGrad, MassMatrixType::CONSISTENT> SolidDynamicElemTypeDefGradConMass;
 
      typedef SolidElemDynamic<ElementType, CollocationType, SolidConstLawElastic, MassMatrixType::LUMPED>      SolidDynamicElemTypeElasticLumpedMass;
      typedef SolidElemDynamic<ElementType, CollocationType, SolidConstLawViscoelastic, MassMatrixType::LUMPED> SolidDynamicElemTypeViscoElasticLumpedMass;
      typedef SolidElemDynamic<ElementType, CollocationType, SolidConstLawElasticIncompr, MassMatrixType::LUMPED> SolidDynamicElemTypeElasticIncomprLumpedMass;
+     typedef SolidElemDynamic<ElementType, CollocationType, SolidConstLawDefGrad, MassMatrixType::LUMPED> SolidDynamicElemTypeDefGradLumpedMass;
 
      constexpr SolidElemFlags eElemFlags = ElementType::eElemFlags;
-     constexpr index_type iNumNodes = ElementType::iNumNodes;
+     constexpr index_type iNumNodes = ElementType::ElemTypeDisplacement::iNumNodes;
 
-     constexpr index_type iNumNodesPressure = ElementType::iNumNodesPressure;
+     constexpr index_type iNumNodesPressure = ElementType::ElemTypePressure::iNumNodes;
      constexpr index_type iNumEvalPointsStiffness = CollocationType::iNumEvalPointsStiffness;
 
      std::array<const StructDispNodeAd*, iNumNodes> rgNodes;
@@ -2444,7 +2789,7 @@ ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
                : pDM->ReadNode<const DynamicStructDispNodeAd, Node::STRUCTURAL>(HP);
      }
 
-     if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE) {
+     if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE_PK2GL) {
           static_assert(iNumNodesPressure > 0);
 
           for (index_type i = 0; i < iNumNodesPressure; ++i) {
@@ -2464,9 +2809,7 @@ ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
           }
      }
 
-     constexpr bool bUseDisplacementPressure = eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE;
-
-     typedef typename std::conditional<bUseDisplacementPressure, ConstitutiveLaw7D, ConstitutiveLaw6D>::type ConstLawTplType;
+     typedef typename SolidElemConstLawHelper<eElemFlags>::ConstLawType ConstLawTplType;
 
      std::array<std::unique_ptr<ConstLawTplType>, iNumEvalPointsStiffness> rgMaterialData;
 
@@ -2480,17 +2823,19 @@ ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
 
           ConstLawType::Type CLType_I = ConstLawType::UNKNOWN;
 
-          if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE) {
+          if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE_PK2GL) {
                rgMaterialData[i].reset(HP.GetConstLaw7D(CLType_I));
-          } else {
+          } else if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PK2GL) {
                rgMaterialData[i].reset(HP.GetConstLaw6D(CLType_I));
+          } else {
+               static_assert(eElemFlags == SolidElemFlags::DISPLACEMENT_PK1F);
+               rgMaterialData[i].reset(HP.GetConstLaw9D(CLType_I));
           }
 
           if (rgMaterialData[i]->iGetNumDof() != 0) {
                silent_cerr("line " << HP.GetLineData()
                            << ": solid(" << uLabel << ") "
-                           "does not support dynamic constitutive laws yet"
-                           << std::endl);
+                           "does not support dynamic constitutive laws yet\n");
                throw ErrGeneric(MBDYN_EXCEPT_ARGS);
           }
 
@@ -2498,14 +2843,14 @@ ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
                switch (CLType_I) {
                case ConstLawType::ELASTIC:
                case ConstLawType::VISCOELASTIC:
-                    if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE) {
+                    if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE_PK2GL) {
                          silent_cerr("solid(" << uLabel << ") does not support non incompressible constitutive law types "
                                      "at line " << HP.GetLineData() << "\n");
                          throw ErrNotImplementedYet(MBDYN_EXCEPT_ARGS);
                     }
                     break;
                case ConstLawType::ELASTICINCOMPR:
-                    if constexpr(eElemFlags != SolidElemFlags::DISPLACEMENT_PRESSURE) {
+                    if constexpr(eElemFlags != SolidElemFlags::DISPLACEMENT_PRESSURE_PK2GL) {
                          silent_cerr("solid(" << uLabel << ") does not support incompressible constitutive law types "
                                      "at line " << HP.GetLineData() << "\n");
                          throw ErrNotImplementedYet(MBDYN_EXCEPT_ARGS);
@@ -2542,10 +2887,20 @@ ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
      if (bStaticModel) {
           switch (eConstLawType) {
           case ConstLawType::ELASTIC:
-               if constexpr(eElemFlags != SolidElemFlags::DISPLACEMENT_PRESSURE) {
+               if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PK2GL) {
                     SAFENEWWITHCONSTRUCTOR(pEl,
                                            SolidStaticElemTypeElastic,
                                            SolidStaticElemTypeElastic(uLabel,
+                                                                      rgNodes,
+                                                                      rgNodesPressure,
+                                                                      rhon,
+                                                                      std::move(rgMaterialData),
+                                                                      pRBK,
+                                                                      fOut));
+               } else if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PK1F) {
+                    SAFENEWWITHCONSTRUCTOR(pEl,
+                                           SolidStaticElemTypeDefGrad,
+                                           SolidStaticElemTypeDefGrad(uLabel,
                                                                       rgNodes,
                                                                       rgNodesPressure,
                                                                       rhon,
@@ -2557,7 +2912,7 @@ ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
                }
                break;
           case ConstLawType::VISCOELASTIC:
-               if constexpr(eElemFlags != SolidElemFlags::DISPLACEMENT_PRESSURE) {
+               if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PK2GL) {
                          SAFENEWWITHCONSTRUCTOR(pEl,
                                                 SolidStaticElemTypeViscoElastic,
                                                 SolidStaticElemTypeViscoElastic(uLabel,
@@ -2572,7 +2927,7 @@ ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
                }
                break;
           case ConstLawType::ELASTICINCOMPR:
-               if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE) {
+               if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE_PK2GL) {
                     SAFENEWWITHCONSTRUCTOR(pEl,
                                            SolidStaticElemTypeElasticIncompr,
                                            SolidStaticElemTypeElasticIncompr(uLabel,
@@ -2593,7 +2948,7 @@ ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
      } else {
           switch (eConstLawType) {
           case ConstLawType::ELASTIC:
-               if constexpr(eElemFlags != SolidElemFlags::DISPLACEMENT_PRESSURE) {
+               if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PK2GL) {
                     switch (eMassMatrixType) {
                     case MassMatrixType::CONSISTENT:
                          SAFENEWWITHCONSTRUCTOR(pEl,
@@ -2620,12 +2975,39 @@ ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
                     default:
                          ASSERT(0);
                     }
+               } else if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PK1F) {
+                    switch (eMassMatrixType) {
+                    case MassMatrixType::CONSISTENT:
+                         SAFENEWWITHCONSTRUCTOR(pEl,
+                                                SolidDynamicElemTypeDefGradConMass,
+                                                SolidDynamicElemTypeDefGradConMass(uLabel,
+                                                                                   rgNodes,
+                                                                                   rgNodesPressure,
+                                                                                   rhon,
+                                                                                   std::move(rgMaterialData),
+                                                                                   pRBK,
+                                                                                   fOut));
+                    break;
+                    case MassMatrixType::LUMPED:
+                         SAFENEWWITHCONSTRUCTOR(pEl,
+                                                SolidDynamicElemTypeDefGradLumpedMass,
+                                                SolidDynamicElemTypeDefGradLumpedMass(uLabel,
+                                                                                      rgNodes,
+                                                                                      rgNodesPressure,
+                                                                                      rhon,
+                                                                                      std::move(rgMaterialData),
+                                                                                      pRBK,
+                                                                                      fOut));
+                         break;
+                    default:
+                         ASSERT(0);
+                    }
                } else {
                     throw ErrNotImplementedYet(MBDYN_EXCEPT_ARGS);
                }
                break;
           case ConstLawType::VISCOELASTIC:
-               if constexpr(eElemFlags != SolidElemFlags::DISPLACEMENT_PRESSURE) {
+               if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PK2GL) {
                     switch (eMassMatrixType) {
                     case MassMatrixType::CONSISTENT:
                          SAFENEWWITHCONSTRUCTOR(pEl,
@@ -2657,7 +3039,7 @@ ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
                }
                break;
           case ConstLawType::ELASTICINCOMPR:
-               if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE) {
+               if constexpr(eElemFlags == SolidElemFlags::DISPLACEMENT_PRESSURE_PK2GL) {
                     switch (eMassMatrixType) {
                     case MassMatrixType::CONSISTENT:
                          SAFENEWWITHCONSTRUCTOR(pEl,
@@ -2703,15 +3085,23 @@ ReadSolid(DataManager* const pDM, MBDynParser& HP, const unsigned int uLabel)
      return pEl;
 }
 
-// Displacement based elements
+// Displacement based elements using the Green Lagrange strain tensor and the 2nd Piola Kirchhoff stress tensor
 template SolidElem* ReadSolid<Hexahedron8, Gauss2x2x2>(DataManager*, MBDynParser&, unsigned int);
 template SolidElem* ReadSolid<Hexahedron20, Gauss3x3x3>(DataManager*, MBDynParser&, unsigned int);
 template SolidElem* ReadSolid<Hexahedron27, Gauss3x3x3>(DataManager*, MBDynParser&, unsigned int);
 template SolidElem* ReadSolid<Hexahedron20r, GaussH20r>(DataManager*, MBDynParser&, unsigned int);
 template SolidElem* ReadSolid<Pentahedron15, CollocPenta15>(DataManager*, MBDynParser&, unsigned int);
-template SolidElem* ReadSolid<Tetrahedron10h, CollocTet10h>(DataManager*, MBDynParser&, unsigned int);
+template SolidElem* ReadSolid<Tetrahedron10, CollocTet10h>(DataManager*, MBDynParser&, unsigned int);
 
-// Displacement/pressure formulation
+// Displacement based elements using the deformation gradient and the 1st Piola Kirchhoff stress tensor
+template SolidElem* ReadSolid<Hexahedron8f, Gauss2x2x2>(DataManager*, MBDynParser&, unsigned int);
+template SolidElem* ReadSolid<Hexahedron20f, Gauss3x3x3>(DataManager*, MBDynParser&, unsigned int);
+template SolidElem* ReadSolid<Hexahedron27f, Gauss3x3x3>(DataManager*, MBDynParser&, unsigned int);
+template SolidElem* ReadSolid<Hexahedron20fr, GaussH20r>(DataManager*, MBDynParser&, unsigned int);
+template SolidElem* ReadSolid<Pentahedron15f, CollocPenta15>(DataManager*, MBDynParser&, unsigned int);
+template SolidElem* ReadSolid<Tetrahedron10f, CollocTet10h>(DataManager*, MBDynParser&, unsigned int);
+
+// Displacement/pressure formulation using the Green Lagrange strain tensor, the 2nd Piola Kirchhoff stress tensor and the hydrostatic pressure
 template SolidElem* ReadSolid<Hexahedron8upc, Gauss2x2x2>(DataManager*, MBDynParser&, unsigned int);
 template SolidElem* ReadSolid<Hexahedron20upc, Gauss3x3x3>(DataManager*, MBDynParser&, unsigned int);
 template SolidElem* ReadSolid<Hexahedron20upcr, GaussH20r>(DataManager*, MBDynParser&, unsigned int);

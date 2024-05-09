@@ -841,11 +841,11 @@ DataManager::pChooseElem(Elem* p, unsigned int iDeriv) const
 		return p;
 
 	case DOFOWNER:
-		ASSERT(dynamic_cast<ElemWithDofs *>(p) != NULL);
+                //ASSERT(dynamic_cast<ElemWithDofs *>(p) != NULL);
 		return p;
 
 	case GRAVITYOWNER:
-		ASSERT(dynamic_cast<ElemGravityOwner *>(p) != NULL);
+                //ASSERT(dynamic_cast<ElemGravityOwner *>(p) != NULL);
 		return p;
 
 	case AIRPROPOWNER:

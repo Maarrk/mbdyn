@@ -135,6 +135,8 @@ while ! test -z "$1"; do
     shift
 done
 
+export MBD_NUM_THREADS
+
 if ! test -d "${OCT_PKG_TEST_DIR}"; then
     if ! mkdir -p "${OCT_PKG_TEST_DIR}"; then
         echo "Failed to create directory \"${OCT_PKG_TEST_DIR}\"!"
@@ -466,7 +468,6 @@ for pkgname_and_flags in ${OCT_PKG_LIST}; do
 
     if test ${MBD_NUM_TASKS} -gt 1 && test ${oct_pkg_num_tests} -gt 1; then
         echo "Parallel execution using ${MBD_NUM_TASKS} tasks:"
-        export MBD_NUM_THREADS
         export TIMEOUT_CMD
         export OCTAVE_EXEC
         export OCTAVE_CMD_ARGS
