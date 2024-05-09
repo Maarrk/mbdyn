@@ -364,7 +364,7 @@ variables:
   OCTAVE_EXEC: "octave"
 
   SICONOS_REPOSITORY:
-    value: "https://github.com/octave-user/siconos.git" ## FIXME: Should be changed to the main repository
+    value: "https://github.com/siconos/siconos.git" ## FIXME: Should be changed to the main repository
     options:
       - "https://github.com/siconos/siconos.git" ## Main repository
       - "https://github.com/octave-user/siconos.git" ## Forked from https://github.com/siconos/siconos.git
@@ -372,7 +372,7 @@ variables:
     description: "Repository of the Siconos library (http://siconos.gforge.inria.fr) which should be cloned"
 
   SICONOS_BRANCH:
-    value: "mbdyn"
+    value: "master"
     options:
       - "master" ## This branch is tracking the main repository, but must be synchronized manually
       - "mbdyn"  ## This branch is intended to be used for MBDyn's testsuite

@@ -50,7 +50,7 @@ BodyAd<B, N>::BodyAd(unsigned int uL, const N *pNode,
 {
      ASSERT(pNode != nullptr);
      ASSERT(pNode->GetNodeType() == Node::STRUCTURAL);
-     ASSERT(dMass > 0.);
+     ASSERT(dMassTmp > 0.);
 }
 
 template<class B, class N>

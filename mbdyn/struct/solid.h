@@ -47,16 +47,22 @@
 
 // 3D elements
 class Hexahedron8;
+class Hexahedron8f;
 class Hexahedron8upc;
 class Hexahedron20;
+class Hexahedron20f;
 class Hexahedron20upc;
-class Hexahedron20upcr;
 class Hexahedron20r;
+class Hexahedron20fr;
+class Hexahedron20upcr;
 class Hexahedron27;
+class Hexahedron27f;
 class Pentahedron6;
 class Pentahedron15;
+class Pentahedron15f;
 class Pentahedron15upc;
-class Tetrahedron10h;
+class Tetrahedron10;
+class Tetrahedron10f;
 class Tetrahedron10upc;
 
 // 3D collocation rules
@@ -93,6 +99,12 @@ public:
      virtual doublereal dGetPrivData(unsigned int i) const override;
 
      virtual doublereal dGetE() const;
+
+     virtual doublereal dGetU() const = 0;
+
+     virtual doublereal dGetDissipatedEnergy() const = 0;
+
+     virtual doublereal dGetRequestedTimeStep() const = 0;
 };
 
 template <typename ElementType, typename CollocationType>

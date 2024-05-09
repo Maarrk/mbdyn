@@ -1446,8 +1446,8 @@ DataManager::DofOwnerSet(void)
 				DofOwnerOwner* pEWD = Cast<DofOwnerOwner>(p->second);
 				//Elem* pEl = Cast<Elem>(p->second);
 
-				DEBUGLCOUT(MYDEBUG_INIT, "    " << psElemNames[pEWD->GetElemType()]
-						<< "(" << pEWD->GetLabel() << ")" << std::endl);
+				DEBUGLCOUT(MYDEBUG_INIT, "    " << psElemNames[p->second->GetElemType()]
+						<< "(" << p->second->GetLabel() << ")" << std::endl);
 
 				DofOwner* pDO = const_cast<DofOwner *>(pEWD->pGetDofOwner());
 				pDO->iNumDofs = p->second->iGetNumDof();

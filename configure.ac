@@ -264,6 +264,7 @@ OL_ARG_WITH(suitesparseqr,[  --with-suitesparseqr    with SuiteSparseQR library]
 OL_ARG_WITH(strumpack,[  --with-strumpack        with STRUMPACK library],auto,[auto yes no])
 OL_ARG_WITH(trilinos,[  --with-trilinos          with Trilinos library],auto,[auto yes no])
 OL_ARG_WITH(siconos,[  --with-siconos            with Siconos library],auto,[auto yes no])
+OL_ARG_WITH(mfront,[  --with-mfront            with MFrontGenericInterfaceSupport C++ library],auto,[auto yes no])
 dnl temporarily disabled until we find out how to make it work...
 dnl OL_ARG_WITH(taucs,[  --with-taucs            with TAUCS math library - eXperimental],auto,[auto yes no])
 ol_with_taucs=no
@@ -356,7 +357,7 @@ AC_MSG_CHECKING(for c++ >= c++17)
 AC_RUN_IFELSE(
         [AC_LANG_PROGRAM([],
                 [
-                        if (__cplusplus == 202101L || __cplusplus == 202002L|| __cplusplus == 201703L) {
+                        if (__cplusplus >= 201703L) {
                                 return 0;
                         }
                         return 1;
@@ -385,7 +386,6 @@ AC_RUN_IFELSE(
 )
 AC_LANG([C])
 
-
 dnl ----------------------------------------------------------------
 dnl
 dnl Initialize vars
@@ -412,6 +412,7 @@ SUITESPARSEQR_LIBS=
 STRUMPACK_LIBS=
 TRILINOS_LIBS=
 SICONOS_LIBS=
+MFRONT_LIBS=
 ARPACK_LIBS=
 JDQZ_LIBS=
 SECURITY_LIBS=
@@ -2991,6 +2992,98 @@ fi
 
 dnl ----------------------------------------------------------------
 dnl
+dnl Check for MFrontGenericInterfaceSupport (https://thelfer.github.io/mgis/web/index.html)
+dnl To be used with the MFront code generation tool (https://thelfer.github.io/tfel/web/index.html)
+dnl
+ol_link_mfront=no
+if test $ol_with_mfront != no ; then
+        have_mfront=no
+
+        AC_LANG([C++])
+        AC_CHECK_HEADERS([MGIS/Behaviour/State.hxx MGIS/Behaviour/Behaviour.hxx MGIS/Behaviour/BehaviourData.hxx MGIS/Behaviour/Integrate.hxx],[have_mfront_h=yes],[have_mfront_h=no])
+
+        AC_MSG_CHECKING([for Mfront library])
+        if test "$have_mfront_h" = "yes" ; then
+                have_mfront="no"
+                try_mfront_LIBS="-lMFrontGenericInterface"
+                save_LIBS="$LIBS"
+                LIBS="$try_mfront_LIBS $save_LIBS"
+                AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+                    #include <iostream>
+                    #include <iomanip>
+                    #include <array>
+                    #include <cmath>
+                    #include <cstdlib>
+                    #include <iostream>
+                    #include "MGIS/Behaviour/State.hxx"
+                    #include "MGIS/Behaviour/Behaviour.hxx"
+                    #include "MGIS/Behaviour/BehaviourData.hxx"
+                    #include "MGIS/Behaviour/Integrate.hxx"
+                    #include "MGIS/Behaviour/MaterialStateManager.hxx"
+                        ]], [[
+                    using namespace mgis;
+                    using namespace mgis::behaviour;
+
+                    try {
+                        const auto h = Hypothesis::TRIDIMENSIONAL;
+                        auto o = FiniteStrainBehaviourOptions{};
+                        o.stress_measure = FiniteStrainBehaviourOptions::PK2;
+                        o.tangent_operator = FiniteStrainBehaviourOptions::DS_DEGL;
+                        Behaviour b = load("libBehaviour.so", "Norton", h);
+
+                        constexpr double E = 210000e6;
+                        constexpr double nu = 0.3;
+                        constexpr double Re = 235e6;
+                        constexpr double H = 2000e6;
+
+                        setParameter(b, "YoungModulus", E);
+                        setParameter(b, "PoissonRatio", nu);
+                        setParameter(b, "YieldStrength", Re);
+                        setParameter(b, "HardeningSlope", H);
+
+                        BehaviourData d{b};
+                        BehaviourDataView v{make_view(d)};
+
+                        constexpr int N = 3;
+                        constexpr double epsxx = 1e-3;
+
+                        for (int i = 1; i <= N; ++i) {
+                            d.dt = 1. / N;
+                            d.s1.gradients[0] = epsxx * i / N;
+                            d.s1.gradients[1] = -nu * epsxx * i / N;
+                            d.s1.gradients[2] = -nu * epsxx * i / N;
+                            d.K[0] = 4;
+                            integrate(v, b);
+                            update(d);
+                        }
+
+                        revert(d);
+                        } catch (std::exception& e) {
+                          std::cerr << e.what() << '\n';
+                          return EXIT_FAILURE;
+                        }
+                        return EXIT_SUCCESS;
+                       ]])],[have_mfront="yes"],[])
+
+                       LIBS="$save_LIBS"
+        fi
+
+        if test "$have_mfront" = "yes"; then
+           AC_MSG_RESULT([yes])
+           ol_link_mfront=yes
+           MFRONT_LIBS="$try_mfront_LIBS"
+           AC_DEFINE(USE_MFRONT,1,[define if you want to use MFrontGenericInterfaceSupport])
+        else
+           if test "$ol_with_mfront" = "yes" ; then
+               AC_MSG_ERROR([Could not locate Mfront])
+           fi
+           AC_MSG_RESULT([no])
+        fi
+        AC_LANG([C])
+fi
+
+dnl ----------------------------------------------------------------
+dnl
 dnl Check for ARPACK
 dnl
 ol_link_arpack=no
@@ -3777,6 +3870,7 @@ AC_SUBST(SUITESPARSEQR_LIBS)
 AC_SUBST(STRUMPACK_LIBS)
 AC_SUBST(TRILINOS_LIBS)
 AC_SUBST(SICONOS_LIBS)
+AC_SUBST(MFRONT_LIBS)
 AC_SUBST(LAPACK_LIBS)
 AC_SUBST(BLAS_LIBS)
 AC_SUBST(TAUCS_LIBS)
