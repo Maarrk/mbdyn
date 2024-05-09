@@ -37,23 +37,79 @@
 #include "withlab.h"
 #include "simentity.h"
 #include "tpldrive.h"
-
 #include "matvec3.h"
 #include "matvec6.h"
 #include "sp_gradient.h"
 #include "sp_matrix_base.h"
+#include "ltstrcase.h"
 
 typedef sp_grad::SpColVector<doublereal, 7> Vec7;
+typedef sp_grad::SpColVector<doublereal, 9> Vec9;
+typedef sp_grad::SpMatrix<doublereal, 9, 9> Mat9x9;
 typedef sp_grad::SpMatrix<doublereal, 7, 7> Mat7x7;
+
+// Required for ConstitutiveLaw7D
+template <>
+inline const Vec7&
+mb_zero<Vec7>() {
+     static const Vec7 Zero7(7, 0);
+
+     return Zero7;
+}
+
+template <>
+inline const Mat7x7&
+mb_zero<Mat7x7>() {
+     static const Mat7x7 Zero7x7(7, 7, 0);
+
+     return Zero7x7;
+}
+
+template <>
+inline Mat7x7
+mb_deye<Mat7x7>(const doublereal d) {
+     using namespace sp_grad;
+
+     Mat7x7 A(7, 7, 0);
+
+     for (index_type i = 1; i <= A.iGetNumRows(); ++i) {
+          A(i, i) = d;
+     }
+
+     return A;
+}
+
+template <>
+inline const Vec9&
+mb_zero<Vec9>() {
+     static const Vec9 Zero9(9, 0);
+
+     return Zero9;
+}
+
+// Required for ConstitutiveLaw9D
+template <>
+inline const Mat9x9&
+mb_zero<Mat9x9>() {
+     static const Mat9x9 Zero9x9(9, 9, 0);
+
+     return Zero9x9;
+}
+
+template <>
+inline Mat9x9
+mb_deye<Mat9x9>(const doublereal d) = delete;
 
 template <typename T>
 struct ConstLawHelper {
-     static constexpr sp_grad::index_type iDim = T::iNumRowsStatic;
+     static constexpr sp_grad::index_type iDim1 = T::iNumRowsStatic;
+     static constexpr sp_grad::index_type iDim2 = T::iNumColsStatic;
 };
 
 template <>
 struct ConstLawHelper<doublereal> {
-     static constexpr sp_grad::index_type iDim = 1;
+     static constexpr sp_grad::index_type iDim1 = 1;
+     static constexpr sp_grad::index_type iDim2 = 1;
 };
 
 /* Tipi di cerniere deformabili */
@@ -70,172 +126,189 @@ public:
         };
 };
 
-/* ConstitutiveLaw - begin */
-template <class T, class Tder>
-class ConstitutiveLawBase : public WithLabel, public SimulationEntity {
+class ConstitutiveLawCommon: public SimulationEntity, public WithLabel {
 public:
-	using SimulationEntity::AfterConvergence;
-	using SimulationEntity::Update;
-
-	class ErrNotAvailable : public MBDynErrBase {
-	public:
-		ErrNotAvailable(MBDYN_EXCEPT_ARGS_DECL)
-		: MBDynErrBase(MBDYN_EXCEPT_ARGS_PASSTHRU)
-		{
-			silent_cerr("Constitutive law not available "
-				"for this dimensionality"
-				<< std::endl);
-		};
-		ErrNotAvailable(std::ostream& out, MBDYN_EXCEPT_ARGS_DECL)
-		: MBDynErrBase(MBDYN_EXCEPT_ARGS_PASSTHRU)
-		{
-			out << "Constitutive law not available "
-				"for this dimensionality"
-				<< what()
-				<< std::endl;
-		};
-	};
-
-        typedef typename ConstitutiveLawBase<T, Tder>::ErrNotAvailable Err;   
-
-        typedef T StrainType;
-        typedef T StressType;
-        typedef Tder StressDerStrainType;
-protected:
-        T Epsilon;		/* strain */
-        T EpsilonPrime;		/* strain rate */
-
-        T F;			/* force */
-        Tder FDE;		/* force strain derivative */
-        Tder FDEPrime;		/* force strain rate derivative */
-
-public:
-        static constexpr sp_grad::index_type iDim = ConstLawHelper<T>::iDim;
-
-        ConstitutiveLawBase(void)
-        : WithLabel(0),
-        Epsilon(mb_zero<T>()), EpsilonPrime(mb_zero<T>()),
-        F(mb_zero<T>()), FDE(mb_zero<Tder>()), FDEPrime(mb_zero<Tder>()) {
-                NO_OP;
+        class ErrNotAvailable : public MBDynErrBase {
+        public:
+                ErrNotAvailable(MBDYN_EXCEPT_ARGS_DECL)
+                : MBDynErrBase(MBDYN_EXCEPT_ARGS_PASSTHRU)
+                {
+                        silent_cerr("Constitutive law not available "
+                                "for this dimensionality"
+                                << std::endl);
+                }
+                ErrNotAvailable(std::ostream& out, MBDYN_EXCEPT_ARGS_DECL)
+                : MBDynErrBase(MBDYN_EXCEPT_ARGS_PASSTHRU)
+                {
+                        out << "Constitutive law not available "
+                                "for this dimensionality"
+                                << what()
+                                << std::endl;
+                }
         };
 
-        virtual ~ConstitutiveLawBase(void) {
-                NO_OP;
-        };
+        ConstitutiveLawCommon()
+             :WithLabel(0) {
+        }
 
-        virtual ConstLawType::Type GetConstLawType(void) const = 0;
+        virtual ~ConstitutiveLawCommon() {
+        }
+
+        virtual ConstLawType::Type GetConstLawType() const = 0;
 
         virtual std::ostream& Restart(std::ostream& out) const {
                 return out;
-        };
+        }
+
+        /* simentity */
+        virtual unsigned int iGetNumDof(void) const override {
+                return 0;
+        }
+
+        virtual std::ostream& DescribeDof(std::ostream& out,
+                                          const char *prefix = "",
+                                          bool bInitial = false) const override
+        {
+                return out;
+        }
+
+        virtual void DescribeDof(std::vector<std::string>& desc,
+                                 bool bInitial = false, int i = -1) const override
+        {
+                ASSERT(i <= 0);
+                desc.resize(0);
+        }
+
+        virtual std::ostream& DescribeEq(std::ostream& out,
+                                         const char *prefix = "",
+                                         bool bInitial = false) const override
+        {
+                return out;
+        }
+
+        virtual void DescribeEq(std::vector<std::string>& desc,
+                                bool bInitial = false, int i = -1) const override
+        {
+                ASSERT(i <= 0);
+                desc.resize(0);
+        }
+
+        virtual DofOrder::Order GetDofType(unsigned int i) const override {
+                throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+        }
+};
+
+/* ConstitutiveLaw - begin */
+template <typename Tstress, typename Tder, typename Tstrain = Tstress>
+class ConstitutiveLawBase: public ConstitutiveLawCommon {
+public:
+        using SimulationEntity::AfterConvergence;
+        using SimulationEntity::Update;
+
+        typedef ErrNotAvailable Err;
+
+        typedef Tstrain StrainType;
+        typedef Tstress StressType;
+        typedef Tder StressDerStrainType;
+protected:
+        Tstrain Epsilon;		/* strain */
+        Tstrain EpsilonPrime;		/* strain rate */
+
+        Tstress F;			/* force(stress) */
+        Tder FDE;		/* force(stress) strain derivative */
+        Tder FDEPrime;		/* force(stress) strain rate derivative */
+public:
+        static constexpr sp_grad::index_type iDimStress = ConstLawHelper<Tstress>::iDim1;
+        static constexpr sp_grad::index_type iDimStrain = ConstLawHelper<Tstrain>::iDim1;
+
+        static_assert(ConstLawHelper<Tder>::iDim1 == iDimStress);
+        static_assert(ConstLawHelper<Tder>::iDim2 == iDimStrain);
+        static_assert(iDimStrain >= iDimStress); // required for MFront (e.g. in order to pass the deformation gradient instead of the strain tensor)
+        static_assert(ConstLawHelper<Tstress>::iDim2 == 1);
+        static_assert(ConstLawHelper<Tstrain>::iDim2 == 1);
+
+        ConstitutiveLawBase()
+        : Epsilon(mb_zero<Tstrain>()), EpsilonPrime(mb_zero<Tstrain>()),
+          F(mb_zero<Tstress>()), FDE(mb_zero<Tder>()), FDEPrime(mb_zero<Tder>()) {
+                NO_OP;
+        }
+
+        virtual ~ConstitutiveLawBase() {
+                NO_OP;
+        }
 
         // Main interface used by all the elements without automatic differentiation
-        virtual void Update(const T& Eps, const T& EpsPrime = mb_zero<T>()) = 0;
-     
-        virtual void AfterConvergence(const T& Eps, const T& EpsPrime = mb_zero<T>()) {
+        virtual void Update(const Tstrain& Eps, const Tstrain& EpsPrime = mb_zero<Tstrain>()) = 0;
+
+        virtual void AfterConvergence(const Tstrain& Eps, const Tstrain& EpsPrime = mb_zero<Tstrain>()) {
                 NO_OP;
-        };
+        }
 
-        virtual const T& GetEpsilon(void) const {
+        virtual const Tstrain& GetEpsilon(void) const {
                 return Epsilon;
-        };
+        }
 
-        virtual const T& GetEpsilonPrime(void) const {
+        virtual const Tstrain& GetEpsilonPrime(void) const {
                 return EpsilonPrime;
-        };
+        }
 
-        virtual const T& GetF(void) const {
+        virtual const Tstress& GetF(void) const {
                 return F;
-        };
+        }
 
         virtual const Tder& GetFDE(void) const {
                 return FDE;
-        };
+        }
 
         virtual const Tder& GetFDEPrime(void) const {
                 return FDEPrime;
-        };
-
-        /* simentity */
-        virtual unsigned int iGetNumDof(void) const {
-                return 0;
-        };
-
-        virtual std::ostream& DescribeDof(std::ostream& out,
-                        const char *prefix = "",
-                        bool bInitial = false) const
-        {
-                return out;
-        };
-        virtual void DescribeDof(std::vector<std::string>& desc,
-                        bool bInitial = false, int i = -1) const
-        {
-                ASSERT(i <= 0);
-                desc.resize(0);
-        };
-
-        virtual std::ostream& DescribeEq(std::ostream& out,
-                        const char *prefix = "",
-                        bool bInitial = false) const
-        {
-                return out;
-        };
-
-        virtual void DescribeEq(std::vector<std::string>& desc,
-                        bool bInitial = false, int i = -1) const
-        {
-                ASSERT(i <= 0);
-                desc.resize(0);
-        };
-
-        virtual DofOrder::Order GetDofType(unsigned int i) const {
-                throw ErrGeneric(MBDYN_EXCEPT_ARGS);
-        };
+        }
 };
 
-template <typename T, typename Tder>
-class ConstitutiveLawAd: public ConstitutiveLawBase<T, Tder> {
+template <typename Tstress, typename Tder, typename Tstrain = Tstress>
+class ConstitutiveLawAd: public ConstitutiveLawBase<Tstress, Tder, Tstrain> {
 public:
-     using ConstitutiveLawBase<T, Tder>::iDim;
-     using ConstitutiveLawBase<T, Tder>::Update;
-     using ConstitutiveLawBase<T, Tder>::F;
-     using ConstitutiveLawBase<T, Tder>::FDE;
-     using ConstitutiveLawBase<T, Tder>::FDEPrime;
-     
+     using ConstitutiveLawBase<Tstress, Tder, Tstrain>::iDimStress;
+     using ConstitutiveLawBase<Tstress, Tder, Tstrain>::iDimStrain;
+     using ConstitutiveLawBase<Tstress, Tder, Tstrain>::Update;
+     using ConstitutiveLawBase<Tstress, Tder, Tstrain>::F;
+     using ConstitutiveLawBase<Tstress, Tder, Tstrain>::FDE;
+     using ConstitutiveLawBase<Tstress, Tder, Tstrain>::FDEPrime;
+
      // The following functions provide a default implementation of the interfaces,
      // used by elements with automatic differentiation, for all the constitutive laws
      // without explicit support for automatic differentiation.
      virtual void
-     Update(const sp_grad::SpColVector<doublereal, iDim>& Eps,
-            sp_grad::SpColVector<doublereal, iDim>& FTmp,
+     Update(const sp_grad::SpColVector<doublereal, iDimStrain>& Eps,
+            sp_grad::SpColVector<doublereal, iDimStress>& FTmp,
             const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap);
 
      virtual void
-     Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDim>& Eps,
-            sp_grad::SpColVector<sp_grad::SpGradient, iDim>& FTmp,
+     Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& Eps,
+            sp_grad::SpColVector<sp_grad::SpGradient, iDimStress>& FTmp,
             const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap);
 
      virtual void
-     Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDim>& Eps,
-            sp_grad::SpColVector<sp_grad::GpGradProd, iDim>& FTmp,
+     Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& Eps,
+            sp_grad::SpColVector<sp_grad::GpGradProd, iDimStress>& FTmp,
             const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap);
 
      virtual void
-     Update(const sp_grad::SpColVector<doublereal, iDim>& Eps,
-            const sp_grad::SpColVector<doublereal, iDim>& EpsPrime,
-            sp_grad::SpColVector<doublereal, iDim>& FTmp,
+     Update(const sp_grad::SpColVector<doublereal, iDimStrain>& Eps,
+            const sp_grad::SpColVector<doublereal, iDimStrain>& EpsPrime,
+            sp_grad::SpColVector<doublereal, iDimStress>& FTmp,
             const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap);
 
      virtual void
-     Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDim>& Eps,
-            const sp_grad::SpColVector<sp_grad::SpGradient, iDim>& EpsPrime,
-            sp_grad::SpColVector<sp_grad::SpGradient, iDim>& FTmp,
+     Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& Eps,
+            const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& EpsPrime,
+            sp_grad::SpColVector<sp_grad::SpGradient, iDimStress>& FTmp,
             const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap);
 
      virtual void
-     Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDim>& Eps,
-            const sp_grad::SpColVector<sp_grad::GpGradProd, iDim>& EpsPrime,
-            sp_grad::SpColVector<sp_grad::GpGradProd, iDim>& FTmp,
+     Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& Eps,
+            const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& EpsPrime,
+            sp_grad::SpColVector<sp_grad::GpGradProd, iDimStress>& FTmp,
             const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap);
 
 protected:
@@ -244,26 +317,27 @@ protected:
      // Those functions may be instantiated by derived classes.
      template <typename ConstLaw>
      static inline void
-     UpdateElasticSparse(ConstLaw* pCl, const T& Eps);
+     UpdateElasticSparse(ConstLaw* pCl, const Tstrain& Eps);
 
      template <typename ConstLaw>
      static inline void
-     UpdateViscoelasticSparse(ConstLaw* pCl, const T& Eps, const T& EpsPrime);
+     UpdateViscoelasticSparse(ConstLaw* pCl, const Tstrain& Eps, const Tstrain& EpsPrime);
 };
 
 template <>
-class ConstitutiveLawAd<doublereal, doublereal>: public ConstitutiveLawBase<doublereal, doublereal> {    
+class ConstitutiveLawAd<doublereal, doublereal>: public ConstitutiveLawBase<doublereal, doublereal> {
      // TODO: add dedicated Update functions for scalar types
 };
 
-template <typename T, typename Tder>
-class ConstitutiveLaw: public ConstitutiveLawAd<T, Tder> {
-     typedef ConstitutiveLawBase<T, Tder> ConstLawBaseType;
-     typedef ConstitutiveLawAd<T, Tder> ConstLawAdType;
+template <typename Tstress, typename Tder, typename Tstrain = Tstress>
+class ConstitutiveLaw: public ConstitutiveLawAd<Tstress, Tder, Tstrain> {
+     typedef ConstitutiveLawBase<Tstress, Tder, Tstrain> ConstLawBaseType;
+     typedef ConstitutiveLawAd<Tstress, Tder, Tstrain> ConstLawAdType;
 public:
      virtual ConstitutiveLaw* pCopy() const = 0;
 
-     using ConstLawBaseType::iDim;
+     using ConstLawBaseType::iDimStress;
+     using ConstLawBaseType::iDimStrain;
      using ConstLawBaseType::Update;
      using ConstLawAdType::Update;
      using ConstLawBaseType::GetConstLawType;
@@ -287,12 +361,13 @@ typedef ConstitutiveLaw<doublereal, doublereal> ConstitutiveLaw1D;
 typedef ConstitutiveLaw<Vec3, Mat3x3> ConstitutiveLaw3D;
 typedef ConstitutiveLaw<Vec6, Mat6x6> ConstitutiveLaw6D;
 typedef ConstitutiveLaw<Vec7, Mat7x7> ConstitutiveLaw7D;
+typedef ConstitutiveLaw<Vec9, Mat9x9> ConstitutiveLaw9D;
 
-template <typename T, typename Tder>
+template <typename Tstress, typename Tder, typename Tstrain>
 void
-ConstitutiveLawAd<T, Tder>::Update(const sp_grad::SpColVector<doublereal, iDim>& Eps,
-                                   sp_grad::SpColVector<doublereal, iDim>& FTmp,
-                                   const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap)
+ConstitutiveLawAd<Tstress, Tder, Tstrain>::Update(const sp_grad::SpColVector<doublereal, iDimStrain>& Eps,
+                                                  sp_grad::SpColVector<doublereal, iDimStress>& FTmp,
+                                                  const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap)
 {
      using namespace sp_grad;
 
@@ -308,53 +383,53 @@ ConstitutiveLawAd<T, Tder>::Update(const sp_grad::SpColVector<doublereal, iDim>&
      FTmp = this->GetF();
 }
 
-template <typename T, typename Tder>
+template <typename Tstress, typename Tder, typename Tstrain>
 void
-ConstitutiveLawAd<T, Tder>::Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDim>& Eps,
-                                   sp_grad::SpColVector<sp_grad::SpGradient, iDim>& FTmp,
-                                   const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap)
+ConstitutiveLawAd<Tstress, Tder, Tstrain>::Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& Eps,
+                                                  sp_grad::SpColVector<sp_grad::SpGradient, iDimStress>& FTmp,
+                                                  const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap)
 {
      using namespace sp_grad;
 
      ASSERT(this->iGetNumDof() == 0);
      ASSERT((this->GetConstLawType() & ConstLawType::VISCOUS) == 0);
 
-     for (index_type i = 1; i <= iDim; ++i) {
+     for (index_type i = 1; i <= iDimStress; ++i) {
           FTmp(i).ResizeReset(this->F(i), oDofMap.iGetLocalSize());
           FTmp(i).InitDeriv(oDofMap.GetDofMap());
 
-          for (index_type j = 1; j <= iDim; ++j) {
+          for (index_type j = 1; j <= iDimStrain; ++j) {
                Eps(j).AddDeriv(FTmp(i), this->FDE(i, j), oDofMap.GetDofMap());
           }
      }
 }
 
-template <typename T, typename Tder>
+template <typename Tstress, typename Tder, typename Tstrain>
 void
-ConstitutiveLawAd<T, Tder>::Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDim>& Eps,
-                                   sp_grad::SpColVector<sp_grad::GpGradProd, iDim>& FTmp,
-                                   const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap)
+ConstitutiveLawAd<Tstress, Tder, Tstrain>::Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& Eps,
+                                                  sp_grad::SpColVector<sp_grad::GpGradProd, iDimStress>& FTmp,
+                                                  const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap)
 {
      using namespace sp_grad;
 
      ASSERT(this->iGetNumDof() == 0);
      ASSERT((this->GetConstLawType() & ConstLawType::VISCOUS) == 0);
 
-     for (index_type i = 1; i <= iDim; ++i) {
+     for (index_type i = 1; i <= iDimStress; ++i) {
           FTmp(i).Reset(this->F(i));
 
-          for (index_type j = 1; j <= iDim; ++j) {
+          for (index_type j = 1; j <= iDimStrain; ++j) {
                Eps(j).InsertDeriv(FTmp(i), this->FDE(i, j));
           }
      }
 }
 
-template <typename T, typename Tder>
+template <typename Tstress, typename Tder, typename Tstrain>
 void
-ConstitutiveLawAd<T, Tder>::Update(const sp_grad::SpColVector<doublereal, iDim>& Eps,
-                                   const sp_grad::SpColVector<doublereal, iDim>& EpsPrime,
-                                   sp_grad::SpColVector<doublereal, iDim>& FTmp,
-                                   const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap)
+ConstitutiveLawAd<Tstress, Tder, Tstrain>::Update(const sp_grad::SpColVector<doublereal, iDimStrain>& Eps,
+                                                  const sp_grad::SpColVector<doublereal, iDimStrain>& EpsPrime,
+                                                  sp_grad::SpColVector<doublereal, iDimStress>& FTmp,
+                                                  const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap)
 {
      using namespace sp_grad;
 
@@ -369,67 +444,67 @@ ConstitutiveLawAd<T, Tder>::Update(const sp_grad::SpColVector<doublereal, iDim>&
      FTmp = this->GetF();
 }
 
-template <typename T, typename Tder>
+template <typename Tstress, typename Tder, typename Tstrain>
 void
-ConstitutiveLawAd<T, Tder>::Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDim>& Eps,
-                                   const sp_grad::SpColVector<sp_grad::SpGradient, iDim>& EpsPrime,
-                                   sp_grad::SpColVector<sp_grad::SpGradient, iDim>& FTmp,
-                                   const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap)
+ConstitutiveLawAd<Tstress, Tder, Tstrain>::Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& Eps,
+                                                  const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& EpsPrime,
+                                                  sp_grad::SpColVector<sp_grad::SpGradient, iDimStress>& FTmp,
+                                                  const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap)
 {
      using namespace sp_grad;
 
      ASSERT(this->iGetNumDof() == 0);
      ASSERT((this->GetConstLawType() & ConstLawType::VISCOUS) != 0);
 
-     for (index_type i = 1; i <= iDim; ++i) {
+     for (index_type i = 1; i <= iDimStress; ++i) {
           FTmp(i).ResizeReset(this->F(i), oDofMap.iGetLocalSize());
           FTmp(i).InitDeriv(oDofMap.GetDofMap());
 
-          for (index_type j = 1; j <= iDim; ++j) {
+          for (index_type j = 1; j <= iDimStrain; ++j) {
                Eps(j).AddDeriv(FTmp(i), this->FDE(i, j), oDofMap.GetDofMap());
                EpsPrime(j).AddDeriv(FTmp(i), this->FDEPrime(i, j), oDofMap.GetDofMap());
           }
      }
 }
 
-template <typename T, typename Tder>
+template <typename Tstress, typename Tder, typename Tstrain>
 void
-ConstitutiveLawAd<T, Tder>::Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDim>& Eps,
-                                   const sp_grad::SpColVector<sp_grad::GpGradProd, iDim>& EpsPrime,
-                                   sp_grad::SpColVector<sp_grad::GpGradProd, iDim>& FTmp,
-                                   const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap)
+ConstitutiveLawAd<Tstress, Tder, Tstrain>::Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& Eps,
+                                                  const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& EpsPrime,
+                                                  sp_grad::SpColVector<sp_grad::GpGradProd, iDimStress>& FTmp,
+                                                  const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap)
 {
      using namespace sp_grad;
 
      ASSERT(this->iGetNumDof() == 0);
      ASSERT((this->GetConstLawType() & ConstLawType::VISCOUS) != 0);
 
-     for (index_type i = 1; i <= iDim; ++i) {
+     for (index_type i = 1; i <= iDimStress; ++i) {
           FTmp(i).Reset(this->F(i));
 
-          for (index_type j = 1; j <= iDim; ++j) {
+          for (index_type j = 1; j <= iDimStrain; ++j) {
                Eps(j).InsertDeriv(FTmp(i), this->FDE(i, j));
                EpsPrime(j).InsertDeriv(FTmp(i), this->FDEPrime(i, j));
           }
      }
 }
 
-template <class T, class Tder>
+template <typename Tstress, typename Tder, typename Tstrain>
 template <typename ConstLaw>
 void
-ConstitutiveLawAd<T, Tder>::UpdateViscoelasticSparse(ConstLaw* pCl, const T& Eps, const T& EpsPrime)
+ConstitutiveLawAd<Tstress, Tder, Tstrain>::UpdateViscoelasticSparse(ConstLaw* pCl, const Tstrain& Eps, const Tstrain& EpsPrime)
 {
         using namespace sp_grad;
-        constexpr index_type N = ConstLawHelper<T>::iDim;
-        SpColVectorA<SpGradient, N> gEps, gEpsPrime, gF;
+        SpColVectorA<SpGradient, iDimStrain> gEps, gEpsPrime;
+        SpColVectorA<SpGradient, iDimStress> gF;
 
         pCl->Epsilon = Eps;
         pCl->EpsilonPrime = EpsPrime;
 
-        for (index_type i = 1; i <= N; ++i)
+        for (index_type i = 1; i <= iDimStrain; ++i)
         {
              gEps(i).Reset(Eps(i), i, 1.);
-             gEpsPrime(i).Reset(EpsPrime(i), i + N, 1.);
+             gEpsPrime(i).Reset(EpsPrime(i), i + iDimStrain, 1.);
         }
 
         SpGradExpDofMapHelper<SpGradient> oDofMap;
@@ -443,40 +518,40 @@ ConstitutiveLawAd<T, Tder>::UpdateViscoelasticSparse(ConstLaw* pCl, const T& Eps
 
         pCl->UpdateViscoelasticTpl(gEps, gEpsPrime, gF, oDofMap);
 
-        for (index_type j = 1; j <= N; ++j) {
-             for (index_type i = 1; i <= N; ++i) {
+        for (index_type j = 1; j <= iDimStrain; ++j) {
+             for (index_type i = 1; i <= iDimStress; ++i) {
                   pCl->FDE(i, j) = pCl->FDEPrime(i, j) = 0.;
              }
         }
 
-        for (index_type i = 1; i <= N; ++i) {
+        for (index_type i = 1; i <= iDimStress; ++i) {
                 pCl->F(i) = gF(i).dGetValue();
 
                 for (const auto& oDer: gF(i)) {
                      ASSERT(oDer.iDof >= 1);
-                     ASSERT(oDer.iDof <= 2 * N);
+                     ASSERT(oDer.iDof <= 2 * iDimStrain);
 
-                     if (oDer.iDof <= N) {
+                     if (oDer.iDof <= iDimStrain) {
                           pCl->FDE(i, oDer.iDof) += oDer.dDer;
                      } else {
-                          pCl->FDEPrime(i, oDer.iDof - N) += oDer.dDer;
+                          pCl->FDEPrime(i, oDer.iDof - iDimStrain) += oDer.dDer;
                      }
                 }
         }
 }
 
-template <class T, class Tder>
+template <typename T, typename Tder, typename Tstrain>
 template <typename ConstLaw>
 void
-ConstitutiveLawAd<T, Tder>::UpdateElasticSparse(ConstLaw* pCl, const T& Eps)
+ConstitutiveLawAd<T, Tder, Tstrain>::UpdateElasticSparse(ConstLaw* pCl, const Tstrain& Eps)
 {
         using namespace sp_grad;
-        constexpr index_type N = ConstLawHelper<T>::iDim;
-        SpColVectorA<SpGradient, N> gEps, gF;
+        SpColVectorA<SpGradient, iDimStrain> gEps;
+        SpColVectorA<SpGradient, iDimStress> gF;
 
         pCl->Epsilon = Eps;
 
-        for (index_type i = 1; i <= N; ++i)
+        for (index_type i = 1; i <= iDimStrain; ++i)
         {
              gEps(i).Reset(Eps(i), i, 1.);
         }
@@ -490,18 +565,18 @@ ConstitutiveLawAd<T, Tder>::UpdateElasticSparse(ConstLaw* pCl, const T& Eps)
 
         pCl->UpdateElasticTpl(gEps, gF, oDofMap);
 
-        for (index_type j = 1; j <= N; ++j) {
-             for (index_type i = 1; i <= N; ++i) {
+        for (index_type j = 1; j <= iDimStrain; ++j) {
+             for (index_type i = 1; i <= iDimStress; ++i) {
                   pCl->FDE(i, j) = 0.;
              }
         }
 
-        for (index_type i = 1; i <= N; ++i) {
+        for (index_type i = 1; i <= iDimStress; ++i) {
                 pCl->F(i) = gF(i).dGetValue();
 
                 for (const auto& oDer: gF(i)) {
                      ASSERT(oDer.iDof >= 1);
-                     ASSERT(oDer.iDof <= N);
+                     ASSERT(oDer.iDof <= iDimStrain);
                      pCl->FDE(i, oDer.iDof) += oDer.dDer;
                 }
         }
@@ -647,35 +722,46 @@ ConstitutiveLawAd<T, Tder>::UpdateElasticSparse(ConstLaw* pCl, const T& Eps)
 
 /* ConstitutiveLawOwner - end */
 
-/* functions that read a constitutive law */
-extern ConstitutiveLaw<doublereal, doublereal> *
-ReadCL1D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType);
-extern ConstitutiveLaw<Vec3, Mat3x3> *
-ReadCL3D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType);
-extern ConstitutiveLaw<Vec6, Mat6x6> *
-ReadCL6D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType);
-extern ConstitutiveLaw<Vec7, Mat7x7> *
-ReadCL7D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType);
-
 /* prototype of the template functional object: reads a constitutive law */
-template <class T, class Tder>
+template <typename Tstress, typename Tder, typename Tstrain = Tstress>
 struct ConstitutiveLawRead {
-        virtual ~ConstitutiveLawRead<T, Tder>( void ) { NO_OP; };
-        virtual ConstitutiveLaw<T, Tder> *
+        virtual ~ConstitutiveLawRead( void ) { NO_OP; };
+        virtual ConstitutiveLaw<Tstress, Tder, Tstrain>*
         Read(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType) = 0;
 };
 
+/* functions that read a constitutive law */
+ConstitutiveLaw<doublereal, doublereal> *
+ReadCL1D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType);
+
+ConstitutiveLaw<Vec3, Mat3x3> *
+ReadCL3D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType);
+
+ConstitutiveLaw<Vec6, Mat6x6> *
+ReadCL6D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType);
+
+ConstitutiveLaw<Vec7, Mat7x7> *
+ReadCL7D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType);
+
+ConstitutiveLaw<Vec9, Mat9x9>*
+ReadCL9D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType);
+
 /* constitutive law registration functions: call to register one */
-extern bool
-SetCL1D(const char *name, ConstitutiveLawRead<doublereal, doublereal> *rf);
-extern bool
-SetCL3D(const char *name, ConstitutiveLawRead<Vec3, Mat3x3> *rf);
-extern bool
-SetCL6D(const char *name, ConstitutiveLawRead<Vec6, Mat6x6> *rf);
-extern bool
-SetCL7D(const char *name, ConstitutiveLawRead<Vec7, Mat7x7> *rf);
-/* create/destroy */
-extern void InitCL(void);
-extern void DestroyCL(void);
+bool
+SetCL1D(const std::string& name, ConstitutiveLawRead<doublereal, doublereal>* rf);
+
+bool
+SetCL3D(const std::string& name, ConstitutiveLawRead<Vec3, Mat3x3>* rf);
+
+bool
+SetCL6D(const std::string& name, ConstitutiveLawRead<Vec6, Mat6x6>* rf);
+
+bool
+SetCL7D(const std::string& name, ConstitutiveLawRead<Vec7, Mat7x7>* rf);
+
+bool
+SetCL9D(const std::string& name, ConstitutiveLawRead<Vec9, Mat9x9>* rf);
+
+void ClearCL();
 
 #endif /* CONSTLTP_H */

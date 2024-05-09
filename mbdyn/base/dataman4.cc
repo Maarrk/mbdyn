@@ -114,15 +114,21 @@ enum KeyWords {
 	SHELL4EAS,
 	SHELL4EASANS,
         HEXAHEDRON8,
+        HEXAHEDRON8F,
         HEXAHEDRON8UPC,        
         HEXAHEDRON20,
+        HEXAHEDRON20F,     
         HEXAHEDRON20UPC,
-        HEXAHEDRON20UPCR,
         HEXAHEDRON20R,
+        HEXAHEDRON20FR,
+        HEXAHEDRON20UPCR,
         HEXAHEDRON27,
+        HEXAHEDRON27F,      
         PENTAHEDRON15,
+        PENTAHEDRON15F,        
         PENTAHEDRON15UPC,
         TETRAHEDRON10,
+        TETRAHEDRON10F,      
         TETRAHEDRON10UPC,
         PRESSUREQ4,
         PRESSUREQ8,
@@ -203,15 +209,21 @@ DataManager::ReadElems(MBDynParser& HP)
 		"shell4eas",
 		"shell4easans",
                 "hexahedron8",
+                "hexahedron8f",                
                 "hexahedron8upc",                
                 "hexahedron20",
+                "hexahedron20f",                
                 "hexahedron20upc",
-                "hexahedron20upcr",
                 "hexahedron20r",
+                "hexahedron20fr",
+                "hexahedron20upcr",
                 "hexahedron27",
+                "hexahedron27f",
                 "pentahedron15",
+                "pentahedron15f",                
                 "pentahedron15upc",
                 "tetrahedron10",
+                "tetrahedron10f",
                 "tetrahedron10upc",
                 "pressureq4",
                 "pressureq8",
@@ -406,15 +418,21 @@ DataManager::ReadElems(MBDynParser& HP)
 			}
 
                         case HEXAHEDRON8:
+                        case HEXAHEDRON8F:
                         case HEXAHEDRON8UPC:                             
                         case HEXAHEDRON20:
+                        case HEXAHEDRON20F:                             
                         case HEXAHEDRON20UPC:
-                        case HEXAHEDRON20UPCR:
                         case HEXAHEDRON20R:
+                        case HEXAHEDRON20FR:                             
+                        case HEXAHEDRON20UPCR:
                         case HEXAHEDRON27:
+                        case HEXAHEDRON27F:                             
                         case PENTAHEDRON15:
+                        case PENTAHEDRON15F:                             
                         case PENTAHEDRON15UPC:
                         case TETRAHEDRON10:
+                        case TETRAHEDRON10F:                             
                         case TETRAHEDRON10UPC: {
                              DEBUGLCOUT(MYDEBUG_INPUT, "solids\n");
                              Typ = Elem::SOLID;
@@ -625,15 +643,21 @@ DataManager::ReadElems(MBDynParser& HP)
 					break;
                                         
                                 case HEXAHEDRON8:
+                                case HEXAHEDRON8F:
                                 case HEXAHEDRON8UPC:
                                 case HEXAHEDRON20:
+                                case HEXAHEDRON20F:
                                 case HEXAHEDRON20UPC:
-                                case HEXAHEDRON20UPCR:
                                 case HEXAHEDRON20R:
+                                case HEXAHEDRON20FR:                                     
+                                case HEXAHEDRON20UPCR:
                                 case HEXAHEDRON27:
+                                case HEXAHEDRON27F:                                     
                                 case PENTAHEDRON15:
+                                case PENTAHEDRON15F:                                   
                                 case PENTAHEDRON15UPC:
                                 case TETRAHEDRON10:
+                                case TETRAHEDRON10F:
                                 case TETRAHEDRON10UPC:
                                         t = Elem::SOLID;
                                         break;
@@ -1246,15 +1270,21 @@ DataManager::ReadElems(MBDynParser& HP)
 				case SHELL4EAS:
 				case SHELL4EASANS:
                                 case HEXAHEDRON8:
+                                case HEXAHEDRON8F:                                     
                                 case HEXAHEDRON8UPC:                                     
                                 case HEXAHEDRON20:
+                                case HEXAHEDRON20F:                                     
                                 case HEXAHEDRON20UPC:
-                                case HEXAHEDRON20UPCR:
                                 case HEXAHEDRON20R:
+                                case HEXAHEDRON20FR:                                     
+                                case HEXAHEDRON20UPCR:
                                 case HEXAHEDRON27:
+                                case HEXAHEDRON27F:                                     
                                 case PENTAHEDRON15:
+                                case PENTAHEDRON15F:                                     
                                 case PENTAHEDRON15UPC:
                                 case TETRAHEDRON10:
+                                case TETRAHEDRON10F:                                     
                                 case TETRAHEDRON10UPC:
                                 case PRESSUREQ4:
                                 case PRESSUREQ8:
@@ -1769,41 +1799,59 @@ DataManager::ReadOneElem(MBDynParser& HP, unsigned int uLabel, const std::string
 	}
 
         case HEXAHEDRON8:
+        case HEXAHEDRON8F:
         case HEXAHEDRON8UPC:
         case HEXAHEDRON20:
+        case HEXAHEDRON20F:
         case HEXAHEDRON20UPC:
-        case HEXAHEDRON20UPCR:
         case HEXAHEDRON20R:
+        case HEXAHEDRON20FR:
+        case HEXAHEDRON20UPCR:
         case HEXAHEDRON27:
+        case HEXAHEDRON27F:
         case PENTAHEDRON15:
+        case PENTAHEDRON15F:
         case PENTAHEDRON15UPC:
         case TETRAHEDRON10:
+        case TETRAHEDRON10F:
         case TETRAHEDRON10UPC: {
                 static constexpr char sType[][17] = {
                         "Hexahedron8",
+                        "Hexahedron8f",
                         "Hexahedron8upc",
                         "Hexahedron20",
+                        "Hexahedron20f",
                         "Hexahedron20upc",
-                        "Hexahedron20upcr",
                         "Hexahedron20r",
+                        "Hexahedron20fr",
+                        "Hexahedron20upcr",
                         "Hexahedron27",
+                        "Hexahedron27f",
                         "Pentahedron15",
+                        "Pentahedron15f",
                         "Pentahedron15upc",
                         "Tetrahedron10",
+                        "Tetrahedron10f",
                         "Tetrahedron10upc"
                 };
 
                 constexpr integer iNumElemTypes = sizeof(sType) / sizeof(sType[0]);
 
                 static_assert(HEXAHEDRON8UPC - HEXAHEDRON8 < iNumElemTypes, "index out of range");
+                static_assert(HEXAHEDRON8F - HEXAHEDRON8 < iNumElemTypes, "index out of range");
                 static_assert(HEXAHEDRON20 - HEXAHEDRON8 < iNumElemTypes, "index out of range");
+                static_assert(HEXAHEDRON20F - HEXAHEDRON8 < iNumElemTypes, "index out of range");
                 static_assert(HEXAHEDRON20UPC - HEXAHEDRON8 < iNumElemTypes, "index out of range");
-                static_assert(HEXAHEDRON20UPCR - HEXAHEDRON8 < iNumElemTypes, "index out of range");
                 static_assert(HEXAHEDRON20R - HEXAHEDRON8 < iNumElemTypes, "index out of range");
+                static_assert(HEXAHEDRON20FR - HEXAHEDRON8 < iNumElemTypes, "index out of range");
+                static_assert(HEXAHEDRON20UPCR - HEXAHEDRON8 < iNumElemTypes, "index out of range");
                 static_assert(HEXAHEDRON27 - HEXAHEDRON8 < iNumElemTypes, "index out of range");
+                static_assert(HEXAHEDRON27F - HEXAHEDRON8 < iNumElemTypes, "index out of range");
                 static_assert(PENTAHEDRON15 - HEXAHEDRON8 < iNumElemTypes, "index out of range");
+                static_assert(PENTAHEDRON15F - HEXAHEDRON8 < iNumElemTypes, "index out of range");
                 static_assert(PENTAHEDRON15UPC - HEXAHEDRON8 < iNumElemTypes, "index out of range");
                 static_assert(TETRAHEDRON10 - HEXAHEDRON8 < iNumElemTypes, "index out of range");
+                static_assert(TETRAHEDRON10F - HEXAHEDRON8 < iNumElemTypes, "index out of range");
                 static_assert(TETRAHEDRON10UPC - HEXAHEDRON8 < iNumElemTypes, "index out of range");
 
                 ASSERT(CurrType - HEXAHEDRON8 < iNumElemTypes);
@@ -1838,32 +1886,50 @@ DataManager::ReadOneElem(MBDynParser& HP, unsigned int uLabel, const std::string
                 case HEXAHEDRON8:
                      pE = ReadSolid<Hexahedron8, Gauss2x2x2>(this, HP, uLabel);
                      break;
+                case HEXAHEDRON8F:
+                     pE = ReadSolid<Hexahedron8f, Gauss2x2x2>(this, HP, uLabel);
+                     break;
                 case HEXAHEDRON8UPC:
                      pE = ReadSolid<Hexahedron8upc, Gauss2x2x2>(this, HP, uLabel);
                      break;
                 case HEXAHEDRON20:
                      pE = ReadSolid<Hexahedron20, Gauss3x3x3>(this, HP, uLabel);
                      break;
+                case HEXAHEDRON20F:
+                     pE = ReadSolid<Hexahedron20f, Gauss3x3x3>(this, HP, uLabel);
+                     break;
                 case HEXAHEDRON20UPC:
                      pE = ReadSolid<Hexahedron20upc, Gauss3x3x3>(this, HP, uLabel);
-                     break;
-                case HEXAHEDRON20UPCR:
-                     pE = ReadSolid<Hexahedron20upcr, GaussH20r>(this, HP, uLabel);
                      break;
                 case HEXAHEDRON20R:
                      pE = ReadSolid<Hexahedron20r, GaussH20r>(this, HP, uLabel);
                      break;
+                case HEXAHEDRON20FR:
+                     pE = ReadSolid<Hexahedron20fr, GaussH20r>(this, HP, uLabel);
+                     break;
+                case HEXAHEDRON20UPCR:
+                     pE = ReadSolid<Hexahedron20upcr, GaussH20r>(this, HP, uLabel);
+                     break;
                 case HEXAHEDRON27:
                      pE = ReadSolid<Hexahedron27, Gauss3x3x3>(this, HP, uLabel);
                      break;
+                case HEXAHEDRON27F:
+                     pE = ReadSolid<Hexahedron27f, Gauss3x3x3>(this, HP, uLabel);
+                     break;
                 case PENTAHEDRON15:
                      pE = ReadSolid<Pentahedron15, CollocPenta15>(this, HP, uLabel);
+                     break;
+                case PENTAHEDRON15F:
+                     pE = ReadSolid<Pentahedron15f, CollocPenta15>(this, HP, uLabel);
                      break;
                 case PENTAHEDRON15UPC:
                      pE = ReadSolid<Pentahedron15upc, CollocPenta15>(this, HP, uLabel);
                      break;
                 case TETRAHEDRON10:
-                     pE = ReadSolid<Tetrahedron10h, CollocTet10h>(this, HP, uLabel);
+                     pE = ReadSolid<Tetrahedron10, CollocTet10h>(this, HP, uLabel);
+                     break;
+                case TETRAHEDRON10F:
+                     pE = ReadSolid<Tetrahedron10f, CollocTet10h>(this, HP, uLabel);
                      break;
                 case TETRAHEDRON10UPC:
                      pE = ReadSolid<Tetrahedron10upc, CollocTet10h>(this, HP, uLabel);

@@ -134,7 +134,8 @@ test: all
 		"libraries/libmbwrap/wraptest -m lapack" \
 		"libraries/libmbwrap/wraptest -m qr" \
 		"libraries/liby12/y12test" \
-		"mbdyn/struct/solidshapetest" ; do \
+		"mbdyn/struct/solidshapetest ${MBD_TEST_PROGS_GTEST_FLAGS}" \
+                "mbdyn/solidcsltest ${MBD_TEST_PROGS_GTEST_FLAGS}" ; do \
 		printf "running command: \"%s\"\n" "$${cmd}" ; \
 		$${cmd} ; \
 		rc=$$? ; \

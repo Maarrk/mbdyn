@@ -72,6 +72,7 @@ $(GINACLIB_LIBS) \
 @SICONOS_LIBS@ \
 @LIBS@ \
 @GTEST_LIBS@ \
+@MFRONT_LIBS@ \
 $(GINACLIB_LIBS)
 
 ### note: to avoid dynamic linking, in mbdyn_LDADD use
@@ -92,5 +93,9 @@ AM_CPPFLAGS = \
 -I$(srcdir)/../mbdyn/hydr \
 $(GINACLIB_CPPFLAGS) \
 @GTEST_INCLUDE@
+
+noinst_PROGRAMS = solidcsltest
+solidcsltest_SOURCES = struct/solidcsltest.cc
+solidcsltest_LDADD = $(mbdyn_LDADD)
 
 include $(top_srcdir)/build/bot.mk

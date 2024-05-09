@@ -200,7 +200,7 @@ screwjoint.h \
 screwjoint.cc
 endif
 
-libstruct_la_LIBADD = @LIBS@
+libstruct_la_LIBADD = @LIBS@ @MFRONT_LIBS@
 libstruct_la_LDFLAGS = -static
 
 noinst_PROGRAMS = solidshapetest

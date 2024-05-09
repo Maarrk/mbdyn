@@ -57,185 +57,6 @@
 #include "constltp_axw.h"
 #include "constltp_dcw.h"
 
-/* constitutive law containers */
-typedef std::map<std::string, ConstitutiveLawRead<doublereal, doublereal> *, ltstrcase> CL1DFuncMapType;
-typedef std::map<std::string, ConstitutiveLawRead<Vec3, Mat3x3> *, ltstrcase> CL3DFuncMapType;
-typedef std::map<std::string, ConstitutiveLawRead<Vec6, Mat6x6> *, ltstrcase> CL6DFuncMapType;
-typedef std::map<std::string, ConstitutiveLawRead<Vec7, Mat7x7> *, ltstrcase> CL7DFuncMapType;
-
-static CL1DFuncMapType CL1DFuncMap;
-static CL3DFuncMapType CL3DFuncMap;
-static CL6DFuncMapType CL6DFuncMap;
-static CL7DFuncMapType CL7DFuncMap;
-
-/* constitutive law parsing checkers */
-struct CL1DWordSetType : public HighParser::WordSet {
-	bool IsWord(const std::string& s) const {
-		return CL1DFuncMap.find(s) != CL1DFuncMap.end();
-	};
-};
-
-struct CL3DWordSetType : public HighParser::WordSet {
-	bool IsWord(const std::string& s) const {
-		return CL3DFuncMap.find(s) != CL3DFuncMap.end();
-	};
-};
-
-struct CL6DWordSetType : public HighParser::WordSet {
-	bool IsWord(const std::string& s) const {
-		return CL6DFuncMap.find(s) != CL6DFuncMap.end();
-	};
-};
-
-struct CL7DWordSetType : public HighParser::WordSet {
-	bool IsWord(const std::string& s) const {
-		return CL7DFuncMap.find(s) != CL7DFuncMap.end();
-	};
-};
-
-static CL1DWordSetType CL1DWordSet;
-static CL3DWordSetType CL3DWordSet;
-static CL6DWordSetType CL6DWordSet;
-static CL7DWordSetType CL7DWordSet;
-
-/* constitutive law registration functions: call to register one */
-bool
-SetCL1D(const char *name, ConstitutiveLawRead<doublereal, doublereal> *rf)
-{
-	pedantic_cout("registering constitutive law 1D \"" << name << "\""
-		<< std::endl );
-	return CL1DFuncMap.insert(CL1DFuncMapType::value_type(name, rf)).second;
-}
-
-bool
-SetCL3D(const char *name, ConstitutiveLawRead<Vec3, Mat3x3> *rf)
-{
-	pedantic_cout("registering constitutive law 3D \"" << name << "\""
-		<< std::endl );
-	return CL3DFuncMap.insert(CL3DFuncMapType::value_type(name, rf)).second;
-}
-
-bool
-SetCL6D(const char *name, ConstitutiveLawRead<Vec6, Mat6x6> *rf)
-{
-	pedantic_cout("registering constitutive law 6D \"" << name << "\""
-		<< std::endl );
-	return CL6DFuncMap.insert(CL6DFuncMapType::value_type(name, rf)).second;
-}
-
-bool
-SetCL7D(const char *name, ConstitutiveLawRead<Vec7, Mat7x7> *rf)
-{
-	pedantic_cout("registering constitutive law 7D \"" << name << "\"\n");
-	return CL7DFuncMap.insert(CL7DFuncMapType::value_type(name, rf)).second;
-}
-
-/* function that reads a constitutive law */
-ConstitutiveLaw<doublereal, doublereal> *
-ReadCL1D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType)
-{
-	const char *s, *sOrig = HP.IsWord(CL1DWordSet);
-	if (sOrig == 0) {
-		/* default to linear elastic? */
-		s = "linear" "elastic";
-		sOrig = "";
-
-	} else {
-		s = sOrig;
-	}
-
-	CL1DFuncMapType::iterator func = CL1DFuncMap.find(std::string(s));
-	if (func == CL1DFuncMap.end()) {
-		silent_cerr("unknown constitutive law 1D type "
-			"\"" << sOrig << "\" "
-			"at line " << HP.GetLineData() << std::endl);
-		throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-	}
-
-	return func->second->Read(pDM, HP, CLType);
-}
-
-ConstitutiveLaw<Vec3, Mat3x3> *
-ReadCL3D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType)
-{
-	const char *s, *sOrig = HP.IsWord(CL3DWordSet);
-	if (sOrig == 0) {
-#if 0
-		s = "linear" "elastic";
-		sOrig = "";
-#else
-		silent_cerr("unknown constitutive law 3D type "
-			"at line " << HP.GetLineData() << std::endl);
-		throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-#endif
-
-	} else {
-		s = sOrig;
-	}
-
-	CL3DFuncMapType::iterator func = CL3DFuncMap.find(std::string(s));
-	if (func == CL3DFuncMap.end()) {
-		silent_cerr("unknown constitutive law 3D type "
-			"\"" << sOrig << "\" "
-			"at line " << HP.GetLineData() << std::endl);
-		throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-	}
-
-	return func->second->Read(pDM, HP, CLType);
-}
-
-ConstitutiveLaw<Vec6, Mat6x6> *
-ReadCL6D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType)
-{
-	const char *s, *sOrig = HP.IsWord(CL6DWordSet);
-	if (sOrig == 0) {
-#if 0
-		s = "linear" "elastic";
-		sOrig = "";
-#else
-		silent_cerr("unknown constitutive law 6D type "
-			"at line " << HP.GetLineData() << std::endl);
-		throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-#endif
-
-	} else {
-		s = sOrig;
-	}
-
-	CL6DFuncMapType::iterator func = CL6DFuncMap.find(std::string(s));
-	if (func == CL6DFuncMap.end()) {
-		silent_cerr("unknown constitutive law 6D type "
-			"\"" << sOrig << "\" "
-			"at line " << HP.GetLineData() << std::endl);
-		throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-	}
-
-	return func->second->Read(pDM, HP, CLType);
-}
-
-ConstitutiveLaw<Vec7, Mat7x7> *
-ReadCL7D(const DataManager* pDM, MBDynParser& HP, ConstLawType::Type& CLType)
-{
-        const char* s = HP.IsWord(CL7DWordSet);
-
-        if (!s) {
-                silent_cerr("unknown constitutive law 7D type "
-                            "at line " << HP.GetLineData() << "\n");
-                throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-        }
-
-        auto func = CL7DFuncMap.find(std::string(s));
-
-        if (func == CL7DFuncMap.end()) {
-                silent_cerr("unknown constitutive law 7D type "
-                            "\"" << s << "\" "
-                            "at line " << HP.GetLineData() << "\n");
-                throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
-        }
-
-        return func->second->Read(pDM, HP, CLType);
-}
-
 /* specific functional object(s) */
 struct CLArray1DR : public ConstitutiveLawRead<doublereal, doublereal> {
 	virtual ConstitutiveLaw<doublereal, doublereal> *
@@ -1459,13 +1280,15 @@ struct ShockAbsorberCLR : public ConstitutiveLawRead<T, Tder> {
 	};
 };
 
-static unsigned done = 0;
-
 /* initialization function */
 void
 InitCL(void)
 {
-	if (::done++ > 0) {
+        static unsigned done = 0;
+
+        ASSERT(done == 0);
+        
+	if (done++ > 0) {
 		return;
 	}
 
@@ -1625,38 +1448,4 @@ InitCL(void)
 	 * - write a module that calls SetCL*D() from inside a function
 	 *   called module_init(), and load it using "module load".
 	 */
-}
-
-void
-DestroyCL(void)
-{
-	if (::done == 0) {
-		silent_cerr("DestroyCL() called once too many" << std::endl);
-		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
-	}
-
-	if (--::done > 0) {
-		return;
-	}
-
-	/* free stuff */
-	for (CL1DFuncMapType::iterator i = CL1DFuncMap.begin(); i != CL1DFuncMap.end(); ++i) {
-		delete i->second;
-	}
-	CL1DFuncMap.clear();
-
-	for (CL3DFuncMapType::iterator i = CL3DFuncMap.begin(); i != CL3DFuncMap.end(); ++i) {
-		delete i->second;
-	}
-	CL3DFuncMap.clear();
-
-	for (CL6DFuncMapType::iterator i = CL6DFuncMap.begin(); i != CL6DFuncMap.end(); ++i) {
-		delete i->second;
-	}
-	CL6DFuncMap.clear();
-
-        for (auto& c:CL7DFuncMap) {
-                delete c.second;
-        }
-        CL7DFuncMap.clear();
 }

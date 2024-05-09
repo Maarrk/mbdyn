@@ -43,11 +43,21 @@
 
 #include "mbconfig.h"           /* This goes first in every *.c,*.cc file */
 #include "solidshape.h"
+#include "demangle.h"
+
+#ifdef USE_GTEST
+#include <gtest/gtest.h>
+#define TESTSUITE_ASSERT(expr) EXPECT_TRUE(expr)
+#define TESTSUITE_SCOPED_TRACE(msg) SCOPED_TRACE(msg)
+#else
+#define TESTSUITE_ASSERT(expr) assert(expr)
+#define TESTSUITE_SCOPED_TRACE(msg) static_cast<void>(0)
+#endif
 
 template <typename ElementType, sp_grad::index_type iDim>
 bool bCheckShapeFunction()
 {
-     std::cout << "element type: \"" << ElementType::ElementName() << "\"\n";
+     std::cout << "element type: \"" << mbdyn_demangle(typeid(ElementType)) << "\"\n";
 
      bool bRes = true;
      using namespace sp_grad;
@@ -83,26 +93,26 @@ bool bCheckShapeFunctionUPC()
      using namespace sp_grad;
 
      SpColVectorA<doublereal, iDim> r;
-     SpColVectorA<doublereal, ElementType::iNumNodes> h;
-     SpColVectorA<doublereal, ElementType::iNumNodesPressure> g;
+     SpColVectorA<doublereal, ElementType::ElemTypeDisplacement::iNumNodes> h;
+     SpColVectorA<doublereal, ElementType::ElemTypePressure::iNumNodes> g;
 
-     for (index_type i = 1; i <= ElementType::iNumNodes; ++i) {
+     for (index_type i = 1; i <= ElementType::ElemTypeDisplacement::iNumNodes; ++i) {
           std::cout << "node: " << i << "\n";
 
-          ElementType::NodalPosition(i, r);
-          ElementType::ShapeFunction(r, h);
-          ElementType::ElemTypePressureUPC::ShapeFunction(r, g);
+          ElementType::ElemTypeDisplacement::NodalPosition(i, r);
+          ElementType::ElemTypeDisplacement::ShapeFunction(r, h);
+          ElementType::ElemTypePressure::ShapeFunction(r, g);
 
           std::cout << "r = {" << r << "}\n";
           std::cout << "h = {" << h << "}\n";
           std::cout << "g = {" << g << "}\n";
 
-          for (index_type j = 1; j <= ElementType::iNumNodes; ++j) {
+          for (index_type j = 1; j <= ElementType::ElemTypeDisplacement::iNumNodes; ++j) {
                if (h(j) != (i == j)) {
                     bRes = false;
                }
 
-               if (i <= ElementType::iNumNodesPressure && j <= ElementType::iNumNodesPressure) {
+               if (i <= ElementType::ElemTypePressure::iNumNodes && j <= ElementType::ElemTypePressure::iNumNodes) {
                     if (g(j) != (i == j)) {
                          bRes = false;
                     }
@@ -113,28 +123,45 @@ bool bCheckShapeFunctionUPC()
      return bRes;
 }
 
+#ifdef USE_GTEST
+TEST(solidshapetest, bCheckShapeFunction)
+#else
+void RunAllTests()
+#endif
+{
+     TESTSUITE_ASSERT((bCheckShapeFunction<Quadrangle4, 2>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Quadrangle8, 2>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Quadrangle9, 2>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Quadrangle8r, 2>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Triangle6h, 2>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Hexahedron8u, 3>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Hexahedron8p, 3>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Hexahedron20u, 3>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Hexahedron27u, 3>()));
+     TESTSUITE_ASSERT((bCheckShapeFunctionUPC<Hexahedron20upc, 3>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Hexahedron20ur, 3>()));
+     TESTSUITE_ASSERT((bCheckShapeFunctionUPC<Hexahedron20upcr, 3>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Pentahedron6u, 3>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Pentahedron15u, 3>()));
+     TESTSUITE_ASSERT((bCheckShapeFunctionUPC<Pentahedron15upc, 3>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Tetrahedron4u, 3>()));
+     TESTSUITE_ASSERT((bCheckShapeFunction<Tetrahedron10u, 3>()));
+     TESTSUITE_ASSERT((bCheckShapeFunctionUPC<Tetrahedron10upc, 3>()));
+}
+
 int main(int argc, char* argv[])
 {
-     assert((bCheckShapeFunction<Quadrangle4, 2>()));
-     assert((bCheckShapeFunction<Quadrangle8, 2>()));
-     assert((bCheckShapeFunction<Quadrangle9, 2>()));
-     assert((bCheckShapeFunction<Quadrangle8r, 2>()));
-     assert((bCheckShapeFunction<Triangle6h, 2>()));
-     assert((bCheckShapeFunction<Hexahedron8, 3>()));
-     assert((bCheckShapeFunction<Hexahedron8p, 3>()));
-     assert((bCheckShapeFunction<Hexahedron20, 3>()));
-     assert((bCheckShapeFunction<Hexahedron27, 3>()));
-     assert((bCheckShapeFunctionUPC<Hexahedron20upc, 3>()));
-     assert((bCheckShapeFunction<Hexahedron20r, 3>()));
-     assert((bCheckShapeFunctionUPC<Hexahedron20upcr, 3>()));
-     assert((bCheckShapeFunction<Pentahedron6, 3>()));
-     assert((bCheckShapeFunction<Pentahedron15, 3>()));
-     assert((bCheckShapeFunctionUPC<Pentahedron15upc, 3>()));
-     assert((bCheckShapeFunction<Tetrahedron4h, 3>()));
-     assert((bCheckShapeFunction<Tetrahedron10h, 3>()));
-     assert((bCheckShapeFunctionUPC<Tetrahedron10upc, 3>()));
+#ifdef USE_GTEST
+     testing::InitGoogleTest(&argc, argv);
+#endif
+
+#ifdef USE_GTEST
+     return RUN_ALL_TESTS();
+#else
+     RunAllTests();
 
      std::cout << argv[0] << ": all tests passed\n";
 
      return 0;
+#endif
 }

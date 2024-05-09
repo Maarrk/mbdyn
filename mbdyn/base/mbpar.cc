@@ -51,6 +51,7 @@
 #include "c81data.h"
 
 #include "dataman.h"
+#include "constltp_impl.h"
 #include "solidcsl.h"
 #include "modules.h"
 
@@ -235,7 +236,7 @@ MBDynParser::~MBDynParser(void)
 {
 	DestroyDriveCallerData();
 	DestroyTplDC();
-	DestroyCL();
+        ClearCL();
 	DestroySF();
 	DestroyStreamOutputContentTypes();
 	DestroyFileDriveContentTypes();
@@ -809,6 +810,38 @@ MBDynParser::ConstitutiveLaw_int(void)
                 break;
         }
 
+        case 9:
+        {
+                /* allow "reference" (copy cached constitutive law) */
+                ConstitutiveLaw9D *pCL = GetConstLaw9D(clt);
+                if (pCL == NULL) {
+                        silent_cerr("unable to read constitutive law 9D "
+                                        << uLabel);
+                        if (!sName.empty()) {
+                                silent_cerr(" (" << sName << ")");
+                        }
+                        silent_cerr(" at line " << GetLineData()
+                                        << std::endl);
+                        throw MBDynParser::ErrGeneric(MBDYN_EXCEPT_ARGS);
+                }
+
+                pCL->PutLabel(uLabel);
+                if (!sName.empty()) {
+                        pCL->PutName(sName);
+                }
+
+                if (!CL9D.insert(CL9DType::value_type(uLabel, pCL)).second) {
+                        silent_cerr("constitutive law 9D " << uLabel);
+                        if (!sName.empty()) {
+                                silent_cerr(" (" << sName << ")");
+                        }
+                        silent_cerr(" already defined at line "
+                                        << GetLineData() << std::endl);
+                        throw MBDynParser::ErrGeneric(MBDYN_EXCEPT_ARGS);
+                }
+                break;
+        }
+        
 	default:
 		silent_cerr("unknown constitutive law dimensionality " 
 				<< dim << " at line " << GetLineData()
@@ -2047,6 +2080,33 @@ MBDynParser::GetConstLaw7D(ConstLawType::Type& clt)
 	auto i = CL7D.find(uLabel);
 	if (i == CL7D.end()) {
 		silent_cerr("constitutive law 7D " << uLabel
+                            << " is undefined at line "
+                            << GetLineData() << "\n");
+		throw MBDynParser::ErrGeneric(MBDYN_EXCEPT_ARGS);
+	}
+
+	clt = i->second->GetConstLawType();
+	return i->second->pCopy();
+}
+
+ConstitutiveLaw9D *
+MBDynParser::GetConstLaw9D(ConstLawType::Type& clt)
+{
+	if (pDM == 0) {
+		silent_cerr("constitutive law parsing at line "
+				<< GetLineData() << " allowed "
+				"only after control data block" << std::endl);
+		throw MBDynParser::ErrGeneric(MBDYN_EXCEPT_ARGS);
+	}
+
+	if (!IsKeyWord("reference")) {
+		return ReadCL9D(pDM, *this, clt);
+	}
+
+	unsigned int uLabel = GetInt();
+	auto i = CL9D.find(uLabel);
+	if (i == CL9D.end()) {
+		silent_cerr("constitutive law 9D " << uLabel
                             << " is undefined at line "
                             << GetLineData() << "\n");
 		throw MBDynParser::ErrGeneric(MBDYN_EXCEPT_ARGS);

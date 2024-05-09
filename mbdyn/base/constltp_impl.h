@@ -2301,4 +2301,7 @@ GetPreStrain(const DataManager* pDM, MBDynParser& HP)
 	return pTplDC;
 }
 
+/* create/destroy */
+extern void InitCL(void);
+
 #endif // CONSTLTP_IMPL_H
