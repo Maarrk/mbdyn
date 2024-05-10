@@ -2154,17 +2154,20 @@ private:
 	enum Status m_status;
 	const DriveCaller *m_pActivatingCondition;
 	const DriveCaller *m_pDeactivatingCondition;
+	bool m_bEpsRef;
 	T m_EpsRef;
 
 public:
 	BiStopCLWrapper(
 			ConstitutiveLaw<T, Tder> *pCL,
 			bool bInitialStatus,
+			bool bEpsRef,
 			const DriveCaller *pA,
 			const DriveCaller *pD
 	) : 
 	m_pCL(pCL), m_status(bInitialStatus ? ACTIVE : INACTIVE),
 	m_pActivatingCondition(pA), m_pDeactivatingCondition(pD),
+	m_bEpsRef(bEpsRef),
 	m_EpsRef(mb_zero<T>()) {
 		ASSERT(m_pActivatingCondition != 0);
 		ASSERT(m_pDeactivatingCondition != 0);
@@ -2190,6 +2193,7 @@ public:
 			cl,
 			cl(m_pCL->pCopy(),
 				m_status == ACTIVE,
+				m_bEpsRef,
 				m_pActivatingCondition->pCopy(),
 				m_pDeactivatingCondition->pCopy()));
 
@@ -2205,6 +2209,7 @@ public:
 		} else {
 			out << "active";
 		}
+		out << ", capture reference strain, " << (m_bEpsRef ? "true" : "false");
 		out << ", ",
 			m_pActivatingCondition->Restart(out) << ", ",
 			m_pDeactivatingCondition->Restart(out) << ", ";
@@ -2227,7 +2232,9 @@ public:
 
 			/* activates: change data and ask for jacobian rigeneration */
 			m_status = ACTIVE;
-			m_EpsRef = ConstitutiveLaw<T, Tder>::Epsilon;
+			if (m_bEpsRef) {
+				m_EpsRef = ConstitutiveLaw<T, Tder>::Epsilon;
+			}
 			bChangeJac = true;
 
 		case ACTIVE:

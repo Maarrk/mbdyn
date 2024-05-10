@@ -1127,6 +1127,11 @@ struct LinearBiStopCLR : public ConstitutiveLawRead<T, Tder> {
 			}
 		}
 
+		bool r(true);
+		if (HP.IsKeyWord("capture" "reference" "strain")) {
+			r = HP.GetYesNoOrBool(true);
+		}
+
 		const DriveCaller *pA = HP.GetDriveCaller();
 		const DriveCaller *pD = HP.GetDriveCaller();
 
@@ -1143,7 +1148,7 @@ struct LinearBiStopCLR : public ConstitutiveLawRead<T, Tder> {
 			SAFENEWWITHCONSTRUCTOR(pWrappedCL, LECL, LECL(pTplDC, PreStress, dS));
 		}
 
-		SAFENEWWITHCONSTRUCTOR(pCL, L, L(pWrappedCL, s, pA, pD));
+		SAFENEWWITHCONSTRUCTOR(pCL, L, L(pWrappedCL, s, r, pA, pD));
 
 		return pCL;
 	};
@@ -1168,7 +1173,7 @@ struct LinearViscoElasticBiStopCLR : public LinearBiStopCLR<T, Tder> {
 };
 
 static void
-ReadBiStopBase(MBDynParser& HP, bool& bStatus, const DriveCaller *& pA, const DriveCaller *& pD)
+ReadBiStopBase(MBDynParser& HP, bool& bStatus, bool& bCapture, const DriveCaller *& pA, const DriveCaller *& pD)
 {
 	if (HP.IsKeyWord("initial" "status")) {
 		if (HP.IsKeyWord("active")) {
@@ -1180,6 +1185,10 @@ ReadBiStopBase(MBDynParser& HP, bool& bStatus, const DriveCaller *& pA, const Dr
 		} else {
 			bStatus = HP.GetBool();
 		}
+	}
+
+	if (HP.IsKeyWord("capture" "reference" "strain")) {
+		bCapture = HP.GetYesNoOrBool(bCapture);
 	}
 
 	pA = HP.GetDriveCaller();
@@ -1196,10 +1205,11 @@ struct BiStopCLW1DR : public ConstitutiveLawRead<doublereal, doublereal> {
 		const DriveCaller *pA = 0;
 		const DriveCaller *pD = 0;
 		bool bStatus(false);
-		ReadBiStopBase(HP, bStatus, pA, pD);
+		bool bCapture(true);
+		ReadBiStopBase(HP, bStatus, bCapture, pA, pD);
 
 		ConstitutiveLaw<doublereal, doublereal> *pWrappedCL = ReadCL1D(pDM, HP, CLType);
-		SAFENEWWITHCONSTRUCTOR(pCL, L, L(pWrappedCL, bStatus, pA, pD));
+		SAFENEWWITHCONSTRUCTOR(pCL, L, L(pWrappedCL, bStatus, bCapture, pA, pD));
 
 		return pCL;
 	};
@@ -1215,10 +1225,11 @@ struct BiStopCLW3DR : public ConstitutiveLawRead<Vec3, Mat3x3> {
 		const DriveCaller *pA = 0;
 		const DriveCaller *pD = 0;
 		bool bStatus(false);
-		ReadBiStopBase(HP, bStatus, pA, pD);
+		bool bCapture(true);
+		ReadBiStopBase(HP, bStatus, bCapture, pA, pD);
 
 		ConstitutiveLaw<Vec3, Mat3x3> *pWrappedCL = ReadCL3D(pDM, HP, CLType);
-		SAFENEWWITHCONSTRUCTOR(pCL, L, L(pWrappedCL, bStatus, pA, pD));
+		SAFENEWWITHCONSTRUCTOR(pCL, L, L(pWrappedCL, bStatus, bCapture, pA, pD));
 
 		return pCL;
 	};
@@ -1234,10 +1245,11 @@ struct BiStopCLW6DR : public ConstitutiveLawRead<Vec6, Mat6x6> {
 		const DriveCaller *pA = 0;
 		const DriveCaller *pD = 0;
 		bool bStatus(false);
-		ReadBiStopBase(HP, bStatus, pA, pD);
+		bool bCapture(true);
+		ReadBiStopBase(HP, bStatus, bCapture, pA, pD);
 
 		ConstitutiveLaw<Vec6, Mat6x6> *pWrappedCL = ReadCL6D(pDM, HP, CLType);
-		SAFENEWWITHCONSTRUCTOR(pCL, L, L(pWrappedCL, bStatus, pA, pD));
+		SAFENEWWITHCONSTRUCTOR(pCL, L, L(pWrappedCL, bStatus, bCapture, pA, pD));
 
 		return pCL;
 	};

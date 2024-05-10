@@ -5294,18 +5294,26 @@ The 1D constitutive law \nt{wrapped\_const\_law} acts about (or along) direction
 
 \subsection{bistop}
 This wrapper applies the logic of the bistop, that is activate or deactivate
-the constitutive property based on distinct conditions, with memory,
+the constitutive property based on distinct activation and deactivation conditions, with memory,
 to a generic underlying constitutive law.
+
 The syntax is
 %\begin{verbatim}
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{specific_const_law} ::= \kw{bistop} ,
         [ \kw{initial status} , \{ \kw{inactive} | \kw{active} | (\ty{bool}) \bnt{status} \} , ]
+        [ \kw{capture reference strain} , \{ \kw{yes} | \kw{no} | (\ty{bool}) \bnt{capture} \} , ]
         (\hty{DriveCaller}) \bnt{activating_condition} ,
         (\hty{DriveCaller}) \bnt{deactivating_condition} ,
         (\htmlref{\ty{ConstitutiveLaw}\be{\bnt{Entity}, \bnt{DerivativeOfEntity}}}{sec:ConstitutiveLaw}) \bnt{wrapped_const_law}
 \end{Verbatim}
 %\end{verbatim}
+When the state is \kw{inactive} (\kw{false}, that is zero; the default) it is ignored (zero force and slopes are returned);
+when the state is \kw{active} (\kw{true}, that is non-zero), the constitutive law is used.
+With memory means that once the activation condition is triggered, the status remains \kw{active} until the deactivation condition is triggered and the status is turned into \kw{inactive}.
+Conversely, when the status is \kw{inactive} it remains such until the activation condition is triggered, turning it into \kw{active}.
+
+By default, when transitioning from \kw{inactive} to \kw{active} (namely, when the \nt{activating\_condition} changes from \kw{false} to \kw{true}), the reference strain is reset to the current strain value, $\varepsilon_\text{curr}$, so the underlying \nt{wrapped\_const\_law} is subsequently evaluated as $\nt{wrapped\_const\_law}(\varepsilon - \varepsilon_\text{curr})$.  If \kw{capture reference strain} is \kw{no} (or \kw{false}, that is zero), the reference strain is not reset.
 
 
 \subsection{drive caller wrapper}
