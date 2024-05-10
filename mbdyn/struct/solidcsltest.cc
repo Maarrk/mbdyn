@@ -547,7 +547,6 @@ TESTSUITE_TEST(SmallStrainTest)
 {
      constexpr doublereal E = 210000e6;
      constexpr doublereal nu = 0.3;
-     constexpr doublereal s0 = std::numeric_limits<doublereal>::max();
 
      constexpr doublereal beta = 0.01;
      constexpr doublereal delta = 0.25;
