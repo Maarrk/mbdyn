@@ -65,7 +65,7 @@ gtest-build-job:       # This job runs in the build stage, which runs first.
       - cd build_dir
       - |
         if ! test -f Makefile; then
-          cmake .. -DCMAKE_INSTALL_PREFIX="${GTEST_INSTALL_PREFIX}" -DCMAKE_BUILD_TYPE=Release
+          cmake .. -DCMAKE_INSTALL_PREFIX="${GTEST_INSTALL_PREFIX}" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON
         fi
       - make -j${MBD_NUM_BUILD_JOBS}
       - rm -rf ${GTEST_INSTALL_PREFIX}

@@ -27,7 +27,7 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 ## AUTHOR: Reinhard Resch <mbdyn-user@a1.net>
-## Copyright (C) 2020(-2023) all rights reserved.
+## Copyright (C) 2020(-2024) all rights reserved.
 
 ## The copyright of this code is transferred
 ## to Pierangelo Masarati and Paolo Mantegazza
@@ -86,7 +86,7 @@ figure("visible", "off");
 subplot(2, 1, 1);
 title("trajectory");
 hold on;
-plot(tref, 180 / pi * yref(:, 1), "-;qref(t);1");
+plot(tref, 180 / pi * yref(:, 1), "-;qref(t);r");
 xlabel("t [s]");
 ylabel("q [deg]");
 grid on;
@@ -94,7 +94,7 @@ grid minor on;
 subplot(2, 1, 2);
 title("velocity");
 hold on;
-plot(tref, yref(:, 2), "-;qdotref(t);1");
+plot(tref, yref(:, 2), "-;qdotref(t);r");
 xlabel("t [s]");
 ylabel("qdot [rad/s]");
 grid on;
@@ -254,11 +254,11 @@ unwind_protect
 
   subplot(2, 1, 1);
   hold on;
-  plot(t, 180 / pi * q, "-;q(t);0");
+  plot(t, 180 / pi * q, "-;q(t);b");
 
   subplot(2, 1, 2);
   hold on;
-  plot(t, qdot, "-;qdot(t);0");
+  plot(t, qdot, "-;qdot(t);b");
 
   [drive_id, drive_data] = mbdyn_post_load_output_drv(options.output_file);
 

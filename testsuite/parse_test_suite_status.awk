@@ -37,64 +37,72 @@
 
 # parse_test_suite_status.awk: helper to parse the output from Octave's __run_test_suite__ function
 
-BEGIN {
-    failed = -1;
-    passed = -1;
+BEGINFILE {
+    failed = 0;
+    passed = 0;
 }
 
 /^  PASS\>/ {
     ## Output from Octave's function "__run_test_suite__"
-    passed = $2;
+    passed += strtonum($2);
 }
 
 /^  FAIL\>/ {
     ## Output from Octave's function "__run_test_suite__"
-    failed = $2;
+    failed += strtonum($2);
 }
 
-/^PASSES\>/ {
+/^PASSES [0-9]+ out of [0-9]+ test$/ {
     ## Output from Octave's function "test"
-    passed = strtonum($2);
+    passes = strtonum($2);
     total = strtonum($5);
-    failed = total - passed;
+    passed += passes;
+    failed += total - passes;
 }
 
 /^FAILED\>/ {
     ## Output from Octave's function "test"
-    failed = strtonum($2);
+    failed += strtonum($2);
+}
+
+$2~/\<PASSED\>/ && $4~/^[0-9]+/ && $5~/\<test\.$/ {
+    ## Output from gtest
+    passed += strtonum($4);
+}
+
+$2~/\<FAILED\>/ && $4~/^[0-9]/ && $5~/\<test\>/ {
+    ## Output from gtest
+    failed += strtonum($4);
 }
 
 /\?\?\?\?\? .+has no tests available$|\?\?\?\?\? .+source code with tests for dynamically linked function not found$/ {
     ## Output from Octave's function "test"
     ## This is not considered as a failure.
-    passed = 0;
-    failed = 0;
+    ++passed;
 }
 
 /^!!!!! test failed$/ {
-    if (failed < 0) {
-        failed = 0;
-        passed = 0;
-    }
-
     ++failed;
 }
 
-END {
-    if (failed < 0 || passed < 0) {
-        printf("Failed to parse output file \"%s\"!\n", FILENAME);
-        exit 1;
+$1~/\<testsuites\>/ && $2~/\<tests="[0-9]+"/ && $3~/\<failures="[0-9]+"/ && $5~/\<errors="[0-9]+"/ {
+    ntests = split($2, tests, "\"");
+    nfailures = split($3, failures, "\"");
+    nerrors = split($5, errors, "\"");
+
+    if (ntests == 3 && nfailures == 3 && nerrors == 3) {
+        passed += tests[2] - failures[2] - errors[2];
+        failed += failures[2] + errors[2];
     }
+}
 
-    printf("%d/%d tests passed!\n", passed, failed + passed);
-
+ENDFILE {
     if (failed > 0) {
-        printf("%d/%d tests failed!\n", failed, failed + passed);
         exit 1;
     }
 
-    if (passed == 0) {
-        printf("No tests were executed\n");
-        exit 0;
-    }
+    ## Use zero terminated strings.
+    ## So, we can use a similar command to clean up all the output which does not indicate a failure:
+    ## find ${TMPDIR} -name 'fntests.out' -print0 | awk -f parse_test_suite_status.awk | xargs -0 rm
+    printf("%s\0", FILENAME);
 }
