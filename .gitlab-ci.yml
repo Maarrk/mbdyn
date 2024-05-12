@@ -361,7 +361,20 @@ variables:
       - "single"
     description: "Mode of execution for all Octave package tests (e.g. single may be executed in parallel)"
 
-  OCTAVE_EXEC: "octave"
+  OCTAVE_EXEC:
+    value: "octave"
+    options:
+      - "octave"
+      - "octave-cli"
+    description: "GNU/Octave interpreter"
+
+  GTEST_OCTAVE_EXEC:
+    value: "gtest-octave-cli"
+    options:
+      - "octave"
+      - "octave-cli"
+      - "gtest-octave-cli"
+    description: "GNU/Octave interpreter"
 
   SICONOS_REPOSITORY:
     value: "https://github.com/siconos/siconos.git" ## FIXME: Should be changed to the main repository

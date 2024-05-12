@@ -946,7 +946,7 @@ ModuleNonsmoothNode::mbs_get_force(NS_subsys& NS)
 	// External forces: gravity and the reaction passed from the rest of the system integrated by MBDYN
 	Vec3 F_k = NS.Lambda_k;
 	Vec3 F_kp1 = NS.Lambda_kp1;
-	Vec3 Fg;
+	Vec3 Fg = Zero3;
 	if (NS.bGravity) {
 		Fg = NS.GravityAcceleration * NS.mass_ns;
 		F_k += Fg;
@@ -1075,7 +1075,7 @@ ModuleNonsmoothNode::mbs_get_force_frictional(NS_subsys& NS)
 	// External forces: gravity and the reaction passed from the rest of the system integrated by MBDYN
 	Vec3 F_k = NS.Lambda_k;
 	Vec3 F_kp1 = NS.Lambda_kp1;
-	Vec3 Fg;
+	Vec3 Fg = Zero3;
 	if (NS.bGravity) {
 		Fg = NS.GravityAcceleration * NS.mass_ns;
 		F_k += Fg;

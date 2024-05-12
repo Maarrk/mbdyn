@@ -164,6 +164,7 @@ while ! test -z "$1"; do
         --help)
             echo "${program_name} --mbdyn-install-prefix <MBD_INSTALL_PREFIX>"
             echo "                --mbdyn-build-dir <MBD_BUILD_DIR>"
+            echo "                --mbdyn-install-prefix <MBD_INSTALL_PREFIX>"
             echo "                --mbdyn-compiler-flags <MBD_COMPILER_FLAGS>"
             echo "                --siconos-install-prefix <SICONOS_INSTALL_PREFIX>"
             echo "                --netcdf-install-prefix <NC_INSTALL_PREFIX>"
@@ -350,6 +351,7 @@ if test -d "${GTEST_INSTALL_PREFIX}"; then
     GTEST_PKG_CONFIG=`find "${GTEST_INSTALL_PREFIX}" -name pkgconfig -and -type d`
     if test -d "${GTEST_PKG_CONFIG}"; then
         export PKG_CONFIG_PATH="${GTEST_PKG_CONFIG}:${PKG_CONFIG_PATH}"
+        export LDFLAGS="${LDFLAGS} `pkg-config --libs-only-L gtest | sed 's/^-L\//-Wl,-rpath=\//g'`"
     else
         echo "Warning: GTEST_PKG_CONFIG_PATH could not be detected"
     fi

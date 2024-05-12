@@ -53,10 +53,12 @@ OCT_PKG_LIST="${OCT_PKG_LIST:-nurbs:yes:master:no:unlimited netcdf:yes:master:no
 OCT_PKG_BUILD_DIR="${OCT_PKG_BUILD_DIR:-${program_dir}/var/cache/tmp/build/octave-pkg}"
 OCT_PKG_BINARY_DIR="${OCT_PKG_BUILD_DIR}/binary-packages"
 MBD_COMPILER_FLAGS="${MBD_COMPILER_FLAGS:--Ofast -Wall -march=native -mtune=native -Wno-unused-variable}"
+MBD_NUM_BUILD_JOBS="${MBD_NUM_BUILD_JOBS:-$(($(lscpu | awk '/^Socket\(s\)/{ print $2 }') * $(lscpu | awk '/^Core\(s\) per socket/{ print $4 }')))}"
 MBD_CLEAN_ALL="${MBD_CLEAN_ALL:-no}"
 MKL_INSTALL_PREFIX="${MKL_INSTALL_PREFIX:-/usr/lib}"
 MKL_PKG_CONFIG="${MKL_PKG_CONFIG:-mkl-dynamic-lp64-gomp}"
 NC_CONFIG="${NC_CONFIG:-nc-config}"
+GTEST_INSTALL_PREFIX="${GTEST_INSTALL_PREFIX:-${program_dir}/var/cache/gtest}"
 
 while ! test -z "$1"; do
     case "$1" in
@@ -74,6 +76,10 @@ while ! test -z "$1"; do
             ;;
         --nlopt-install-prefix)
             NL_INSTALL_PREFIX="$2"
+            shift
+            ;;
+        --gtest-install-prefix)
+            GTEST_INSTALL_PREFIX="$2"
             shift
             ;;
         --compiler-flags)
@@ -96,8 +102,12 @@ while ! test -z "$1"; do
             OCT_PKG_INSTALL_PREFIX="$2"
             shift
             ;;
+        --tasks)
+            MBD_NUM_BUILD_JOBS="$2"
+            shift
+            ;;
         --help|-h)
-            printf "%s\n --octave-pkg-list <list-of-packages-and-flags>\n --octave-pkg-prefix <pkg-install-dir>\n --octave-exec <octave-executable>\n --help\n" "${program_name}"
+            printf "%s\n --octave-pkg-list <list-of-packages-and-flags>\n --octave-pkg-prefix <pkg-install-dir>\n --octave-exec <octave-executable>\n --gtest-install-prefix <gtest-dir>\n --help\n" "${program_name}"
             exit 1;
             ;;
         *)
@@ -195,6 +205,17 @@ if ! test -z "${NC_INSTALL_PREFIX}"; then
     fi
 
     export PATH="${NC_INSTALL_PREFIX}/bin:${PATH}"
+fi
+
+if test -d "${GTEST_INSTALL_PREFIX}"; then
+    GTEST_PKG_CONFIG=`find "${GTEST_INSTALL_PREFIX}" -name pkgconfig -and -type d`
+    if test -d "${GTEST_PKG_CONFIG}"; then
+        export PKG_CONFIG_PATH="${GTEST_PKG_CONFIG}:${PKG_CONFIG_PATH}"
+    else
+        echo "Warning: GTEST_PKG_CONFIG_PATH could not be detected"
+    fi
+else
+    echo "Warning: GTEST_PKG_CONFIG_PATH could not be detected"
 fi
 
 echo PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"
@@ -343,7 +364,7 @@ for pkgname_and_flags in ${OCT_PKG_LIST}; do
             fi
 
             case "${pkgname}" in
-                mboct-fem-pkg)
+                mboct-fem-pkg|mboct-octave-pkg)
                     INSTALL_PREFIX_FEM_PRE_MESH_SIZE="${OCT_PKG_INSTALL_PREFIX:-/usr/local}"
 
                     ## FIXME: Need to install fem_pre_mesh_size since octave's package manager does not run "make install"
@@ -366,16 +387,16 @@ for pkgname_and_flags in ${OCT_PKG_LIST}; do
                         fi
                     fi
 
-                    ## No need to recompile the whole package!
-                    if ! make fem_pre_mesh_size; then
-                        echo "Failed to build fem_pre_mesh_size"
+                    if ! make -j"${MBD_NUM_BUILD_JOBS}"; then
+                        echo "Failed to build binaries"
                         exit 1
                     fi
 
-                    if ! install fem_pre_mesh_size "${INSTALL_PREFIX_FEM_PRE_MESH_SIZE}/bin"; then
-                        echo "Failed to install fem_pre_mesh_size"
+                    if ! make install; then
+                        echo "Failed to install binaries"
                         exit 1
                     fi
+
                     if ! cd ..; then
                         echo "Directory is not valid"
                         exit 1

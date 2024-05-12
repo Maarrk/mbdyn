@@ -65,7 +65,7 @@ export OPENBLAS_NUM_THREADS=1
 MBD_NUM_TASKS=${MBD_NUM_TASKS:-$(( $(lscpu | awk '/^Socket\(s\)/{ print $2 }') * $(lscpu | awk '/^Core\(s\) per socket/{ print $4 }') ))}
 MBD_NUM_THREADS=${MBD_NUM_THREADS:-1}
 
-echo $program_name
+echo "${program_name}"
 
 if test "$(basename ${program_name})" = "${program_name}" && ! test -z "$(which ${program_name})"; then
     ## Path of script was inside the environment variable PATH
@@ -257,7 +257,18 @@ function octave_pkg_testsuite_run()
             ;;
     esac
 
-    OCTAVE_CMD=$(printf '%s%s %s %s --eval %s' "${TIMEOUT_CMD}" "${octave_pkg_timing_cmd}" "${OCTAVE_EXEC}" "${OCTAVE_CMD_ARGS}" "${octave_code_cmd}")
+    junit_xml_report_file_octave_assert="${TMPDIR}/junit_xml_report_octave_$$_assert.xml"
+
+    case "${OCTAVE_EXEC}" in
+        gtest-*)
+            octave_pkg_gtest_flags=`printf ' --test-suite-name "%s" --test-name "%s" --gtest_output=xml:%s' "${octave_pkg_name}" "${octave_code_cmd}" "${junit_xml_report_file_octave_assert}"`
+            ;;
+        *)
+            octave_pkg_gtest_flags=""
+            ;;
+    esac
+
+    OCTAVE_CMD=$(printf '%s%s%s%s %s --eval %s' "${TIMEOUT_CMD}" "${octave_pkg_timing_cmd}" "${OCTAVE_EXEC}" "${octave_pkg_gtest_flags}" "${OCTAVE_CMD_ARGS}" "${octave_code_cmd}")
 
     case "${OCT_PKG_PRINT_RES}" in
         all|*disk*)
@@ -283,6 +294,8 @@ function octave_pkg_testsuite_run()
     if ! test -z "${octave_pkg_timing_file}"; then
         rm -f "${octave_pkg_timing_file}"
     fi
+
+    find "${TMPDIR}" -name 'junit_xml_report_octave_*.xml' -delete
 
     echo "${OCTAVE_CMD}"
 
@@ -316,32 +329,15 @@ function octave_pkg_testsuite_run()
 
     case ${rc} in
         0)
-            echo "${OCTAVE_CMD} completed with status 0"
-            case ${OCT_PKG_TEST_MODE} in
-                pkg|single)
-                    if test -f "${pkg_test_output_file}"; then
-                        pkg_test_log_parse="${pkg_test_output_file}"
-                    else
-                        pkg_test_log_parse="${pkg_test_log_file}"
-                    fi
-
-                    if test -f "${pkg_test_log_parse}"; then
-                        if awk -f parse_test_suite_status.awk "${pkg_test_log_parse}"; then
-                            curr_test_status="passed"
-                        else
-                            cat "${pkg_test_log_parse}"
-                        fi
-                    else
-                        echo "File ${pkg_test_log_parse} not found"
-                        curr_test_status="unexpected"
-                    fi
-                    ;;
-            esac
+            ## Make sure that octave is calling exit(1) on failures
+            curr_test_status="passed"
             ;;
         124)
-            echo "${OCTAVE_CMD} failed with timeout"
+            curr_test_status="timeout"
             ;;
     esac
+
+    printf "%d: command \"%s\" returned with status %d:%s\n" "${octave_pkg_task_id}" "${OCTAVE_CMD}" "${rc}" "${curr_test_status}"
 
     if test -f "${octave_pkg_timing_file}"; then
         echo "Resources used by ${OCTAVE_CMD}"
@@ -363,14 +359,12 @@ function octave_pkg_testsuite_run()
     case "${curr_test_status}" in
         passed)
             printf "octave testsuite for package \"%s\" passed\n" "${octave_pkg_name}"
+            ## FIXME: JUnit xml files should not be deleted, but there are too many files to be displayed by GitLab-CI
+            find "${TMPDIR}" '(' -name 'fntests.log' -or -name "fntests.out" -or -name "junit_xml_report_octave_$$_*.xml" ')' -print0 | xargs -0 awk -f parse_test_suite_status.awk | xargs -0 rm -f
+            find "${TMPDIR}" '(' -name 'octave_pkg_testsuite_test_*' ')' -delete
             ;;
         *)
             printf "octave testsuite for package \"%s\" failed\n" "${octave_pkg_name}"
-            if test -f "${pkg_test_log_file}"; then
-                cat "${pkg_test_log_file}";
-            else
-                echo "${pkg_test_log_file} not found";
-            fi
             ;;
     esac
 
@@ -379,9 +373,7 @@ function octave_pkg_testsuite_run()
     echo "Remove all temporary files after the test:"
     ## "oct-" is the default prefix of Octave's tempname() function
     export -n TMPDIR
-    find "${TMPDIR}" '(' -type f -and '(' -name 'oct-*' -or -name 'fntests.*' ')' ')' -delete
-    ## FIXME: JUnit xml files should not be deleted, but there are too many files to be displayed by GitLab-CI
-    find "${TMPDIR}" -name "junit_xml_report_octave_$$_*.xml" -print0 | xargs -0 awk -F ' ' 'BEGINFILE{failures=1;} $3~/\<failures="0"/ {failures=0;} ENDFILE{ if(!failures) printf("%s\0", FILENAME);}' | xargs -0 rm -f
+    find "${TMPDIR}" '(' -type f -and '(' -name 'oct-*' ')' ')' -delete
 }
 
 for pkgname_and_flags in ${OCT_PKG_LIST}; do
@@ -421,7 +413,7 @@ for pkgname_and_flags in ${OCT_PKG_LIST}; do
     oct_pkg_sigterm_dumps_core="sigterm_dumps_octave_core(false);"
     oct_pkg_load_cmd=$(printf "pkg('load','%s');" "${pkgname}")
     oct_pkg_list_cmd=$(printf "p=pkg('list','%s');" "${pkgname}")
-    oct_pkg_run_test_suite_cmd="__run_test_suite__({p{1}.dir},{p{1}.dir});"
+    oct_pkg_run_test_suite_cmd="[PASS,FAIL,XFAIL,XBUG,SKIP,RTSKIP,REGRESS]=__run_test_suite__({p{1}.dir},{p{1}.dir});if(REGRESS);exit(1);end;"
 
     case "${OCT_PKG_TEST_MODE}" in
         pkg)
@@ -441,7 +433,7 @@ for pkgname_and_flags in ${OCT_PKG_LIST}; do
             ((oct_pkg_func_index=0))
             for pkg_function_name in ${OCTAVE_PKG_FUNCTIONS}; do
                 ((++oct_pkg_func_index))
-                oct_pkg_test_function_cmd=$(printf "test('%s');" "${pkg_function_name}")
+                oct_pkg_test_function_cmd=$(printf "[N,NMAX,NXFAIL,NBUG,NSKIP,NRTSKIP,NREGRESSION]=test('%s','verbose','octave_pkg_testsuite_test_%03d_%s');if(NREGRESSION);exit(1);end;" "${pkg_function_name}" "${oct_pkg_func_index}" "${pkg_function_name}")
                 oct_pkg_profile_data=`printf '%s/oct_pkg_profile_data_%d_%s_%03d.mat' "${OCT_PKG_TEST_DIR}" ${octave_pkg_testsuite_pid} "${pkgname}" $((oct_pkg_func_index))`
                 oct_pkg_profile_off_cmd=$(printf "${oct_pkg_profile_off_fmt}" "${oct_pkg_profile_data}")
                 OCTAVE_CODE="${OCTAVE_CODE} ${oct_pkg_sigterm_dumps_core}${oct_pkg_prefix_cmd}${oct_pkg_load_cmd}${oct_pkg_profile_on_cmd}${oct_pkg_test_function_cmd}${oct_pkg_profile_off_cmd}"

@@ -27,7 +27,7 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 ## AUTHOR: Reinhard Resch <octave-user@a1.net>
-## Copyright (C) 2023(-2023) all rights reserved.
+## Copyright (C) 2023(-2024) all rights reserved.
 
 ## The copyright of this code is transferred
 ## to Pierangelo Masarati and Paolo Mantegazza
@@ -170,7 +170,7 @@ unwind_protect
   figure("visible", "off");
   hold on;
   plot(traj{log_dat.vars.node_idx_sphere_center}(:, 1), traj{log_dat.vars.node_idx_sphere_center}(:, 3), "-;trajectory;r");
-  plot([-r2, 0, r2], [h2, 0, h2], "-;surface;0");
+  plot([-r2, 0, r2], [h2, 0, h2], "-;surface;b");
   xlabel("x [m]");
   ylabel("z [m]");
   grid on;
@@ -179,8 +179,8 @@ unwind_protect
 
   figure("visible", "off");
   hold on;
-  plot(t, drive_data{1}, "-;Wkin;1");
-  plot(t, drive_data{2}, "-;Wpot;2");
+  plot(t, drive_data{1}, "-;Wkin;r");
+  plot(t, drive_data{2}, "-;Wpot;g");
   plot(t, drive_data{1} + drive_data{2}, "-;Wkin+Wpot;k");
   grid on;
   grid minor on;
