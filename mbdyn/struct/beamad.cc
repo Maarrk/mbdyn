@@ -43,62 +43,70 @@
 #include "beamad.h"
 #include "shapefnc.h"
 
-BeamAd::BeamAd(unsigned int uL,
-               const StructNodeAd* pN1,
-               const StructNodeAd* pN2,
-               const StructNodeAd* pN3,
-               const Vec3& F1,
-               const Vec3& F2,
-               const Vec3& F3,
-               const Mat3x3& R1,
-               const Mat3x3& R2,
-               const Mat3x3& R3,
-               const Mat3x3& r_I,
-               const Mat3x3& rII,
-               ConstitutiveLaw6D* pD_I,
-               ConstitutiveLaw6D* pDII,
-               OrientationDescription ood,
-               flag fOut)
+template <typename BeamType>
+BeamAdBase<BeamType>::BeamAdBase(unsigned int uL,
+                                 const StructNodeAd* pN1,
+                                 const StructNodeAd* pN2,
+                                 const StructNodeAd* pN3,
+                                 const Vec3& F1,
+                                 const Vec3& F2,
+                                 const Vec3& F3,
+                                 const Mat3x3& R1,
+                                 const Mat3x3& R2,
+                                 const Mat3x3& R3,
+                                 const Mat3x3& r_I,
+                                 const Mat3x3& rII,
+                                 ConstitutiveLaw6D* pD_I,
+                                 ConstitutiveLaw6D* pDII,
+                                 OrientationDescription ood,
+                                 flag fOut)
 :
- Beam(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut),
- pNode{pN1, pN2, pN3}
+     BeamType(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut),
+     pNode{pN1, pN2, pN3}
 {
 
 }
 
-BeamAd::~BeamAd()
+template <typename BeamType>
+BeamAdBase<BeamType>::~BeamAdBase()
 {
 }
 
-void BeamAd::WorkSpaceDim(integer* piNumRows, integer* piNumCols) const
+template <typename BeamType>
+void BeamAdBase<BeamType>::WorkSpaceDim(integer* piNumRows, integer* piNumCols) const
 {
      *piNumRows = 18;
      *piNumCols = 0;
 }
 
+template <typename BeamType>
 void
-BeamAd::AddInternalForcesAD(sp_grad::SpColVector<doublereal, 6>& AzLoc, unsigned int iSez)
+BeamAdBase<BeamType>::AddInternalForcesAD(sp_grad::SpColVector<doublereal, 6>& AzLoc, unsigned int iSez)
+{
+     // Not in use so far, but may be overridden by derived classes.
+}
+
+template <typename BeamType>
+void
+BeamAdBase<BeamType>::AddInternalForcesAD(sp_grad::SpColVector<sp_grad::SpGradient, 6>& AzLoc, unsigned int iSez)
 {
 }
 
+template <typename BeamType>
 void
-BeamAd::AddInternalForcesAD(sp_grad::SpColVector<sp_grad::SpGradient, 6>& AzLoc, unsigned int iSez)
+BeamAdBase<BeamType>::AddInternalForcesAD(sp_grad::SpColVector<sp_grad::GpGradProd, 6>& AzLoc, unsigned int iSez)
 {
 }
 
-void
-BeamAd::AddInternalForcesAD(sp_grad::SpColVector<sp_grad::GpGradProd, 6>& AzLoc, unsigned int iSez)
-{
-}
-
+template <typename BeamType>
 template <typename T>
 void
-BeamAd::InterpState(const sp_grad::SpColVector<T, 3>& v1,
-                    const sp_grad::SpColVector<T, 3>& v2,
-                    const sp_grad::SpColVector<T, 3>& v3,
-                    sp_grad::SpColVector<T, 3>& p,
-                    Section Sec,
-                    const sp_grad::SpGradExpDofMapHelper<T>& oDofMap)
+BeamAdBase<BeamType>::InterpState(const sp_grad::SpColVector<T, 3>& v1,
+                                  const sp_grad::SpColVector<T, 3>& v2,
+                                  const sp_grad::SpColVector<T, 3>& v3,
+                                  sp_grad::SpColVector<T, 3>& p,
+                                  Section Sec,
+                                  const sp_grad::SpGradExpDofMapHelper<T>& oDofMap)
 {
      using namespace sp_grad;
 
@@ -107,14 +115,15 @@ BeamAd::InterpState(const sp_grad::SpColVector<T, 3>& v1,
      }
 }
 
+template <typename BeamType>
 template <typename T>
 void
-BeamAd::InterpDeriv(const sp_grad::SpColVector<T, 3>& v1,
-                    const sp_grad::SpColVector<T, 3>& v2,
-                    const sp_grad::SpColVector<T, 3>& v3,
-                    sp_grad::SpColVector<T, 3>& g,
-                    Section Sec,
-                    const sp_grad::SpGradExpDofMapHelper<T>& oDofMap)
+BeamAdBase<BeamType>::InterpDeriv(const sp_grad::SpColVector<T, 3>& v1,
+                                  const sp_grad::SpColVector<T, 3>& v2,
+                                  const sp_grad::SpColVector<T, 3>& v3,
+                                  sp_grad::SpColVector<T, 3>& g,
+                                  Section Sec,
+                                  const sp_grad::SpGradExpDofMapHelper<T>& oDofMap)
 {
      using namespace sp_grad;
 
@@ -123,34 +132,14 @@ BeamAd::InterpDeriv(const sp_grad::SpColVector<T, 3>& v1,
      }
 }
 
-void BeamAd::UpdateState(const std::array<sp_grad::SpMatrixA<doublereal, 3, 3>, NUMSEZ>& RTmp,
-                         const std::array<sp_grad::SpColVectorA<doublereal, 3>, NUMSEZ>& pTmp,
-                         const std::array<sp_grad::SpColVectorA<doublereal, 3>, NUMSEZ>& gTmp,
-                         const std::array<sp_grad::SpColVectorA<doublereal, 3>, NUMSEZ>& LTmp,
-                         const std::array<sp_grad::SpColVectorA<doublereal, 6>, NUMSEZ>& DefLocTmp,
-                         const std::array<sp_grad::SpColVectorA<doublereal, 6>, NUMSEZ>& AzTmp,
-                         const std::array<sp_grad::SpColVectorA<doublereal, 6>, NUMSEZ>& AzLocTmp)
-{
-     using namespace sp_grad;
-
-     for (index_type i = 0; i < NUMSEZ; ++i) {
-          R[i] = RTmp[i];
-          p[i] = pTmp[i];
-          g[i] = gTmp[i];
-          L[i] = LTmp[i];
-          DefLoc[i] = DefLocTmp[i];
-          Az[i] = AzTmp[i];
-          AzLoc[i] = AzLocTmp[i];
-     }
-}
-
+template <typename BeamType>
 template <typename T>
 void
-BeamAd::AssReactionForce(sp_grad::SpGradientAssVec<T>& WorkVec,
-                         const std::array<sp_grad::SpColVectorA<T, 3>, NUMSEZ>& p,
-                         const std::array<sp_grad::SpColVectorA<T, 6>, NUMSEZ>& Az,
-                         const std::array<sp_grad::SpColVectorA<T, 3>, NUMNODES>& X,
-                         const sp_grad::SpGradExpDofMapHelper<T>& oDofMap) const
+BeamAdBase<BeamType>::AssReactionForce(sp_grad::SpGradientAssVec<T>& WorkVec,
+                                       const std::array<sp_grad::SpColVectorA<T, 3>, NUMSEZ>& p,
+                                       const std::array<sp_grad::SpColVectorA<T, 6>, NUMSEZ>& Az,
+                                       const std::array<sp_grad::SpColVectorA<T, 3>, NUMNODES>& X,
+                                       const sp_grad::SpGradExpDofMapHelper<T>& oDofMap) const
 {
      using namespace sp_grad;
 
@@ -188,6 +177,54 @@ BeamAd::AssReactionForce(sp_grad::SpGradientAssVec<T>& WorkVec,
 
      WorkVec.AddItem(iNode3FirstMomIndex + 1, F_III);
      WorkVec.AddItem(iNode3FirstMomIndex + 4, M_III);
+}
+
+BeamAd::BeamAd(unsigned int uL,
+               const StructNodeAd* pN1,
+               const StructNodeAd* pN2,
+               const StructNodeAd* pN3,
+               const Vec3& F1,
+               const Vec3& F2,
+               const Vec3& F3,
+               const Mat3x3& R1,
+               const Mat3x3& R2,
+               const Mat3x3& R3,
+               const Mat3x3& r_I,
+               const Mat3x3& rII,
+               ConstitutiveLaw6D* pD_I,
+               ConstitutiveLaw6D* pDII,
+               OrientationDescription ood,
+               flag fOut)
+:
+     BeamAdBase<Beam>(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut)
+// pNode{pN1, pN2, pN3}
+{
+
+}
+
+BeamAd::~BeamAd()
+{
+}
+
+void BeamAd::UpdateState(const std::array<sp_grad::SpMatrixA<doublereal, 3, 3>, NUMSEZ>& RTmp,
+                         const std::array<sp_grad::SpColVectorA<doublereal, 3>, NUMSEZ>& pTmp,
+                         const std::array<sp_grad::SpColVectorA<doublereal, 3>, NUMSEZ>& gTmp,
+                         const std::array<sp_grad::SpColVectorA<doublereal, 3>, NUMSEZ>& LTmp,
+                         const std::array<sp_grad::SpColVectorA<doublereal, 6>, NUMSEZ>& DefLocTmp,
+                         const std::array<sp_grad::SpColVectorA<doublereal, 6>, NUMSEZ>& AzTmp,
+                         const std::array<sp_grad::SpColVectorA<doublereal, 6>, NUMSEZ>& AzLocTmp)
+{
+     using namespace sp_grad;
+
+     for (index_type i = 0; i < NUMSEZ; ++i) {
+          R[i] = RTmp[i];
+          p[i] = pTmp[i];
+          g[i] = gTmp[i];
+          L[i] = LTmp[i];
+          DefLoc[i] = DefLocTmp[i];
+          Az[i] = AzTmp[i];
+          AzLoc[i] = AzLocTmp[i];
+     }
 }
 
 template <typename T>
@@ -416,7 +453,7 @@ ViscoElasticBeamAd::ViscoElasticBeamAd(unsigned int uL,
                                        OrientationDescription ood,
                                        flag fOut)
 :
- BeamAd(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut)
+     BeamAdBase<ViscoElasticBeam>(uL, pN1, pN2, pN3, F1, F2, F3, R1, R2, R3, r_I, rII, pD_I, pDII, ood, fOut)
 {
 }
 
@@ -730,4 +767,15 @@ ViscoElasticBeamAd::AssJac(VectorHandler& JacY,
                                           XCurr,
                                           XPrimeCurr,
                                           SpFunctionCall::REGULAR_JAC);
+}
+
+void
+ViscoElasticBeamAd::AfterConvergence(const VectorHandler& X,
+                                     const VectorHandler& XP)
+{
+     for (unsigned i = 0; i < NUMSEZ; i++) {
+          RPrev[i] = R[i];
+          DefLocPrev[i] = DefLoc[i];
+          pD[i]->AfterConvergence(DefLoc[i], DefPrimeLoc[i]);
+     }
 }
