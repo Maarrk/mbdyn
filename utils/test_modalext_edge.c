@@ -429,7 +429,6 @@ main(int argc, char *argv[])
 	char *mdata = NULL;
 	int iters = 1;
 	int iters_random = 0;
-	unsigned steps;
 	int modes = 5;
 	double fm[6];
 	double *fg = NULL;
@@ -596,7 +595,7 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	for (steps = 0; keep_going > 0; steps++) {
+	while (keep_going > 0) {
 		int iter;
 		int niters;
 

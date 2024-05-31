@@ -105,8 +105,8 @@ void printDoublerealNcVar(const netCDF::NcVar var)
 	{
 		case 1:
 		{
-			double varIn[dims[0].getSize()];
-			var.getVar(varIn);
+                        std::vector<double> varIn(dims[0].getSize());
+			var.getVar(&varIn.front());
 			for (size_t ii = 0; ii < dims[0].getSize(); ii++)
 			{
 				std::cout << std::fixed << varIn[ii] << std::endl;
@@ -117,15 +117,15 @@ void printDoublerealNcVar(const netCDF::NcVar var)
 		{
 			const size_t SZX = dims[0].getSize();
 			const size_t SZY = dims[1].getSize();
-			double varIn[SZX][SZY];
+                        std::vector<double> varIn(SZX * SZY);
 
-			var.getVar(varIn);
+			var.getVar(&varIn.front());
 			for (size_t ii = 0; ii < SZX; ii++)
 			{
-				std::cout << std::fixed << varIn[ii][0];
+				std::cout << std::fixed << varIn[ii * SZY];
 				for (size_t jj = 1; jj < SZY; jj++)
 				{
-					std::cout << '\t' << std::fixed << varIn[ii][jj];
+					std::cout << '\t' << std::fixed << varIn[ii * SZY + jj];
 				}
 				std::cout << std::fixed << std::endl;
 			}
@@ -144,8 +144,8 @@ void printIntegerNcVar(const netCDF::NcVar var)
 	{
 		case 1:
 		{
-			int varIn[dims[0].getSize()];
-			var.getVar(varIn);
+                        std::vector<int> varIn(dims[0].getSize());
+			var.getVar(&varIn.front());
 			for (size_t ii = 0; ii < dims[0].getSize(); ii++)
 			{
 				std::cout << std::fixed << varIn[ii] << std::endl;
@@ -165,15 +165,15 @@ void printVec3NcVar(const netCDF::NcVar var)
 	
 	const size_t SZX = dims[0].getSize();
 	const size_t SZY = dims[1].getSize();
-	double varIn[SZX][SZY];
+        std::vector<double> varIn(SZX * SZY);
 
-	var.getVar(varIn);
+	var.getVar(&varIn.front());
 	for (size_t ii = 0; ii < SZX; ii++)
 	{
-		std::cout << std::fixed << varIn[ii][0];
+		std::cout << std::fixed << varIn[ii];
 		for (size_t jj = 1; jj < SZY; jj++)
 		{
-			std::cout << '\t' << std::fixed << varIn[ii][jj];
+			std::cout << '\t' << std::fixed << varIn[ii * SZY + jj];
 		}
 		std::cout << std::fixed << std::endl;
 	}
@@ -187,45 +187,41 @@ void printMat3x3NcVar(const netCDF::NcVar var)
 	const size_t SZX = dims[0].getSize();
 	const size_t SZY = dims[1].getSize();
 	const size_t SZZ = dims[2].getSize();
-	double varIn[SZX][SZY][SZZ];
+        std::vector<double> varIn(SZX * SZY * SZZ);
 
-	var.getVar(varIn);
+	var.getVar(&varIn.front());
 	for (size_t ii = 0; ii < SZX; ii++)
 	{
-		std::cout << std::fixed << varIn[ii][0][0] << '\t'
-		<< std::fixed << varIn[ii][0][1] << '\t'
-		<< std::fixed << varIn[ii][0][2] << '\t'
-		<< std::fixed << varIn[ii][1][0] << '\t'
-		<< std::fixed << varIn[ii][1][1] << '\t'
-		<< std::fixed << varIn[ii][1][2] << '\t'
-		<< std::fixed << varIn[ii][2][0] << '\t'
-		<< std::fixed << varIn[ii][2][1] << '\t'
-		<< std::fixed << varIn[ii][2][2]
-		<< std::endl;
+             for (size_t jj = 0; jj < SZY; ++jj) {
+                  for (size_t kk = 0; kk < SZZ; ++kk) {
+                       std::cout << std::fixed << varIn[ii * SZY * SZZ + jj * SZZ + kk] << '\t';
+                  }
+             }
+             std::cout << '\n';
 	}
 }
 
 void printNcVar(const netCDF::NcVar var)
 {
 	netCDF::NcVarAtt varTypeAtt = var.getAtt("type");
-	char varType[varTypeAtt.getAttLength()];
-	varTypeAtt.getValues(varType);
+        std::string varType(varTypeAtt.getAttLength(), '\0');
+	varTypeAtt.getValues(&varType.front());
 
 	// Sometimes (e.g. with doublereal) the value returned by NcVarAtt::getVaules() is
 	// doesn't have the same length as given by NcVarAtt::getAttLength()
-	if (std::string(varType).find("doublereal") != std::string::npos)
+	if (varType.find("doublereal") != std::string::npos)
 	{
 		printDoublerealNcVar(var);
 	} 
-	else if (std::string(varType).find("Vec3") != std::string::npos)
+	else if (varType.find("Vec3") != std::string::npos)
 	{
 		printVec3NcVar(var);
 	}
-	else if (std::string(varType).find("Mat3x3") != std::string::npos)
+	else if (varType.find("Mat3x3") != std::string::npos)
 	{
 		printMat3x3NcVar(var);
 	} 
-	else if (std::string(varType).find("integer") != std::string::npos)
+	else if (varType.find("integer") != std::string::npos)
 	{
 		printIntegerNcVar(var);
 	}

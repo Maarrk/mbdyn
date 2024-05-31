@@ -168,7 +168,7 @@ public:
 
 	virtual void Output(OutputHandler& OH) const override;
 
-	virtual Vec3 GetAcceleration(const Vec3& /* X */ ) const {
+	virtual Vec3 GetAcceleration(const Vec3& /* X */ ) const override {
 		return Acc;
 	};
 };

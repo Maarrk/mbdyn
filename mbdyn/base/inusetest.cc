@@ -244,8 +244,8 @@ usage:;
 		}
 		fprintf(stderr, "} = %u\n", c);
 
-		unsigned who[nt];
-		memset(who, 0, sizeof(who));
+                std::vector<unsigned> who(nt, 0u);
+
 		for (unsigned i = 0; i < size; i++) {
 			who[ppA[i]->Get()]++;
 		}

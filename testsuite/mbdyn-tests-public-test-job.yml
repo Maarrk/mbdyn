@@ -73,6 +73,7 @@ mbdyn-tests-public-test-job:   # This job runs in the test stage.
       - export AWKPATH=${MBD_INSTALL_PREFIX}/share/awk:${AWKPATH}
       - export TESTSUITE_TIME_CMD
       - export JUNIT_XML_KEEP_ALL_OUTPUT
+      - export MBDYN_EXEC
       - |
         if ! test -d ${MBD_TESTS_PUBLIC_INPUT_DIR}; then
           if ! git clone -b ${MBD_TESTS_PUBLIC_GITLAB_BRANCH} ${MBD_TESTS_PUBLIC_GITLAB} ${MBD_TESTS_PUBLIC_INPUT_DIR}; then
@@ -133,6 +134,7 @@ mbdyn-tests-public-test-job-gcov:   # This job runs in the test stage.
       - export AWKPATH=${MBD_INSTALL_PREFIX}/share/awk:${AWKPATH}
       - export TESTSUITE_TIME_CMD
       - export JUNIT_XML_KEEP_ALL_OUTPUT
+      - export MBDYN_EXEC
       - |
         if ! test -d ${MBD_TESTS_PUBLIC_INPUT_DIR}; then
           if ! git clone -b ${MBD_TESTS_PUBLIC_GITLAB_BRANCH} ${MBD_TESTS_PUBLIC_GITLAB} ${MBD_TESTS_PUBLIC_INPUT_DIR}; then

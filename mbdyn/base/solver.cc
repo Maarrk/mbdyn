@@ -61,6 +61,11 @@
 #include <cmath>
 #include <vector>
 #include <algorithm>
+
+#ifdef HAVE_ALLOCA
+#include <alloca.h>
+#endif
+
 #include "ac/sys_sysinfo.h"
 
 #include "solver.h"
@@ -266,8 +271,12 @@ mbdyn_signal_init(int pre)
 int
 mbdyn_reserve_stack(unsigned long size)
 {
-	int buf[size];
-
+#ifdef HAVE_ALLOCA
+       int* buf = (int*)alloca(sizeof(int) * size);
+#else
+       int buf[size];
+#endif
+       
 #ifdef HAVE_MEMSET
 	memset(buf, 0, size*sizeof(int));
 #else /* !HAVE_MEMSET */

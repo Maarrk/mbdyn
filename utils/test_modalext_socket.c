@@ -75,7 +75,6 @@ main(int argc, char *argv[])
 	int sleeptime = 1;
 	int iters = 1;
 	int iters_random = 0;
-	unsigned steps;
 
 	char *path = NULL;
 	char *host = NULL;
@@ -326,7 +325,7 @@ main(int argc, char *argv[])
 	signal(SIGTERM, sh);
 	signal(SIGINT, sh);
 
-	for (steps = 0; keep_going > 0; steps++) {
+	while (keep_going > 0) {
 		int iter;
 		int niters;
 

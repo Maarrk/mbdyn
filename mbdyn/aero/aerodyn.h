@@ -112,7 +112,7 @@ public:
 	virtual std::ostream& Restart(std::ostream& out) const override;
 
 	/* Tipo dell'elemento (usato per debug ecc.) */
-	virtual Elem::Type GetElemType(void) const { 
+	virtual Elem::Type GetElemType(void) const override {
 		return Elem::AIRPROPERTIES; 
 	};
       

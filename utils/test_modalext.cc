@@ -74,7 +74,6 @@ main(int argc, char *argv[])
 	int sleeptime = 1;
 	int iters = 1;
 	int iters_random = 0;
-	unsigned steps;
 
 	std::string fname_in, fname_out, tmpfname_out;
 	unsigned modes = 0;
@@ -160,7 +159,7 @@ main(int argc, char *argv[])
 	signal(SIGTERM, sh);
 	signal(SIGINT, sh);
 
-	for (steps = 0; keep_going > 0; steps++) {
+	while (keep_going > 0) {
 		int iter;
 		int niters;
 

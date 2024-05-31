@@ -295,32 +295,32 @@ protected:
     };
 
     /* Tipo di elemento */
-    virtual Elem::Type GetElemType(void) const {
+    virtual Elem::Type GetElemType(void) const override {
         return Elem::BEAM;
     };
     
     /* Deformable element */
-    virtual bool bIsDeformable() const {
+    virtual bool bIsDeformable() const override {
         return true;
     };
 
     /* Contributo al file di restart */
-    virtual std::ostream& Restart(std::ostream& out) const;
+    virtual std::ostream& Restart(std::ostream& out) const override;
 
     virtual void
-    AfterConvergence(const VectorHandler& X, const VectorHandler& XP);
+    AfterConvergence(const VectorHandler& X, const VectorHandler& XP) override;
 
     /* Inverse Dynamics */
     virtual void
     AfterConvergence(const VectorHandler& X, const VectorHandler& XP,
-    		const VectorHandler& XPP);
+    		const VectorHandler& XPP) override;
 
     /* funzioni proprie */
 
     /* Dimensioni del workspace; sono 36 righe perche' se genera anche le
      * forze d'inerzia consistenti deve avere accesso alle righe di definizione
      * della quantita' di moto */
-    virtual void WorkSpaceDim(integer* piNumRows, integer* piNumCols) const {
+    virtual void WorkSpaceDim(integer* piNumRows, integer* piNumCols) const override {
         if (bConsistentInertia) {
 	    *piNumRows = 36;
         } else {
@@ -333,11 +333,11 @@ protected:
     /* Settings iniziali, prima della prima soluzione */
     void SetValue(DataManager *pDM,
 		    VectorHandler& /* X */ , VectorHandler& /* XP */ ,
-		    SimulationEntity::Hints *ph = 0);
+		    SimulationEntity::Hints *ph = 0) override;
 
     /* Prepara i parametri di riferimento dopo la predizione */
     virtual void
-    AfterPredict(VectorHandler& /* X */ , VectorHandler& /* XP */ );
+    AfterPredict(VectorHandler& /* X */ , VectorHandler& /* XP */ ) override;
 
     /* assemblaggio residuo */
     virtual SubVectorHandler&
@@ -355,27 +355,27 @@ protected:
 	   InverseDynamics::Order iOrder = InverseDynamics::INVERSE_DYNAMICS) override;
 
     /* inverse dynamics capable element */
-    virtual bool bInverseDynamics(void) const;
+    virtual bool bInverseDynamics(void) const override;
 
     /* assemblaggio jacobiano */
     virtual VariableSubMatrixHandler&
     AssJac(VariableSubMatrixHandler& WorkMat,
 	   doublereal dCoef,
 	   const VectorHandler& XCurr,
-	   const VectorHandler& XPrimeCurr);
+	   const VectorHandler& XPrimeCurr) override;
 
     /* assemblaggio matrici per autovalori */
     void
     AssMats(VariableSubMatrixHandler& WorkMatA,
 	   VariableSubMatrixHandler& WorkMatB,
 	   const VectorHandler& XCurr,
-	   const VectorHandler& XPrimeCurr);
+	   const VectorHandler& XPrimeCurr) override;
 
-    virtual void OutputPrepare(OutputHandler &OH);
+    virtual void OutputPrepare(OutputHandler &OH) override;
 
     /* output; si assume che ogni tipo di elemento sappia, attraverso
      * l'OutputHandler, dove scrivere il proprio output */
-    virtual void Output(OutputHandler& OH) const;
+    virtual void Output(OutputHandler& OH) const override;
 
 #if 0
     /* Output di un modello NASTRAN equivalente nella configurazione corrente */
@@ -396,7 +396,7 @@ protected:
      * quanto vengono derivate tutte le equazioni, mentre per un vincolo di
      * velocita' rimane inalterato. Sono possibili casi intermedi per vincoli
      * misti di posizione e velocita' */
-    virtual unsigned int iGetInitialNumDof(void) const {
+    virtual unsigned int iGetInitialNumDof(void) const override {
         return 0;
     };
 
@@ -406,7 +406,7 @@ protected:
      * la posizione e la velocita' dei nodi */
     virtual void
     InitialWorkSpaceDim(integer* piNumRows,
-			integer* piNumCols) const {
+			integer* piNumCols) const override {
         *piNumRows = 18;
         *piNumCols = 18;
     };
@@ -419,16 +419,16 @@ protected:
     /* Contributo allo jacobiano durante l'assemblaggio iniziale */
     virtual VariableSubMatrixHandler&
     InitialAssJac(VariableSubMatrixHandler& WorkMat,
-                  const VectorHandler& XCurr);
+                  const VectorHandler& XCurr) override;
 
     /* Contributo al residuo durante l'assemblaggio iniziale */
     virtual SubVectorHandler&
-    InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr);
+    InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr) override;
 
     /* Accesso ai dati privati */
-    virtual unsigned int iGetNumPrivData(void) const;
-    virtual unsigned int iGetPrivDataIdx(const char *s) const;
-    virtual doublereal dGetPrivData(unsigned int i) const;
+    virtual unsigned int iGetNumPrivData(void) const override;
+    virtual unsigned int iGetPrivDataIdx(const char *s) const override;
+    virtual doublereal dGetPrivData(unsigned int i) const override;
 
     /* Accesso ai nodi */
     virtual const StructNode* pGetNode(unsigned int i) const;
@@ -437,7 +437,7 @@ protected:
     /* Fornisce il tipo e la label dei nodi che sono connessi all'elemento
      * utile per l'assemblaggio della matrice di connessione fra i dofs */
     virtual void
-    GetConnectedNodes(std::vector<const Node *>& connectedNodes) const {
+    GetConnectedNodes(std::vector<const Node *>& connectedNodes) const override {
         connectedNodes.resize(NUMNODES);
         for (int i = 0; i < NUMNODES; i++) {
             connectedNodes[i] = pNode[i];

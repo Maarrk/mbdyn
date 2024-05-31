@@ -218,6 +218,7 @@ AC_ARG_WITH(octave-pkg-prefix,[  --with-octave-pkg-prefix=path for local install
 ],[ol_with_octave_pkg_prefix=""])
 OL_ARG_ENABLE(install_test_progs, [  --enable-install_test_progs       enable installation of some test programs which are otherwise not installed], no)
 OL_ARG_ENABLE(manuals, [  --enable-manuals        build manuals in PDF format using latex, dvips and ps2pdf], no)
+OL_ARG_ENABLE(openmp, [  --enable-openmp        enable handling of OpenMP directives], yes)
 dnl ----------------------------------------------------------------
 dnl General "with" options
 OL_ARG_WITH(g2c,[  --with-g2c              with g2c header],no,[auto yes no])
@@ -3649,6 +3650,22 @@ AC_CHECK_FUNCS([ \
         usleep \
 ])
 
+AC_CHECK_HEADERS(alloca.h, [have_alloca=yes],[have_alloca=no])
+
+if test $have_alloca = yes; then
+  AC_MSG_CHECKING([for alloca])
+  AC_TRY_LINK([
+    #include <alloca.h>
+  ],[
+    alloca(1024);
+  ],[have_alloca=yes],[have_alloca=no])
+  AC_MSG_RESULT([$have_alloca])
+fi
+
+if test $have_alloca = yes; then
+  AC_DEFINE(HAVE_ALLOCA,1,[define if alloca can be used])
+fi
+
 dnl ----------------------------------------------------------------
 dnl
 dnl Checks if we can detect how many processors can be used on smp arch
@@ -3729,8 +3746,10 @@ if test "$ol_enable_Werror" != no ; then
         AX_CHECK_COMPILE_FLAG([-Wformat-truncation],[CFLAGS="$CFLAGS -Wno-error=format-truncation"], , [-Werror])
         AC_LANG([C++])
         AX_CHECK_COMPILE_FLAG([-Wformat-truncation],CXXFLAGS="$CXXFLAGS -Wno-error=format-truncation", , [-Werror])
-dnl	openmp is required by trilinos, add it just in case        
-	AX_CHECK_COMPILE_FLAG([-fopenmp],CXXFLAGS="$CXXFLAGS -fopenmp", , [-Werror])
+        if test "$ol_enable_openmp" != no ; then
+          dnl	openmp is required by trilinos, add it just in case
+	  AX_CHECK_COMPILE_FLAG([-fopenmp],CXXFLAGS="$CXXFLAGS -fopenmp", , [-Werror])
+        fi
         AC_LANG([C])
         FFLAGS="$FFLAGS"
 fi

@@ -24896,11 +24896,11 @@ namespace {
           GrooveShapeDriveCaller(const DriveHandler* pDH, doublereal Ws, doublereal Wc, doublereal Hg);
 
           virtual ~GrooveShapeDriveCaller();
-          bool bIsDifferentiable(void) const;
-          virtual std::ostream& Restart(std::ostream& out) const;
+          bool bIsDifferentiable(void) const override;
+          virtual std::ostream& Restart(std::ostream& out) const override;
           doublereal dGet(const doublereal& dVar) const override;
-          virtual doublereal dGetP(const doublereal& dVar) const;
-          virtual DriveCaller* pCopy(void) const;
+          virtual doublereal dGetP(const doublereal& dVar) const override;
+          virtual DriveCaller* pCopy(void) const override;
 
      private:
           template <typename T>

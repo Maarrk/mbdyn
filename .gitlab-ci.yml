@@ -145,6 +145,15 @@ variables:
       - "no"
     description: "Generate a test coverage report"
 
+  MBDYN_EXEC:
+    value: "mbdyn"
+    options:
+      - "mbdyn"
+      - "valgrind mbdyn"
+      - "valgrind --leak-check=full mbdyn"
+      - "valgrind --leak-check=full --show-leak-kinds=all mbdyn"
+    description: "Command to run MBDyn from the shell"
+
   ## Compiler flags for MBDyn and mboct-*-pkg
   MBD_COMPILER_FLAGS: "-Ofast -Wall -march=native -mtune=native -Wno-unused-variable"
 

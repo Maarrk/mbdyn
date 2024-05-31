@@ -44,7 +44,9 @@ if ! test -f "${program_dir}/mbdyn_build_job.sh"; then
     program_dir=$(realpath $(which "${program_name}"))
 fi
 
-LIBDIR64="${LIBDIR64:-lib64}" ## FIXME: On some systems it is called "lib64" whereas it is called "lib" on other systems.
+## FIXME: On some systems it is called "lib64" whereas it is called "lib" on other systems.
+## FIXME: In any case "lib64" should take precedence over "lib".
+LIBDIR64="${LIBDIR64:-lib64 lib}"
 MBD_SOURCE_DIR=${MBD_SOURCE_DIR:-`dirname ${program_dir}`}
 MBD_SKIP_BUILD="${MBD_SKIP_BUILD:-no}"
 MBD_INSTALL_PREFIX="${MBD_INSTALL_PREFIX:-${program_dir}/var/cache/mbdyn}"
@@ -66,7 +68,12 @@ OCTAVE_CLI="${OCTAVE_CLI:-octave-cli}"
 TRILINOS_INSTALL_PREFIX="${TRILINOS_INSTALL_PREFIX:-/usr}"
 TRILINOS_INC_DIR="${TRILINOS_INC_DIR:-${TRILINOS_INSTALL_PREFIX}/include/trilinos}"
 SUITESPARSE_INC_DIR="${SUITESPARSE_INC_DIR:-/usr/include/suitesparse}"
-NUMPY_INC_DIR="${NUMPY_INC_DIR:-/usr/${LIBDIR64}/python3.11/site-packages/numpy/core/include}"
+for libdir in ${LIBDIR64}; do
+    NUMPY_INC_DIR="${NUMPY_INC_DIR:-/usr/${libdir}/python3.11/site-packages/numpy/core/include}"
+    if ! test -d "${NUMPY_INC_DIR}"; then
+        NUMPY_INC_DIR=
+    fi
+done
 PYTHON_INC_DIR="${PYTHON_INC_DIR:-`python3-config --includes`}"
 PYTHON_LDFLAGS="${PYTHON_LDFLAGS:-`python3-config --ldflags`}"
 PYTHON_INC_DIR="${PYTHON_INC_DIR:-`python-config --includes`}" ## Just in case "python3-config" is called "python-config"
@@ -292,9 +299,16 @@ fi
 
 if test -d "${SICONOS_INSTALL_PREFIX}"; then
     SICONOS_INC_DIR="${SICONOS_INC_DIR:-${SICONOS_INSTALL_PREFIX}/include/siconos}"
-    SICONOS_LIB_DIR="${SICONOS_LIB_DIR:-${SICONOS_INSTALL_PREFIX}/${LIBDIR64}}"
+    for libdir in ${LIBDIR64}; do
+        SICONOS_LIB_DIR="${SICONOS_LIB_DIR:-${SICONOS_INSTALL_PREFIX}/${libdir}}"
+        if ! test -d "${SICONOS_LIB_DIR}"; then
+            SICONOS_LIB_DIR=
+        fi
+    done
     CPPFLAGS="-I${SICONOS_INC_DIR} ${CPPFLAGS}"
-    LDFLAGS="-L${SICONOS_LIB_DIR} -Wl,-rpath=${SICONOS_LIB_DIR} ${LDFLAGS}"
+    if ! test -z "${SICONOS_LIB_DIR}"; then
+        LDFLAGS="-L${SICONOS_LIB_DIR} -Wl,-rpath=${SICONOS_LIB_DIR} ${LDFLAGS}"
+    fi
 fi
 
 echo "Detecting NetCDF ..."

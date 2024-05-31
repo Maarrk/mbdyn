@@ -57,6 +57,7 @@ declare -i mbdyn_exclude_initial_value=0
 mbdyn_suppressed_errors=""
 
 declare -i mbd_exit_status_mask=0 ## Define the errors codes which should not cause the pipeline to fail
+MBDYN_EXEC="${MBDYN_EXEC:-mbdyn}"
 OCTAVE_EXEC="${OCTAVE_EXEC:-octave}"
 TESTSUITE_TIME_CMD="${TESTSUITE_TIME_CMD:-/usr/bin/time --verbose}"
 JUNIT_XML_KEEP_ALL_OUTPUT="${JUNIT_XML_KEEP_ALL_OUTPUT:-none}"
@@ -96,8 +97,18 @@ while ! test -z "$1"; do
             mbdyn_testsuite_timeout="$2"
             shift
             ;;
-        --regex-filter)
-            mbdyn_input_filter="$2"
+        --regex-filter-include|--regex-filter-exclude)
+            if ! test -z "${mbdyn_input_filter}"; then
+                mbdyn_input_filter="${mbdyn_input_filter} -and "
+            fi
+            case "$1" in
+                --regex-filter-include)
+                    mbdyn_input_filter="${mbdyn_input_filter} -regex $2"
+                    ;;
+                --regex-filter-exclude)
+                    mbdyn_input_filter="${mbdyn_input_filter} -not -regex $2"
+                    ;;
+            esac
             shift
             ;;
         --exclude-inverse-dynamics)
@@ -132,6 +143,10 @@ while ! test -z "$1"; do
             mbdyn_patch_input="$2"
             shift
             ;;
+        --mbdyn-exec)
+            MBDYN_EXEC="$2"
+            shift
+            ;;
         --mbdyn-args-add)
             mbdyn_args_add="$2"
             shift
@@ -156,6 +171,7 @@ while ! test -z "$1"; do
             printf "  --verbose {yes|no}\n"
             printf "  --keep-output {all|failed|unexpected}\n"
             printf "  --patch-input {yes|no}\n"
+            printf "  --mbdyn-exec <mbdyn-binary>\n"
             printf "  --mbdyn-args-add \"<arg1> <arg2> ... <argN>\"\n"
             printf "  --exec-gen {yes|no}\n"
             printf "  --exec-solver {yes|no}\n"
@@ -234,7 +250,7 @@ suppressed_failures=""
 unexpected_faults=""
 
 if ! test -z "${mbdyn_input_filter}"; then
-    mbdyn_input_filter="-and -not -regex ${mbdyn_input_filter}"
+    mbdyn_input_filter="-and ${mbdyn_input_filter}"
 fi
 
 declare -i idx_test=0
@@ -368,7 +384,7 @@ function simple_testsuite_run_test()
                                 mbd_exec_solver="yes"
                             else
                                 ## Generate the input and execute MBDyn
-                                mbd_command="${mbd_command}; mbdyn ${mbdyn_args_add} -f ${mbd_filename} -o ${mbd_output_file}"
+                                mbd_command="${mbd_command}; ${MBDYN_EXEC} ${mbdyn_args_add} -f ${mbd_filename} -o ${mbd_output_file}"
                             fi
                         fi
                         ;;
@@ -398,7 +414,7 @@ function simple_testsuite_run_test()
 
         if test -z "${mbd_command}"; then
             echo "No custom test script was found for input file ${mbd_filename}; The default command will be used to run the model"
-            mbd_command="mbdyn ${mbdyn_args_add} -f ${mbd_filename_patched} -o ${mbd_output_file} --gtest_output=xml:${junit_xml_report_file}"
+            mbd_command="${MBDYN_EXEC} ${mbdyn_args_add} -f ${mbd_filename_patched} -o ${mbd_output_file} --gtest_output=xml:${junit_xml_report_file}"
         fi
 
         case "${mbdyn_print_res}" in

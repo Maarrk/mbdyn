@@ -2240,12 +2240,7 @@ Modal::iGetPrivDataIdx(const char *s) const
 		}
 
 		/* buffer per numero (dimensione massima: 32 bit) */
-		// char buf[sizeof("18446744073709551615") + 1];
-		size_t len = end - s;
-		char buf[len + 1];
-
-		memcpy(buf, s, len);
-		buf[len] = '\0';
+                std::string buf(s, end);
 
 		/* leggi il numero */
 		if (buf[0] == '-') {
@@ -2254,10 +2249,10 @@ Modal::iGetPrivDataIdx(const char *s) const
 
 		errno = 0;
 		char *next;
-		unsigned long n = strtoul(buf, &next, 10);
+		unsigned long n = strtoul(buf.c_str(), &next, 10);
 		int save_errno = errno;
 		end = next;
-		if (end == buf) {
+		if (end == buf.c_str()) {
 			return 0;
 
 		} else if (end[0] != '\0') {
@@ -2265,9 +2260,9 @@ Modal::iGetPrivDataIdx(const char *s) const
 
 		} else if (save_errno == ERANGE) {
 			silent_cerr("Modal(" << GetLabel() << "): "
-				"warning, private data mode index "
-				<< std::string(buf, end - buf)
-				<< " overflows" << std::endl);
+                                    "warning, private data mode index "
+                                    << std::string(buf.c_str(), end)
+                                    << " overflows" << std::endl);
 			return 0;
 		}
 
