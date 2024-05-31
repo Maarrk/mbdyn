@@ -829,7 +829,7 @@ extern "C" void
 tdata_(int32_t *REFNODE, int32_t *NODES, int32_t *ROT, int32_t *ITERS, int32_t *VERB,
 	int32_t *RC_P)
 {
-	switch (mbc->GetRot()) {
+	switch ((MBCType)mbc->GetRot()) {
 	case MBC_ROT_MAT:
 		*ROT = 0;
 		break;

@@ -49,6 +49,7 @@ class ScalarNode : public Node {
 protected:
 	/* scrive l'output */
 	using ToBeOutput::Output;
+        using Node::DescribeEq;
 	virtual std::ostream& Output(std::ostream& out) const;
 
 public:

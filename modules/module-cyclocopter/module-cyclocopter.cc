@@ -88,46 +88,46 @@ public:
 	CyclocopterInflow(unsigned int uL, const DofOwner* pDO);
 	virtual ~CyclocopterInflow(void);
 
-	virtual Elem::Type GetElemType(void) const;
-	virtual InducedVelocity::Type GetInducedVelocityType(void) const;
+	virtual Elem::Type GetElemType(void) const override;
+	virtual InducedVelocity::Type GetInducedVelocityType(void) const override;
 
 	// Elaborazione stato interno dopo la convergenza
 	virtual void
-	AfterConvergence(const VectorHandler& X, const VectorHandler& XP);
+	AfterConvergence(const VectorHandler& X, const VectorHandler& XP) override;
 
 	// output; si assume che ogni tipo di elemento sappia,
 	// attraverso l'OutputHandler, dove scrivere il proprio output
-	virtual void Output(OutputHandler& OH) const;
+	virtual void Output(OutputHandler& OH) const override;
 
 	// Contributo al file di Restart
-	virtual std::ostream& Restart(std::ostream& out) const;
+	virtual std::ostream& Restart(std::ostream& out) const override;
 
 	virtual void SetValue(DataManager *pDM,
 		VectorHandler& X, VectorHandler& XP,
-		SimulationEntity::Hints *ph);
+		SimulationEntity::Hints *ph) override;
 
 	// Relativo ai ...WithDofs
-	virtual void SetInitialValue(VectorHandler& X);
+	virtual void SetInitialValue(VectorHandler& X) override;
 
 	// *******PER IL SOLUTORE PARALLELO********
 	// Fornisce il tipo e la label dei nodi che sono connessi all'elemento
 	// utile per l'assemblaggio della matrice di connessione fra i dofs
 	virtual void
-	GetConnectedNodes(std::vector<const Node *>& connectedNodes) const;
+	GetConnectedNodes(std::vector<const Node *>& connectedNodes) const override;
 	// ************************************************
 
-	virtual unsigned int iGetInitialNumDof(void) const;
+	virtual unsigned int iGetInitialNumDof(void) const override;
 	virtual void 
-	InitialWorkSpaceDim(integer* piNumRows, integer* piNumCols) const;
+	InitialWorkSpaceDim(integer* piNumRows, integer* piNumCols) const override;
    	VariableSubMatrixHandler&
 	InitialAssJac(VariableSubMatrixHandler& WorkMat, 
-		      const VectorHandler& XCurr);
+		      const VectorHandler& XCurr) override;
    	SubVectorHandler& 
-	InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr);
+	InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr) override;
 
 	// Dimensioni del workspace
 	virtual void
-	WorkSpaceDim(integer* piNumRows, integer* piNumCols) const {
+	WorkSpaceDim(integer* piNumRows, integer* piNumCols) const override {
 		*piNumRows = 0;
 		*piNumCols = 0;
 	};
@@ -902,27 +902,27 @@ public:
 
 	// Elaborazione stato interno dopo la convergenza
 	virtual void
-	AfterConvergence(const VectorHandler& X, const VectorHandler& XP);
+	AfterConvergence(const VectorHandler& X, const VectorHandler& XP) override;
 
 	// output; si assume che ogni tipo di elemento sappia,
 	// attraverso l'OutputHandler, dove scrivere il proprio output
-	virtual void Output(OutputHandler& OH) const;
+	virtual void Output(OutputHandler& OH) const override;
 
 	// assemblaggio residuo
 	virtual SubVectorHandler&
 	AssRes(SubVectorHandler& WorkVec,
 		doublereal dCoef,
 		const VectorHandler& XCurr,
-		const VectorHandler& XPrimeCurr);
+		const VectorHandler& XPrimeCurr) override;
 
 	// Somma alla trazione il contributo di un elemento
 	virtual void
-	AddForce(const Elem *pEl, const StructNode *pNode, const Vec3& F, const Vec3& M, const Vec3& X);
+	AddForce(const Elem *pEl, const StructNode *pNode, const Vec3& F, const Vec3& M, const Vec3& X) override;
 
 	// Restituisce ad un elemento la velocita' indotta
 	// in base alla posizione azimuthale
 	virtual Vec3 GetInducedVelocity(Elem::Type type,
-		unsigned uLabel, unsigned uPnt, const Vec3& X) const;
+		unsigned uLabel, unsigned uPnt, const Vec3& X) const override;
 
 	// Restituisce ad un elemento la velocità indotta
 	// in base alla posizione azimuthale (usata per

@@ -298,7 +298,7 @@ void winsock_err_string (int err, char* msg)
 /* errno cannot be used on windows for sockets, so we use
    WSAGetLastError but on non-windows define it to just return
    errno */
-int WSAGetLastError()
+int WSAGetLastError(void)
 {
     return errno;
 }

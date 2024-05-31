@@ -571,7 +571,7 @@ TESTSUITE_TEST(SmallStrainTest)
 
      oMFrontMaterial6D.setMaterialProperty("YoungModulus", E);
      oMFrontMaterial6D.setMaterialProperty("PoissonRatio", nu);
-     oMFrontMaterial6D.setMaterialProperty("YieldStrength", s0);
+     oMFrontMaterial6D.setMaterialProperty("YieldStrength", sigmavy);
 
      oMFrontMaterial6D.PutName("MFrontSmallStrain");
 #endif

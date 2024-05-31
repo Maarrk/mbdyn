@@ -42,6 +42,7 @@
 set -o pipefail ## Needed for commands like "octave --eval ${cmd} |& tee logfile"
 
 program_name="$0"
+MBDYN_EXEC="${MBDYN_EXEC:-mbdyn}"
 TESTSUITE_TIME_CMD="${TESTSUITE_TIME_CMD:-/usr/bin/time --verbose}"
 OCT_PKG_LIST="${OCT_PKG_LIST:-mboct-mbdyn-pkg:no:master:yes:unlimited}"
 OCT_PKG_TEST_DIR="${OCT_PKG_TEST_DIR:-octave-pkg-testsuite}"
@@ -307,7 +308,7 @@ function octave_pkg_testsuite_run()
         return 1
     fi
 
-    export MBOCT_MBDYN_PKG_MBDYN_SOLVER_COMMAND="${MBOCT_MBDYN_PKG_MBDYN_SOLVER_COMMAND:-mbdyn -CG --gtest_output=xml:${junit_xml_report_file}}"
+    export MBOCT_MBDYN_PKG_MBDYN_SOLVER_COMMAND="${MBOCT_MBDYN_PKG_MBDYN_SOLVER_COMMAND:-${MBDYN_EXEC} -CG --gtest_output=xml:${junit_xml_report_file}}"
 
     case "${OCT_PKG_TESTS_VERBOSE}" in
         yes)
