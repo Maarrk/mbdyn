@@ -639,6 +639,20 @@ class Mat6x6: public sp_grad::SpConstMatElemAdapter<Mat6x6>
    
    void Reset(void);
 
+   bool IsDiag() const {
+        for (integer j = 0; j < 2; ++j) {
+             for (integer i = 0; i < 2; ++i) {
+                  const Mat3x3 Aij = GetMat(i, j);
+                  const bool bCondDiag = (i == j) ? Aij.IsDiag() : Aij.IsNull();
+
+                  if (!bCondDiag) {
+                       return false;
+                  }
+             }
+        }
+
+        return true;
+   }
    /* Scrittura su ostream della matrice */
    std::ostream& Write(std::ostream& out, 
 		  const char* sFill = " ", 

@@ -254,15 +254,17 @@ private:
 	GiNaC::ex gExprDEps;		/* derivative */
 
 public:
+        using ElasticConstitutiveLaw1D::Update;
+
 	GiNaCElasticConstitutiveLaw(
 		const TplDriveCaller<doublereal>* pDC,
 		const doublereal& PStress,
 		std::vector<std::string>& epsilon,
 		std::vector<std::string>& expression);
      	virtual ~GiNaCElasticConstitutiveLaw(void);
-     	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const;
-	virtual std::ostream& Restart(std::ostream& out) const;
-	virtual void Update(const doublereal& Eps, const doublereal& /* EpsPrime */ = 0.);
+     	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const override;
+	virtual std::ostream& Restart(std::ostream& out) const override;
+	virtual void Update(const doublereal& Eps, const doublereal& /* EpsPrime */ = 0.) override;
 };
 
 GiNaCElasticConstitutiveLaw<doublereal, doublereal>::GiNaCElasticConstitutiveLaw(
@@ -585,14 +587,16 @@ private:
 	GiNaC::ex gExprDEpsPrime;	/* derivative */
 
 public:
+        using SymbolicViscousConstitutiveLaw<doublereal, doublereal>::Update;
+     
 	GiNaCViscousConstitutiveLaw(
 		const doublereal& PStress,
 		std::vector<std::string>& epsilonPrime,
 		std::vector<std::string>& expression);
      	virtual ~GiNaCViscousConstitutiveLaw(void);
-     	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const;
-	virtual std::ostream& Restart(std::ostream& out) const;
-	virtual void Update(const doublereal& Eps, const doublereal& EpsPrime = 0.);
+     	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const override;
+	virtual std::ostream& Restart(std::ostream& out) const override;
+	virtual void Update(const doublereal& Eps, const doublereal& EpsPrime = 0.) override;
 };
 
 GiNaCViscousConstitutiveLaw<doublereal, doublereal>::GiNaCViscousConstitutiveLaw(
@@ -963,6 +967,8 @@ private:
 	GiNaC::ex gExprDEpsPrime;	/* derivative */
 
 public:
+        using SymbolicViscoElasticConstitutiveLaw<doublereal, doublereal>::Update;
+
 	GiNaCViscoElasticConstitutiveLaw(
 		const TplDriveCaller<doublereal>* pDC,
 		const doublereal& PStress,
@@ -970,9 +976,9 @@ public:
 		std::vector<std::string>& epsilonPrime,
 		std::vector<std::string>& expression);
      	virtual ~GiNaCViscoElasticConstitutiveLaw(void);
-     	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const;
-	virtual std::ostream& Restart(std::ostream& out) const;
-	virtual void Update(const doublereal& Eps, const doublereal& EpsPrime = 0.);
+     	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const override;
+	virtual std::ostream& Restart(std::ostream& out) const override;
+	virtual void Update(const doublereal& Eps, const doublereal& EpsPrime = 0.) override;
 };
 
 GiNaCViscoElasticConstitutiveLaw<doublereal, doublereal>::GiNaCViscoElasticConstitutiveLaw(

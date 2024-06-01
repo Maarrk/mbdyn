@@ -379,6 +379,94 @@ typedef LinearElasticGenericConstitutiveLaw<Vec6, Mat6x6> LinearElasticGenericCo
 
 /* LinearElasticGenericConstitutiveLaw - end */
 
+template <class T, class Tder>
+class LinearElasticDiagonalConstitutiveLaw
+     : public LinearElasticGenericConstitutiveLaw<T, Tder> {
+public:
+     using LinearElasticGenericConstitutiveLaw<T, Tder>::iDimStress;
+     using LinearElasticGenericConstitutiveLaw<T, Tder>::iDimStrain;
+     using LinearElasticGenericConstitutiveLaw<T, Tder>::Update;
+
+     LinearElasticDiagonalConstitutiveLaw(const TplDriveCaller<T>* pDC,
+                                          const T& PStress, const Tder& Stiff)
+          : LinearElasticGenericConstitutiveLaw<T, Tder>(pDC, PStress, Stiff) {
+
+          if (!ConstLawHelper<Tder>::IsDiag(Stiff)) {
+               ASSERT(0);
+               throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+          }
+     }
+
+     virtual ~LinearElasticDiagonalConstitutiveLaw() {
+     }
+
+     virtual ConstitutiveLaw<T, Tder>* pCopy() const override {
+          ConstitutiveLaw<T, Tder>* pCL = nullptr;
+
+          typedef LinearElasticDiagonalConstitutiveLaw<T, Tder> cl;
+
+          SAFENEWWITHCONSTRUCTOR(pCL,
+                                 cl,
+                                 cl(this->pGetDriveCaller()->pCopy(),
+                                    this->PreStress,
+                                    this->FDE));
+          return pCL;
+     }
+
+     virtual void
+     Update(const sp_grad::SpColVector<doublereal, iDimStrain>& Eps,
+            sp_grad::SpColVector<doublereal, iDimStress>& FTmp,
+            const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap) override;
+
+     virtual void
+     Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& Eps,
+            sp_grad::SpColVector<sp_grad::SpGradient, iDimStress>& FTmp,
+            const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap) override;
+
+     virtual void
+     Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& Eps,
+            sp_grad::SpColVector<sp_grad::GpGradProd, iDimStress>& FTmp,
+            const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap) override;
+};
+
+
+template <typename Tstress, typename Tder>
+void
+LinearElasticDiagonalConstitutiveLaw<Tstress, Tder>::Update(const sp_grad::SpColVector<doublereal, iDimStrain>& Eps,
+                                                            sp_grad::SpColVector<doublereal, iDimStress>& FTmp,
+                                                            const sp_grad::SpGradExpDofMapHelper<doublereal>&)
+{
+     using namespace sp_grad;
+
+     ASSERT(ConstLawHelper<Tder>::IsDiag(this->FDE));
+
+     static_assert(iDimStrain == iDimStress);
+
+     const auto Eps0 = this->Get();
+
+     for (index_type i = 1; i <= iDimStrain; ++i) {
+          this->F(i) = FTmp(i) = this->PreStress(i) + this->FDE(i, i) * (Eps(i) - Eps0(i));
+          this->Epsilon(i) = Eps(i);
+     }
+}
+
+template <typename Tstress, typename Tder>
+void
+LinearElasticDiagonalConstitutiveLaw<Tstress, Tder>::Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& Eps,
+                                                            sp_grad::SpColVector<sp_grad::SpGradient, iDimStress>& FTmp,
+                                                            const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap)
+{
+     this->UpdateDiagonal(Eps, FTmp, oDofMap);
+}
+
+template <typename Tstress, typename Tder>
+void
+LinearElasticDiagonalConstitutiveLaw<Tstress, Tder>::Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& Eps,
+                                                            sp_grad::SpColVector<sp_grad::GpGradProd, iDimStress>& FTmp,
+                                                            const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap)
+{
+     this->UpdateDiagonal(Eps, FTmp, oDofMap);
+}
 
 /* LinearElasticGenericAxialTorsionCouplingConstitutiveLaw - begin */
 
@@ -499,13 +587,15 @@ public:
 
 template <>
 class CubicElasticGenericConstitutiveLaw<doublereal, doublereal>
-: public ElasticConstitutiveLaw1D {
-private:
+: public ElasticConstitutiveLaw1D{
+protected:
 	doublereal Stiff1;
 	doublereal Stiff2;
 	doublereal Stiff3;
 
 public:
+        using ElasticConstitutiveLaw1D::Update;
+
 	CubicElasticGenericConstitutiveLaw(const TplDriveCaller<doublereal>* pDC,
 			const doublereal& PStress, const doublereal& Stiff1,
 			const doublereal& Stiff2, const doublereal& Stiff3)
@@ -556,7 +646,7 @@ public:
 template <>
 class CubicElasticGenericConstitutiveLaw<Vec3, Mat3x3>
 : public ElasticConstitutiveLaw3D {
-private:
+protected:
 	Vec3 Stiff1;
 	Vec3 Stiff2;
 	Vec3 Stiff3;
@@ -616,6 +706,141 @@ public:
 
 /* CubicElasticGenericConstitutiveLaw - end */
 
+template <typename T, typename Tder>
+class CubicElasticGenericConstitutiveLawAd;
+
+template <>
+class CubicElasticGenericConstitutiveLawAd<doublereal, doublereal>
+     : public CubicElasticGenericConstitutiveLaw<doublereal, doublereal> {
+public:
+     CubicElasticGenericConstitutiveLawAd(const TplDriveCaller<doublereal>* pDC,
+                                          const doublereal& PStress, const doublereal& Stiff1,
+                                          const doublereal& Stiff2, const doublereal& Stiff3)
+          :CubicElasticGenericConstitutiveLaw<doublereal, doublereal>(pDC, PStress, Stiff1, Stiff2, Stiff3) {
+     }
+
+     virtual ~CubicElasticGenericConstitutiveLawAd() {
+     }
+
+     virtual ConstitutiveLaw1D* pCopy(void) const override {
+          ConstitutiveLaw1D* pCL = 0;
+
+          typedef CubicElasticGenericConstitutiveLawAd<doublereal, doublereal> cl;
+
+          SAFENEWWITHCONSTRUCTOR(pCL,
+                                 cl,
+                                 cl(this->pGetDriveCaller()->pCopy(),
+                                    this->PreStress,
+                                    Stiff1, Stiff2, Stiff3));
+          return pCL;
+     }
+
+     template <typename T>
+     void UpdateElasticTpl(const T& Eps, T& F, const sp_grad::SpGradExpDofMapHelper<T>& oDofMap) {
+          using namespace sp_grad;
+          const T e1 = Eps - this->Get();
+          const T f1 = fabs(e1);
+          const T e2 = oDofMap.MapEval(e1 * e1);
+          const T f2 = oDofMap.MapEval(f1 * e1);
+          const T e3 = oDofMap.MapEval(e2 * e1);
+          oDofMap.MapAssign(F, this->PreStress + Stiff1*e1 + Stiff2*f2 + Stiff3*e3);
+     }
+
+     virtual void Update(const doublereal& Eps, const doublereal&) override {
+          ConstitutiveLaw1D::UpdateElasticSparse(this, Eps);
+     }
+
+     virtual void
+     Update(const doublereal& Eps,
+            doublereal& FTmp,
+            const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap) override {
+          UpdateElasticTpl(Eps, FTmp, oDofMap);
+     }
+
+     virtual void
+     Update(const sp_grad::GpGradProd& Eps,
+            sp_grad::GpGradProd& FTmp,
+            const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap) override {
+          UpdateElasticTpl(Eps, FTmp, oDofMap);
+     }
+
+     virtual void
+     Update(const sp_grad::SpGradient& Eps,
+            sp_grad::SpGradient& FTmp,
+            const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap) override {
+          UpdateElasticTpl(Eps, FTmp, oDofMap);
+     }
+};
+
+template <>
+class CubicElasticGenericConstitutiveLawAd<Vec3, Mat3x3>
+: public CubicElasticGenericConstitutiveLaw<Vec3, Mat3x3> {
+public:
+        CubicElasticGenericConstitutiveLawAd(const TplDriveCaller<Vec3>* pDC,
+                        const Vec3& PStress, const Vec3& Stiff1,
+                        const Vec3& Stiff2, const Vec3& Stiff3)
+             : CubicElasticGenericConstitutiveLaw<Vec3, Mat3x3>(pDC, PStress, Stiff1, Stiff2, Stiff3) {
+        }
+
+        virtual ~CubicElasticGenericConstitutiveLawAd() {
+        }
+
+        virtual ConstitutiveLaw3D* pCopy(void) const override {
+                ConstitutiveLaw3D* pCL = 0;
+
+                typedef CubicElasticGenericConstitutiveLawAd<Vec3, Mat3x3> cl;
+                SAFENEWWITHCONSTRUCTOR(pCL,
+                                       cl,
+                                       cl(this->pGetDriveCaller()->pCopy(),
+                                          this->PreStress,
+                                          this->Stiff1, this->Stiff2, this->Stiff3));
+                return pCL;
+        }
+
+        template <typename VectorType>
+        void UpdateElasticTpl(const VectorType& Eps, VectorType& F, const sp_grad::SpGradExpDofMapHelper<typename VectorType::ValueType>& oDofMap) {
+             using namespace sp_grad;
+             typedef typename VectorType::ValueType T;
+
+             const Vec3 Eps0 = this->Get();
+
+             for (index_type iCnt = 1; iCnt <= 3; ++iCnt) {
+                  const T e1 = Eps(iCnt) - Eps0(iCnt);
+                  const T f1 = fabs(e1);
+                  const T e2 = oDofMap.MapEval(e1 * e1);
+                  const T f2 = oDofMap.MapEval(f1 * e1);
+                  const T e3 = oDofMap.MapEval(e2 * e1);
+
+                  oDofMap.MapAssign(F(iCnt), this->PreStress(iCnt) + Stiff1(iCnt) * e1 + Stiff2(iCnt) * f2 + Stiff3(iCnt) * e3);
+             }
+        }
+
+     virtual void Update(const Vec3& Eps, const Vec3&) override {
+          ConstitutiveLaw3D::UpdateElasticSparse(this, Eps);
+     }
+
+     virtual void
+     Update(const sp_grad::SpColVector<doublereal, iDimStrain>& Eps,
+            sp_grad::SpColVector<doublereal, iDimStress>& FTmp,
+            const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap) override {
+          UpdateElasticTpl(Eps, FTmp, oDofMap);
+     }
+
+     virtual void
+     Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& Eps,
+            sp_grad::SpColVector<sp_grad::GpGradProd, iDimStress>& FTmp,
+            const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap) override {
+          UpdateElasticTpl(Eps, FTmp, oDofMap);
+     }
+
+     virtual void
+     Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& Eps,
+            sp_grad::SpColVector<sp_grad::SpGradient, iDimStress>& FTmp,
+            const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap) override {
+          UpdateElasticTpl(Eps, FTmp, oDofMap);
+     }
+};
+
 
 /* InverseSquareConstitutiveLaw - begin */
 
@@ -626,6 +851,8 @@ private:
 	doublereal m_L0;
 
 public:
+        using ElasticConstitutiveLaw1D::Update;
+     
 	InverseSquareConstitutiveLaw(const TplDriveCaller<doublereal>* pDC,
 			const doublereal& PStress,
 			const doublereal& A, const doublereal& L0)
@@ -633,13 +860,13 @@ public:
 		m_A(A), m_L0(L0)
 	{
 		NO_OP;
-	};
+	}
 
 	virtual ~InverseSquareConstitutiveLaw(void) {
 		NO_OP;
-	};
+	}
 
-	virtual ConstitutiveLaw1D* pCopy(void) const {
+	virtual ConstitutiveLaw1D* pCopy(void) const override {
 		ConstitutiveLaw1D* pCL = 0;
 
 		SAFENEWWITHCONSTRUCTOR(pCL,
@@ -648,21 +875,21 @@ public:
 				ElasticConstitutiveLaw1D::PreStress,
 				m_A, m_L0));
 		return pCL;
-	};
+	}
 
-	virtual std::ostream& Restart(std::ostream& out) const {
+	virtual std::ostream& Restart(std::ostream& out) const override {
 		out << "inverse square, " << m_A << ", " << m_L0;
 		return ElasticConstitutiveLaw1D::Restart_int(out);
-	};
+	}
 
-	virtual void Update(const doublereal& Eps, const doublereal& /* EpsPrime */ = 0.) {
+	virtual void Update(const doublereal& Eps, const doublereal& /* EpsPrime */ = 0.) override {
 		ConstitutiveLaw1D::Epsilon = Eps;
 		doublereal e1 = Eps - ElasticConstitutiveLaw1D::Get();
 		doublereal d = m_L0*(1 + e1);
 		doublereal d2 = d*d;
 		ConstitutiveLaw1D::F = ElasticConstitutiveLaw1D::PreStress + m_A/d2;
 		ConstitutiveLaw1D::FDE = -2.*m_A/(d2*d)*m_L0;
-	};
+	}
 };
 
 /* InverseSquareConstitutiveLaw - end */
@@ -706,18 +933,20 @@ private:
 	doublereal dCurrEps;
 
 public:
+        using ElasticConstitutiveLaw1D::Update;
+     
 	LogConstitutiveLaw(const TplDriveCaller<doublereal>* pDC,
 			const doublereal& PStress, doublereal dStiff)
 	: ElasticConstitutiveLaw1D(pDC, PStress),
 	dStiffness(dStiff), dCurrEps(0.) {
 		ASSERT(Get() < 1.);
-	};
+	}
 
 	virtual ~LogConstitutiveLaw(void) {
 		NO_OP;
-	};
+	}
 
-	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const {
+	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const override {
 		ConstitutiveLaw<doublereal, doublereal>* pCL = 0;
 
 		typedef LogConstitutiveLaw<doublereal, doublereal> cl;
@@ -728,14 +957,14 @@ public:
 					dStiffness));
 
 		return pCL;
-	};
+	}
 
-	virtual std::ostream& Restart(std::ostream& out) const {
+	virtual std::ostream& Restart(std::ostream& out) const override {
 		out << "log elastic, " << dStiffness;
 		return Restart_int(out);
-	};
+	}
 
-	virtual void Update(const doublereal& Eps, const doublereal& /* EpsPrime */ = 0.) {
+	virtual void Update(const doublereal& Eps, const doublereal& /* EpsPrime */ = 0.) override {
 		Epsilon = Eps;
 
 		doublereal dPreStrain = Get();
@@ -749,7 +978,7 @@ public:
 
 		F = PreStress + dStiffness*log(dCurrEps);
 		FDE = dStiffness/dCurrEps;
-	};
+	}
 };
 
 /* LogConstitutiveLaw - end */
@@ -802,6 +1031,8 @@ private:
 	//flag fSecondStiff;
 
 public:
+        using ElasticConstitutiveLaw1D::Update;
+
 	DoubleLinearElasticConstitutiveLaw(const TplDriveCaller<doublereal>* pDC,
 			const doublereal& PStress,
 			doublereal dStiff,
@@ -816,13 +1047,13 @@ public:
 	dSecondStiffness(dSecondStiff),
 	dThirdStiffness(dThirdStiff) {
 		FDE = dStiffness;
-	};
+	}
 
-	virtual ~DoubleLinearElasticConstitutiveLaw(void) {
+	virtual ~DoubleLinearElasticConstitutiveLaw(void) override {
 		NO_OP;
-	};
+	}
 
-	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const {
+	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const override {
 		ConstitutiveLaw<doublereal, doublereal>* pCL = 0;
 
 		typedef DoubleLinearElasticConstitutiveLaw<doublereal, doublereal> cl;
@@ -837,9 +1068,9 @@ public:
 					dThirdStiffness));
 
 		return pCL;
-	};
+	}
 
-	virtual std::ostream& Restart(std::ostream& out) const {
+	virtual std::ostream& Restart(std::ostream& out) const override {
 		out << "double linear elastic, "
 			<< dStiffness << ", "
 			<< dUpperLimitStrain << ", "
@@ -847,9 +1078,9 @@ public:
 			<< dSecondStiffness << ", "
 			<< dThirdStiffness;
 		return Restart_int(out);
-	};
+	}
 
-	virtual void Update(const doublereal& Eps, const doublereal& /* EpsPrime */ = 0.) {
+	virtual void Update(const doublereal& Eps, const doublereal& /* EpsPrime */ = 0.) override {
 		Epsilon = Eps;
 
 		doublereal dPreStrain = Get();
@@ -867,7 +1098,7 @@ public:
 			F = PreStress + dStiffness*dUpperLimitStrain
 				+ dSecondStiffness*(dCurrStrain - dUpperLimitStrain);
 		}
-	};
+	}
 };
 
 
@@ -882,6 +1113,8 @@ private:
 	doublereal dThirdStiffness;
 
 public:
+        using ElasticConstitutiveLaw3D::Update;
+
 	DoubleLinearElasticConstitutiveLaw(const TplDriveCaller<Vec3>* pDC,
 			const Vec3& PStress,
 			doublereal dStiff,
@@ -896,11 +1129,11 @@ public:
 	dSecondStiffness(dSecondStiff),
 	dThirdStiffness(dThirdStiff) {
 		Mat3x3DEye.Manipulate(FDE, dStiffness);
-	};
+	}
 
 	virtual ~DoubleLinearElasticConstitutiveLaw(void) {
 		NO_OP;
-	};
+	}
 
 	virtual ConstitutiveLaw<Vec3, Mat3x3>* pCopy(void) const override {
 		ConstitutiveLaw<Vec3, Mat3x3>* pCL = 0;
@@ -917,7 +1150,7 @@ public:
 					dThirdStiffness));
 
 		return pCL;
-	};
+	}
 
 	virtual std::ostream& Restart(std::ostream& out) const override {
 		out << "double linear elastic, "
@@ -927,7 +1160,7 @@ public:
 			<< dSecondStiffness << ", "
 			<< dThirdStiffness;
 		return Restart_int(out);
-	};
+	}
 
 	using ConstitutiveLawAd<Vec3, Mat3x3>::Update;
 	virtual void Update(const Vec3& Eps, const Vec3& /* EpsPrime */ = Zero3) override {
@@ -953,7 +1186,7 @@ public:
 					   CurrStrain.dGet(2)*dStiffness,
 					   dUpperLimitStrain*dStiffness + (dCurrStrain - dUpperLimitStrain)*dSecondStiffness);
 		}
-	};
+	}
 };
 
 /* DoubleLinearElasticConstitutiveLaw - end */
@@ -1090,6 +1323,8 @@ private:
 	doublereal dGamma;
 
 public:
+        using ElasticConstitutiveLaw1D::Update;
+
 	ContactConstitutiveLaw(const TplDriveCaller<doublereal>* pDC,
 			const doublereal& PStress,
 			const doublereal& dKappa,
@@ -1430,6 +1665,107 @@ typedef LinearViscoElasticGenericConstitutiveLaw<Vec6, Mat6x6> LinearViscoElasti
 
 /* LinearViscoElasticGenericConstitutiveLaw - end */
 
+template <class T, class Tder>
+class LinearViscoElasticDiagonalConstitutiveLaw
+     : public LinearViscoElasticGenericConstitutiveLaw<T, Tder> {
+public:
+     using LinearViscoElasticGenericConstitutiveLaw<T, Tder>::iDimStress;
+     using LinearViscoElasticGenericConstitutiveLaw<T, Tder>::iDimStrain;
+     using LinearViscoElasticGenericConstitutiveLaw<T, Tder>::Update;
+
+     LinearViscoElasticDiagonalConstitutiveLaw(const TplDriveCaller<T>* pDC,
+                                               const T& PStress,
+                                               const Tder& Stiff,
+                                               const Tder& StiffPrime)
+          : LinearViscoElasticGenericConstitutiveLaw<T, Tder>(pDC, PStress, Stiff, StiffPrime) {
+
+          if (!(ConstLawHelper<Tder>::IsDiag(Stiff) && ConstLawHelper<Tder>::IsDiag(StiffPrime))) {
+               ASSERT(0);
+               throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+          }
+     }
+
+     virtual ~LinearViscoElasticDiagonalConstitutiveLaw() {
+          NO_OP;
+     }
+
+     virtual ConstitutiveLaw<T, Tder>* pCopy() const override {
+          ConstitutiveLaw<T, Tder>* pCL = 0;
+
+          typedef LinearViscoElasticDiagonalConstitutiveLaw<T, Tder> cl;
+
+          SAFENEWWITHCONSTRUCTOR(pCL,
+                                 cl,
+                                 cl(this->pGetDriveCaller()->pCopy(),
+                                    this->PreStress,
+                                    this->FDE,
+                                    this->FDEPrime));
+
+          return pCL;
+     }
+
+     virtual void
+     Update(const sp_grad::SpColVector<doublereal, iDimStrain>& Eps,
+            const sp_grad::SpColVector<doublereal, iDimStrain>& EpsPrime,
+            sp_grad::SpColVector<doublereal, iDimStress>& FTmp,
+            const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap) override;
+
+     virtual void
+     Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& Eps,
+            const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& EpsPrime,
+            sp_grad::SpColVector<sp_grad::SpGradient, iDimStress>& FTmp,
+            const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap) override;
+
+     virtual void
+     Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& Eps,
+            const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& EpsPrime,
+            sp_grad::SpColVector<sp_grad::GpGradProd, iDimStress>& FTmp,
+            const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap) override;
+};
+
+template <typename Tstress, typename Tder>
+void
+LinearViscoElasticDiagonalConstitutiveLaw<Tstress, Tder>::Update(const sp_grad::SpColVector<doublereal, iDimStrain>& Eps,
+                                                                 const sp_grad::SpColVector<doublereal, iDimStrain>& EpsPrime,
+                                                                 sp_grad::SpColVector<doublereal, iDimStress>& FTmp,
+                                                                 const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap)
+{
+     using namespace sp_grad;
+
+     ASSERT(ConstLawHelper<Tder>::IsDiag(this->FDE));
+     ASSERT(ConstLawHelper<Tder>::IsDiag(this->FDEPrime));
+
+     static_assert(iDimStrain == iDimStress);
+
+     const auto Eps0 = this->Get();
+
+     for (index_type i = 1; i <= iDimStrain; ++i) {
+          this->F(i) = FTmp(i) = this->PreStress(i) + this->FDE(i, i) * (Eps(i) - Eps0(i)) + this->FDEPrime(i, i) * EpsPrime(i);
+          this->Epsilon(i) = Eps(i);
+          this->EpsilonPrime(i) = EpsPrime(i);
+     }
+}
+
+template <typename Tstress, typename Tder>
+void
+LinearViscoElasticDiagonalConstitutiveLaw<Tstress, Tder>::Update(const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& Eps,
+                                                                 const sp_grad::SpColVector<sp_grad::SpGradient, iDimStrain>& EpsPrime,
+                                                                 sp_grad::SpColVector<sp_grad::SpGradient, iDimStress>& FTmp,
+                                                                 const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap)
+{
+     this->UpdateDiagonal(Eps, EpsPrime, FTmp, oDofMap);
+}
+
+template <typename Tstress, typename Tder>
+void
+LinearViscoElasticDiagonalConstitutiveLaw<Tstress, Tder>::Update(const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& Eps,
+                                                                 const sp_grad::SpColVector<sp_grad::GpGradProd, iDimStrain>& EpsPrime,
+                                                                 sp_grad::SpColVector<sp_grad::GpGradProd, iDimStress>& FTmp,
+                                                                 const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap)
+{
+     this->UpdateDiagonal(Eps, EpsPrime, FTmp, oDofMap);
+}
+
 /* LTVViscoElasticGenericConstitutiveLaw - begin */
 
 template <class T, class Tder>
@@ -1663,6 +1999,8 @@ private:
 	doublereal Stiff3;
 
 public:
+        using ElasticConstitutiveLaw1D::Update;
+
 	CubicViscoElasticGenericConstitutiveLaw(const TplDriveCaller<doublereal>* pDC,
 			const doublereal& PStress, const doublereal& Stiff1,
 			const doublereal& Stiff2, const doublereal& Stiff3,
@@ -1671,13 +2009,13 @@ public:
 		Stiff1(Stiff1), Stiff2(Stiff2), Stiff3(Stiff3)
 	{
 		ConstitutiveLaw1D::FDEPrime = StiffPrime;
-	};
+	}
 
 	virtual ~CubicViscoElasticGenericConstitutiveLaw(void) {
 		NO_OP;
-	};
+	}
 
-	virtual ConstitutiveLaw1D* pCopy(void) const {
+	virtual ConstitutiveLaw1D* pCopy(void) const override {
 		ConstitutiveLaw1D* pCL = 0;
 
 		typedef CubicViscoElasticGenericConstitutiveLaw<doublereal, doublereal> cl;
@@ -1687,18 +2025,18 @@ public:
 					ElasticConstitutiveLaw1D::PreStress,
 					Stiff1, Stiff2, Stiff3, ConstitutiveLaw1D::FDEPrime));
 		return pCL;
-	};
+	}
 
-	virtual std::ostream& Restart(std::ostream& out) const {
+	virtual std::ostream& Restart(std::ostream& out) const override {
 		out << "cubic elastic generic, ",
 			Write(out, Stiff1, ", ") << ", ",
 			Write(out, Stiff2, ", ") << ", ",
 			Write(out, Stiff3, ", ") << ", ",
 			Write(out, ConstitutiveLaw1D::FDEPrime, ", ") << ", ";
 		return ElasticConstitutiveLaw1D::Restart_int(out);
-	};
+	}
 
-	virtual void Update(const doublereal& Eps, const doublereal& EpsPrime = 0.) {
+	virtual void Update(const doublereal& Eps, const doublereal& EpsPrime = 0.) override {
 		ConstitutiveLaw1D::Epsilon = Eps;
 		ConstitutiveLaw1D::EpsilonPrime = EpsPrime;
 		doublereal e1 = Eps - ElasticConstitutiveLaw1D::Get();
@@ -1709,7 +2047,7 @@ public:
 		ConstitutiveLaw1D::FDE = Stiff1 + 2.*Stiff2*f1 + 3.*Stiff3*e2;
 		ConstitutiveLaw1D::F = ElasticConstitutiveLaw1D::PreStress
 			+ Stiff1*e1 + Stiff2*f2 + Stiff3*e3 + ConstitutiveLaw1D::FDEPrime*EpsPrime;
-	};
+	}
 };
 
 template <>
@@ -1835,6 +2173,8 @@ class DoubleLinearViscoElasticConstitutiveLaw<doublereal, doublereal>
    doublereal dSecondStiffnessPrime;
 
  public:
+   using ElasticConstitutiveLaw1D::Update;
+
    DoubleLinearViscoElasticConstitutiveLaw(const TplDriveCaller<doublereal>* pDC,
 					   const doublereal& PStress,
 					   doublereal dStiff,
@@ -1851,17 +2191,17 @@ class DoubleLinearViscoElasticConstitutiveLaw<doublereal, doublereal>
      dSecondStiffnessPrime(dSecondSPrime)
    {
       FDEPrime = dStiffnessPrime;
-   };
+   }
 
    virtual ~DoubleLinearViscoElasticConstitutiveLaw(void) {
       NO_OP;
-   };
+   }
 
-	ConstLawType::Type GetConstLawType(void) const {
+	ConstLawType::Type GetConstLawType(void) const override {
 		return ConstLawType::VISCOELASTIC;
-	};
+	}
 
-   virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const {
+   virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const override {
       ConstitutiveLaw<doublereal, doublereal>* pCL = 0;
 
       typedef DoubleLinearViscoElasticConstitutiveLaw<doublereal, doublereal> cl;
@@ -1877,9 +2217,9 @@ class DoubleLinearViscoElasticConstitutiveLaw<doublereal, doublereal>
 			       dSecondStiffnessPrime));
 
       return pCL;
-   };
+   }
 
-   virtual std::ostream& Restart(std::ostream& out) const {
+   virtual std::ostream& Restart(std::ostream& out) const override {
       out << "double linear viscoelastic, "
 	<< dStiffness << ", "
 	<< dUpperLimitStrain << ", "
@@ -1888,9 +2228,9 @@ class DoubleLinearViscoElasticConstitutiveLaw<doublereal, doublereal>
 	<< dStiffnessPrime << ", "
 	"second damping, " << dSecondStiffnessPrime << ", ";
       return Restart_int(out);
-   };
+   }
 
-   virtual void Update(const doublereal& Eps, const doublereal& EpsPrime = 0.) {
+   virtual void Update(const doublereal& Eps, const doublereal& EpsPrime = 0.) override {
       Epsilon = Eps;
       EpsilonPrime = EpsPrime;
 
@@ -1915,7 +2255,7 @@ class DoubleLinearViscoElasticConstitutiveLaw<doublereal, doublereal>
 		+dSecondStiffnessPrime*EpsilonPrime;
 	 }
       }
-   };
+   }
 };
 
 
@@ -2076,6 +2416,8 @@ class TurbulentViscoElasticConstitutiveLaw<doublereal, doublereal>
    doublereal dParabolicStiffness;
 
  public:
+   using ElasticConstitutiveLaw1D::Update;
+     
    TurbulentViscoElasticConstitutiveLaw(const TplDriveCaller<doublereal>* pDC,
 					const doublereal& PStress,
 					doublereal dStiff,
@@ -2086,17 +2428,17 @@ class TurbulentViscoElasticConstitutiveLaw<doublereal, doublereal>
      dStiffness(dStiff), dStiffnessPrime(dStiffPrime),
      dTreshold(dTres), dParabolicStiffness(dParabStiff) {
       FDE = dStiffness;
-   };
+   }
 
    virtual ~TurbulentViscoElasticConstitutiveLaw(void) {
       NO_OP;
-   };
+   }
 
-	ConstLawType::Type GetConstLawType(void) const {
-		return ConstLawType::VISCOELASTIC;
-	};
+   ConstLawType::Type GetConstLawType(void) const override {
+        return ConstLawType::VISCOELASTIC;
+   }
 
-   virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const {
+   virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const override {
       ConstitutiveLaw<doublereal, doublereal>* pCL = 0;
 
       typedef TurbulentViscoElasticConstitutiveLaw<doublereal, doublereal> cl;
@@ -2110,18 +2452,18 @@ class TurbulentViscoElasticConstitutiveLaw<doublereal, doublereal>
                                dParabolicStiffness));
 
       return pCL;
-   };
+   }
 
-   virtual std::ostream& Restart(std::ostream& out) const {
+   virtual std::ostream& Restart(std::ostream& out) const override {
       out << "turbulent viscoelastic, "
 	<< dStiffness << ", "
 	<< dStiffnessPrime << ", "
 	<< dTreshold << ", "
 	<< dParabolicStiffness << ", ";
       return Restart_int(out);
-   };
+   }
 
-   virtual void Update(const doublereal& Eps, const doublereal& EpsPrime = 0.) {
+   virtual void Update(const doublereal& Eps, const doublereal& EpsPrime = 0.) override {
       Epsilon = Eps;
       EpsilonPrime = EpsPrime;
 
@@ -2137,7 +2479,7 @@ class TurbulentViscoElasticConstitutiveLaw<doublereal, doublereal>
 	 F = PreStress+dStiffness*(Epsilon-dPreStrain)
 	   +dParabolicStiffness*d*EpsilonPrime;
       }
-   };
+   }
 };
 
 /* TurbulentViscoElasticConstitutiveLaw - end */

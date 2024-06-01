@@ -698,6 +698,7 @@ else
     export mbdyn_print_res
     export mbdyn_suppressed_errors
     export MBD_NUM_THREADS
+    export MBDYN_EXEC
     export OCTAVE_EXEC
     export JUNIT_XML_KEEP_ALL_OUTPUT
     export -f simple_testsuite_run_test

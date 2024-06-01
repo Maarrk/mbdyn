@@ -186,9 +186,11 @@ protected:
 
 		ConstitutiveLaw<doublereal, doublereal>::F = -net->output.vec[0];
 		ConstitutiveLaw<doublereal, doublereal>::FDE = -net->jacobian.mat[0][0];
-	};
+	}
 
 public:
+        using ConstitutiveLaw<doublereal, doublereal>::Update;
+
 	AnnElasticConstitutiveLaw(const std::string& f, bool b = false)
 	: bUnit(b), fname(f)
 	{

@@ -37,6 +37,153 @@
 #include "mbpar.h"
 #include "dataman.h"
 
+void
+ConstitutiveLawAd<doublereal, doublereal, doublereal>::Update(const doublereal& Eps,
+                                                              doublereal& FTmp,
+                                                              const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap)
+{
+     using namespace sp_grad;
+
+     ASSERT(this->iGetNumDof() == 0);
+     ASSERT((this->GetConstLawType() & ConstLawType::VISCOUS) == 0);
+
+     // FIXME: Need to copy the data because vectors are not compatible
+     this->Epsilon = Eps;
+
+     this->Update(this->Epsilon, this->EpsilonPrime);
+
+     // FIXME: Return by output argument because move constructors will not be most efficient with static vector size
+     FTmp = this->GetF();
+}
+
+
+void
+ConstitutiveLawAd<doublereal, doublereal, doublereal>::Update(const sp_grad::SpGradient& Eps,
+                                                              sp_grad::SpGradient& FTmp,
+                                                              const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap)
+{
+     using namespace sp_grad;
+
+     ASSERT(this->iGetNumDof() == 0);
+     ASSERT((this->GetConstLawType() & ConstLawType::VISCOUS) == 0);
+
+     FTmp.ResizeReset(this->F, oDofMap.iGetLocalSize());
+     FTmp.InitDeriv(oDofMap.GetDofMap());
+     Eps.AddDeriv(FTmp, this->FDE, oDofMap.GetDofMap());
+}
+
+
+void
+ConstitutiveLawAd<doublereal, doublereal, doublereal>::Update(const sp_grad::GpGradProd& Eps,
+                                                              sp_grad::GpGradProd& FTmp,
+                                                              const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap)
+{
+     using namespace sp_grad;
+
+     ASSERT(this->iGetNumDof() == 0);
+     ASSERT((this->GetConstLawType() & ConstLawType::VISCOUS) == 0);
+
+     FTmp.Reset(this->F);
+     Eps.InsertDeriv(FTmp, this->FDE);
+}
+
+
+void
+ConstitutiveLawAd<doublereal, doublereal, doublereal>::Update(const doublereal& Eps,
+                                                              const doublereal& EpsPrime,
+                                                              doublereal& FTmp,
+                                                              const sp_grad::SpGradExpDofMapHelper<doublereal>& oDofMap)
+{
+     using namespace sp_grad;
+
+     ASSERT(this->iGetNumDof() == 0);
+     ASSERT((this->GetConstLawType() & ConstLawType::VISCOUS) != 0);
+
+     this->Epsilon = Eps; // FIXME: Need to copy the data because vectors are not compatible
+     this->EpsilonPrime = EpsPrime;
+
+     this->Update(this->Epsilon, this->EpsilonPrime);
+
+     FTmp = this->GetF();
+}
+
+
+void
+ConstitutiveLawAd<doublereal, doublereal, doublereal>::Update(const sp_grad::SpGradient& Eps,
+                                                              const sp_grad::SpGradient& EpsPrime,
+                                                              sp_grad::SpGradient& FTmp,
+                                                              const sp_grad::SpGradExpDofMapHelper<sp_grad::SpGradient>& oDofMap)
+{
+     using namespace sp_grad;
+
+     ASSERT(this->iGetNumDof() == 0);
+     ASSERT((this->GetConstLawType() & ConstLawType::VISCOUS) != 0);
+
+     FTmp.ResizeReset(this->F, oDofMap.iGetLocalSize());
+     FTmp.InitDeriv(oDofMap.GetDofMap());
+
+     Eps.AddDeriv(FTmp, this->FDE, oDofMap.GetDofMap());
+     EpsPrime.AddDeriv(FTmp, this->FDEPrime, oDofMap.GetDofMap());
+}
+
+
+void
+ConstitutiveLawAd<doublereal, doublereal, doublereal>::Update(const sp_grad::GpGradProd& Eps,
+                                                              const sp_grad::GpGradProd& EpsPrime,
+                                                              sp_grad::GpGradProd& FTmp,
+                                                              const sp_grad::SpGradExpDofMapHelper<sp_grad::GpGradProd>& oDofMap)
+{
+     using namespace sp_grad;
+
+     ASSERT(this->iGetNumDof() == 0);
+     ASSERT((this->GetConstLawType() & ConstLawType::VISCOUS) != 0);
+
+     FTmp.Reset(this->F);
+     Eps.InsertDeriv(FTmp, this->FDE);
+     EpsPrime.InsertDeriv(FTmp, this->FDEPrime);
+}
+
+template <typename ConstLaw>
+void
+ConstitutiveLawAd<doublereal, doublereal, doublereal>::UpdateViscoelasticSparse(ConstLaw* pCl, const doublereal& Eps, const doublereal& EpsPrime)
+{
+     using namespace sp_grad;
+     SpGradient gEps, gEpsPrime;
+     SpGradient gF;
+
+     pCl->Epsilon = Eps;
+     pCl->EpsilonPrime = EpsPrime;
+
+     gEps.Reset(Eps, 1, 1.);
+     gEpsPrime.Reset(EpsPrime, 2, 1.);
+
+     SpGradExpDofMapHelper<SpGradient> oDofMap;
+
+     oDofMap.GetDofStat(gEps);
+     oDofMap.GetDofStat(gEpsPrime);
+     oDofMap.Reset();
+     oDofMap.InsertDof(gEps);
+     oDofMap.InsertDof(gEpsPrime);
+     oDofMap.InsertDone();
+
+     pCl->UpdateViscoelasticTpl(gEps, gEpsPrime, gF, oDofMap);
+     pCl->FDE = pCl->FDEPrime = 0.;
+     pCl->F = gF.dGetValue();
+
+     for (const auto& oDer: gF) {
+          ASSERT(oDer.iDof == 1 || oDer.iDof == 2);
+
+          if (oDer.iDof == 1) {
+               pCl->FDE += oDer.dDer;
+          } else if (oDer.iDof == 2) {
+               pCl->FDEPrime += oDer.dDer;
+          } else {
+               ASSERT(0);
+               throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+          }
+     }
+}
+
 namespace {
      class ConstLawReaderBase {
      protected:
