@@ -192,6 +192,8 @@ private:
 	std::vector<const DifferentiableScalarFunction *> FDEPrimesc;
 
 public:
+        using ElasticConstitutiveLaw1D::Update;
+     
 	NLPViscoElasticConstitutiveLaw(const TplDriveCaller<doublereal>* pDC,
 		const doublereal& PStress,
 		const ConstLawType::Type& cltype,
@@ -210,13 +212,13 @@ public:
 
 	virtual ~NLPViscoElasticConstitutiveLaw(void) {
 		NO_OP;
-	};
+	}
 
-	ConstLawType::Type GetConstLawType(void) const {
+	ConstLawType::Type GetConstLawType(void) const override {
 		return CLType;
-	};
+	}
 
-	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const {
+	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const override {
 		ConstitutiveLaw<doublereal, doublereal>* pCL = NULL;
 
 		typedef NLPViscoElasticConstitutiveLaw<doublereal, doublereal> cl;
@@ -225,9 +227,9 @@ public:
 				ElasticConstitutiveLaw<doublereal, doublereal>::PreStress,
 				CLType, FDE0, FDEsc, FDEPrime0, FDEPrimesc));
 		return pCL;
-	};
+	}
 
-	virtual std::ostream& Restart(std::ostream& out) const {
+	virtual std::ostream& Restart(std::ostream& out) const override {
 		silent_cerr("NLPViscoElasticConstitutiveLaw: Restart not implemented"
 			<< std::endl);
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
@@ -260,9 +262,9 @@ public:
 
 		return ElasticConstitutiveLaw<T, Tder>::Restart_int(out);
 #endif
-	};
+	}
 
-	virtual void Update(const doublereal& Eps, const doublereal& EpsPrime = 0.) {
+	virtual void Update(const doublereal& Eps, const doublereal& EpsPrime = 0.) override {
 		ConstitutiveLaw<doublereal, doublereal>::Epsilon = Eps;
 		ConstitutiveLaw<doublereal, doublereal>::EpsilonPrime = EpsPrime;
 
@@ -311,7 +313,7 @@ public:
 
 		ConstitutiveLaw<doublereal, doublereal>::F += f;
 		ConstitutiveLaw<doublereal, doublereal>::FDE += fde;
-	};
+	}
 };
 
 typedef NLPViscoElasticConstitutiveLaw<doublereal, doublereal> NLPViscoElasticConstitutiveLaw1D;

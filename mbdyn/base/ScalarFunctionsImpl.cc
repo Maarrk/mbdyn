@@ -1400,6 +1400,8 @@ private:
 	const DifferentiableScalarFunction *pSF;
 
 public:
+        using ConstitutiveLaw<doublereal, doublereal>::Update;
+     
 	ScalarFunctionIsotropicCL(const DifferentiableScalarFunction * psf)
 	: pSF(psf) {
 		NO_OP;
@@ -1407,29 +1409,29 @@ public:
 
 	virtual ~ScalarFunctionIsotropicCL(void) {
 		NO_OP;
-	};
+	}
 
-	ConstLawType::Type GetConstLawType(void) const {
+	ConstLawType::Type GetConstLawType(void) const override {
 		return ConstLawType::ELASTIC;
 	};
 
-	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const {
+	virtual ConstitutiveLaw<doublereal, doublereal>* pCopy(void) const override {
 		ConstitutiveLaw<doublereal, doublereal>* pCL = NULL;
 
 		typedef ScalarFunctionIsotropicCL<doublereal, doublereal> cl;
 		SAFENEWWITHCONSTRUCTOR(pCL, cl, cl(pSF));
 		return pCL;
-	};
+	}
 
-	virtual std::ostream& Restart(std::ostream& out) const {
+	virtual std::ostream& Restart(std::ostream& out) const override {
 		return out << "# not implemented!";
-	};
+	}
 
-	virtual void Update(const doublereal& Eps, const doublereal& /* EpsPrime */  = 0.) {
+	virtual void Update(const doublereal& Eps, const doublereal& /* EpsPrime */  = 0.) override {
 		ConstitutiveLaw<doublereal, doublereal>::Epsilon = Eps;
 		ConstitutiveLaw<doublereal, doublereal>::F = (*pSF)(Eps);
 		ConstitutiveLaw<doublereal, doublereal>::FDE = pSF->ComputeDiff(Eps);
-	};
+	}
 };
 
 /* specific functional object(s) */

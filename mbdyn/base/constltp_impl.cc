@@ -194,11 +194,20 @@ struct LinearElasticGenericCLR : public ConstitutiveLawRead<T, Tder> {
 		GetPreStress(HP, PreStress);
 		TplDriveCaller<T>* pTplDC = GetPreStrain<T>(pDM, HP);
 
-		typedef LinearElasticGenericConstitutiveLaw<T, Tder> L;
-		SAFENEWWITHCONSTRUCTOR(pCL, L, L(pTplDC, PreStress, S));
+                if (ConstLawHelper<Tder>::IsDiag(S) && pDM->bUseAutoDiff()) {
+                     silent_cerr("warning, diagonal stiffness, "
+                                 "using linear elastic diagonal constitutive law instead\n");
+                     typedef typename std::conditional<std::is_same<Tder, doublereal>::value,
+                                                       LinearElasticGenericConstitutiveLaw<T, Tder>,
+                                                       LinearElasticDiagonalConstitutiveLaw<T, Tder>>::type L;
+                     SAFENEWWITHCONSTRUCTOR(pCL, L, L(pTplDC, PreStress, S));
+                } else {
+                     typedef LinearElasticGenericConstitutiveLaw<T, Tder> L;
+                     SAFENEWWITHCONSTRUCTOR(pCL, L, L(pTplDC, PreStress, S));
+                }
 
 		return pCL;
-	};
+	}
 };
 
 template <class T, class Tder>
@@ -793,32 +802,51 @@ struct LinearViscoElasticGenericCLR : public ConstitutiveLawRead<T, Tder> {
 
 		} else
 #endif
-		if (IsNull(S)) {
-			silent_cerr("warning, null stiffness, "
-				"using linear viscous generic constitutive law instead"
-				<< std::endl);
+                if (IsNull(S)) {
+                        silent_cerr("warning, null stiffness, "
+                                "using linear viscous generic constitutive law instead"
+                                << std::endl);
 
-			typedef LinearViscousGenericConstitutiveLaw<T, Tder> L;
-			SAFENEWWITHCONSTRUCTOR(pCL, L, L(PreStress, SP));
-			if (pTplDC) {
-				delete pTplDC;
-			}
+                        typedef LinearViscousGenericConstitutiveLaw<T, Tder> L;
+                        SAFENEWWITHCONSTRUCTOR(pCL, L, L(PreStress, SP));
+                        if (pTplDC) {
+                                delete pTplDC;
+                        }
 
-		} else if (IsNull(SP)) {
-			silent_cerr("warning, null stiffness prime, "
-				"using linear elastic generic constitutive law instead"
-				<< std::endl);
+                } else if (IsNull(SP)) {
+                     if (ConstLawHelper<Tder>::IsDiag(S) && pDM->bUseAutoDiff()) {
+                          silent_cerr("warning, null stiffness prime and diagonal stiffness, "
+                                      "using linear viscoelastic diagonal constitutive law instead\n");
+                          typedef typename std::conditional<std::is_same<Tder, doublereal>::value,
+                                                            LinearElasticGenericConstitutiveLaw<T, Tder>,
+                                                            LinearElasticDiagonalConstitutiveLaw<T, Tder>>::type L;
 
-			typedef LinearElasticGenericConstitutiveLaw<T, Tder> L;
-			SAFENEWWITHCONSTRUCTOR(pCL, L, L(pTplDC, PreStress, S));
+                          SAFENEWWITHCONSTRUCTOR(pCL, L, L(pTplDC, PreStress, S));
+                     } else {
+                          silent_cerr("warning, null stiffness prime, "
+                                      "using linear elastic generic constitutive law instead"
+                                      << std::endl);
 
-		} else {
-			typedef LinearViscoElasticGenericConstitutiveLaw<T, Tder> L;
-			SAFENEWWITHCONSTRUCTOR(pCL, L, L(pTplDC, PreStress, S, SP));
-		}
+                          typedef LinearElasticGenericConstitutiveLaw<T, Tder> L;
+                          SAFENEWWITHCONSTRUCTOR(pCL, L, L(pTplDC, PreStress, S));
+                     }
+                } else {
+                     if (ConstLawHelper<Tder>::IsDiag(S) && ConstLawHelper<Tder>::IsDiag(SP) && pDM->bUseAutoDiff()) {
+                          silent_cerr("warning, diagonal stiffness, "
+                                      "using linear viscoelastic diagonal constitutive law instead\n");
+                          typedef typename std::conditional<std::is_same<Tder, doublereal>::value,
+                                                            LinearViscoElasticGenericConstitutiveLaw<T, Tder>,
+                                                            LinearViscoElasticDiagonalConstitutiveLaw<T, Tder>>::type L;
 
-		return pCL;
-	};
+                        SAFENEWWITHCONSTRUCTOR(pCL, L, L(pTplDC, PreStress, S, SP));
+                     } else {
+                        typedef LinearViscoElasticGenericConstitutiveLaw<T, Tder> L;
+                        SAFENEWWITHCONSTRUCTOR(pCL, L, L(pTplDC, PreStress, S, SP));
+                     }
+                }
+
+                return pCL;
+        }
 };
 
 template <class T, class Tder>
@@ -915,11 +943,15 @@ struct CubicElasticGenericCLR : public ConstitutiveLawRead<T, Tder> {
 		GetPreStress(HP, PreStress);
 		TplDriveCaller<T>* pTplDC = GetPreStrain<T>(pDM, HP);
 
-		typedef CubicElasticGenericConstitutiveLaw<T, Tder> L;
-		SAFENEWWITHCONSTRUCTOR(pCL, L, L(pTplDC, PreStress, S1, S2, S3));
-
+                if (pDM->bUseAutoDiff()) {
+                     typedef CubicElasticGenericConstitutiveLawAd<T, Tder> L;
+                     SAFENEWWITHCONSTRUCTOR(pCL, L, L(pTplDC, PreStress, S1, S2, S3));
+                } else {
+                     typedef CubicElasticGenericConstitutiveLaw<T, Tder> L;
+                     SAFENEWWITHCONSTRUCTOR(pCL, L, L(pTplDC, PreStress, S1, S2, S3));
+                }
 		return pCL;
-	};
+	}
 };
 
 template <class T, class Tder>

@@ -55,35 +55,37 @@ class ShockAbsorberConstitutiveLaw
 : public ElasticConstitutiveLaw<T, Tder> {
 private:
 public:
+        using ElasticConstitutiveLaw<T, Tder>::Update;
+
 	ShockAbsorberConstitutiveLaw(
 			const DataManager* pDM,
 			TplDriveCaller<T>* pDC,
 			MBDynParser& HP
 	) : ElasticConstitutiveLaw<T, Tder>(pDC, 0.) {
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
-	};
+	}
    
 	virtual
 	~ShockAbsorberConstitutiveLaw(void) {
 		NO_OP;
-	};
+	}
 
 	virtual ConstitutiveLaw<T, Tder>*
-	pCopy(void) const {
+	pCopy(void) const override {
 		return NULL;
-	};
+	}
 
 	virtual std::ostream&
-	Restart(std::ostream& out) const {
+	Restart(std::ostream& out) const override {
 		return out
 			<< "/* Shock absorber, not implemented yet */"
 			<< std::endl;
-	};
+	}
 
 	virtual void
-	Update(const T& /* Eps */ , const T& /* EpsPrime */  = 0.) {
+	Update(const T& /* Eps */ , const T& /* EpsPrime */  = 0.) override {
 		NO_OP;
-	};
+	}
 };
 
 
@@ -206,6 +208,8 @@ private:
 	MBDynNcVar Var_dFviscous;
 #endif /* USE_NETCDF */
 public:
+        using ElasticConstitutiveLaw<doublereal, doublereal>::Update;
+     
 	ShockAbsorberConstitutiveLaw(
 			const DataManager* pDM,
 			TplDriveCaller<doublereal>* pDC,
@@ -373,7 +377,7 @@ public:
 	};
 
 	virtual ConstitutiveLaw<doublereal, doublereal>*
-	pCopy(void) const {
+	pCopy(void) const override {
 		typedef ShockAbsorberConstitutiveLaw<doublereal, doublereal> L;
 
 		L* p = NULL;
@@ -382,7 +386,7 @@ public:
 	};
 
 	virtual std::ostream&
-	Restart(std::ostream& out) const {
+	Restart(std::ostream& out) const override {
 		
 		/*
 		 * FIXME: devo trovare il modo di ripristinare
@@ -437,7 +441,7 @@ public:
 	};
 
 	virtual void
-	Update(const doublereal& Eps, const doublereal& EpsPrime = 0.) {
+	Update(const doublereal& Eps, const doublereal& EpsPrime = 0.) override {
 		Epsilon = Eps;
 		EpsilonPrime = EpsPrime;
 
@@ -549,27 +553,27 @@ public:
 		if (ChangeJac) {
 			throw Elem::ChangedEquationStructure(MBDYN_EXCEPT_ARGS);
 		}
-	};
+	}
 
 	/*
 	 * Metodi per l'estrazione di dati "privati".
 	 * Si suppone che l'estrattore li sappia interpretare.
 	 * Come default non ci sono dati privati estraibili
 	 */
-	virtual unsigned int iGetNumPrivData(void) const {
+	virtual unsigned int iGetNumPrivData(void) const override {
 		/*
 		 * deve essere pari al totale di dati che
 		 * si intende esportare
 		 */
 		return 4;
-	};
+	}
 
 	/*
 	 * Maps a string (possibly with substrings) to a private data;
 	 * returns a valid index ( > 0 && <= iGetNumPrivData()) or 0 
 	 * in case of unrecognized data; error must be handled by caller
 	 */
-	virtual unsigned int iGetPrivDataIdx(const char *s) const {
+	virtual unsigned int iGetPrivDataIdx(const char *s) const override {
 		ASSERT(s != NULL);
 
 		if (strcmp(s, "p") == 0) {
@@ -594,13 +598,13 @@ public:
 
 		/* error; handle later */
 		return 0;
-	};
+	}
 
 	/*
 	 * Returns the current value of a private data
 	 * with 0 < i <= iGetNumPrivData()
 	 */
-	virtual doublereal dGetPrivData(unsigned int i) const {
+	virtual doublereal dGetPrivData(unsigned int i) const override {
 		ASSERT(i > 0 && i <= iGetNumPrivData());
 
 		switch (i) {
@@ -620,9 +624,9 @@ public:
 		}
 
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
-	};
+	}
 
-	virtual void OutputAppendPrepare(OutputHandler& OH, const std::string& name) {
+	virtual void OutputAppendPrepare(OutputHandler& OH, const std::string& name) override {
 #if defined(USE_NETCDF)
 		ASSERT(OH.IsOpen(OutputHandler::NETCDF));
 		if (OH.UseNetCDF(OutputHandler::NETCDF)) {
@@ -638,12 +642,12 @@ public:
 #endif /* USE_NETCDF */
 	}
 
-	virtual std::ostream& OutputAppend(std::ostream& out) const {
+	virtual std::ostream& OutputAppend(std::ostream& out) const override {
 		return out << " " << dPressure << " " << dArea
 			<< " " << dFelastic << " " << dFviscous;
 	}
 
-	virtual void NetCDFOutputAppend(OutputHandler& OH) const {
+	virtual void NetCDFOutputAppend(OutputHandler& OH) const override {
 #if defined(USE_NETCDF)
 		ASSERT(OH.IsOpen(OutputHandler::NETCDF));
 		if (OH.UseNetCDF(OutputHandler::NETCDF)) {
