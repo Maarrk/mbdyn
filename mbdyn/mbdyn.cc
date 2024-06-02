@@ -302,7 +302,7 @@ mbdyn_welcome(void)
 }
 
 /* Dati di getopt */
-static char sShortOpts[] = "Cd:eE::f:GhHlN:o:pPrRsS:tTvwW:a:";
+static char sShortOpts[] = "Cd:eE::f:GhHlN:o:pPrRsS:tTvwW:a:F";
 
 #ifdef HAVE_GETOPT_LONG
 static struct option LongOpts[] = {
@@ -329,6 +329,7 @@ static struct option LongOpts[] = {
 	{ "warranty",       no_argument,       NULL,           int('w') },
 	{ "working-dir",    required_argument, NULL,           int('W') },
 	{ "affinity",       required_argument, NULL,           int('a') },
+	{ "new-fill-mem",   no_argument,       NULL,           int('F') },
 	{ NULL,             0,                 NULL,           0        }
 };
 #endif /* HAVE_GETOPT_LONG */
@@ -370,7 +371,6 @@ parse_parallel_args(mbdyn_proc_t& mbp, int argc, char *argv[])
 	return 0;
 }
 #endif /* USE_MPI */
-
 
 void
 mbdyn_parse_arguments(mbdyn_proc_t& mbp, int argc, char *argv[], int& currarg)
@@ -488,6 +488,14 @@ mbdyn_parse_arguments(mbdyn_proc_t& mbp, int argc, char *argv[], int& currarg)
 			}
 			mbp.pIn = dynamic_cast<std::istream *>(&mbp.FileStreamIn);
 			break;
+                case int('F'):
+#ifdef OVERRIDE_OPERATOR_NEW
+                        mbdyn_operator_new_set_flags(mbdyn_operator_new_flags_type::MALLOC_FILL);
+#else
+                        silent_cerr("Warning: option -F will be ignored\n"
+                                    "Warning: configure with --enable-override-operator-new\n");
+#endif
+                        break;
                 case int('G'):
 #ifdef USE_GTEST
                         mbp.bEnableGoogleTest = true;
@@ -1106,6 +1114,17 @@ private:
         char** const argv;
         mbdyn_proc_t* const mbp;
 };
+#endif
+
+#ifdef DEBUG
+// If mbdyn is built in debug mode, let's override operator new globally
+// and do not care about the penalty on performance.
+// Otherwise, override operator new for objects which are allocated
+// only once during a simulation (e.g. SimulationEntity, LinearSolver,
+// MatrixHandler, NonlinearSolver, NonlinearProblem, Solver, DataManager,
+// MatrixHandler, ...).
+// So, the penalty on performance will not be that significant.
+MBDYN_DEFINE_OPERATOR_NEW_DELETE
 #endif
 
 int

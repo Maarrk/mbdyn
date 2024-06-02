@@ -293,6 +293,31 @@ in versione release, senza alcun overhead
 #include <myassert.h>
 #include <except.h>
 
+#ifdef OVERRIDE_OPERATOR_NEW
+enum class mbdyn_operator_new_flags_type: unsigned {
+     MALLOC_NO_FILL = 0x0u,
+     MALLOC_FILL    = 0x1u
+};
+
+void mbdyn_operator_new_set_flags(mbdyn_operator_new_flags_type flags);
+
+mbdyn_operator_new_flags_type mbdyn_operator_new_get_flags();
+
+void* mbdyn_operator_new(size_t size);
+
+void mbdyn_operator_delete(void* pMem);
+
+#define MBDYN_DEFINE_OPERATOR_NEW_DELETE \
+     void* operator new(size_t size) { \
+         return mbdyn_operator_new(size); \
+     } \
+     void operator delete(void* pMem) { \
+         mbdyn_operator_delete(pMem); \
+     }
+#else
+#define MBDYN_DEFINE_OPERATOR_NEW_DELETE
+#endif
+
 #ifdef DEBUG
 
 /* Dichiarazione di funzioni usate nella versione debug */

@@ -226,6 +226,8 @@ public:
         virtual MatrixHandler* Copy() const=0;
         virtual bool AddItem(integer iRow, const sp_grad::SpGradient& oItem);
         virtual bool SubItem(integer iRow, const sp_grad::SpGradient& oItem);
+
+        MBDYN_DEFINE_OPERATOR_NEW_DELETE
 private:
         template <typename Operation>
         inline bool ItemOperation(integer iRow, const Operation oper, const sp_grad::SpGradient& oItem);

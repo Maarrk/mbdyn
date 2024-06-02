@@ -41,15 +41,86 @@
 
 #include "mbconfig.h"           /* This goes first in every *.c,*.cc file */
 
-#ifdef DEBUG
-
 #include <string.h>
+#include <stdlib.h>
 #include <iostream>
 #include <iomanip>
 
 #include "myassert.h"
 #include "mynewmem.h"
 
+#ifdef OVERRIDE_OPERATOR_NEW
+namespace {
+     mbdyn_operator_new_flags_type mbdyn_operator_new_get_flags_default()
+     {
+          const char* pszFlag = getenv("MBDYN_MALLOC_FILL");
+
+          if (pszFlag && atoi(pszFlag) > 0) {
+               return mbdyn_operator_new_flags_type::MALLOC_FILL;
+          }
+
+          return mbdyn_operator_new_flags_type::MALLOC_NO_FILL;
+     }
+
+     mbdyn_operator_new_flags_type mbdyn_operator_new_flags = mbdyn_operator_new_get_flags_default();
+}
+
+void mbdyn_operator_new_set_flags(mbdyn_operator_new_flags_type flags)
+{
+     mbdyn_operator_new_flags = flags;
+}
+
+mbdyn_operator_new_flags_type mbdyn_operator_new_get_flags()
+{
+     return mbdyn_operator_new_flags;
+}
+
+void* mbdyn_operator_new(size_t size)
+{
+     void* pMem;
+
+     for (;;) {
+          pMem = malloc(size);
+
+          if (pMem) {
+               break;
+          }
+
+          auto pFnNewHandler = std::get_new_handler();
+
+          if (!pFnNewHandler) {
+               throw std::bad_alloc();
+          }
+
+          (*pFnNewHandler)();
+     }
+
+     if (mbdyn_operator_new_get_flags() == mbdyn_operator_new_flags_type::MALLOC_FILL) {
+          // An attempt to detect at least some cases of read access to not initialized memory.
+          // Although we could use gcc's -fsanitize=address, our OVERRIDE_OPERATOR_NEW
+          // should have less impact in terms of CPU time and memory usage.
+
+          static constexpr unsigned char rgFillValue[] = {0xFF, 0xFE, 0xFD, 0xFC};
+          static constexpr size_t uNumFillValues = sizeof(rgFillValue) / sizeof(rgFillValue[0]);
+
+          unsigned char* p = static_cast<unsigned char*>(pMem);
+          size_t i = 0;
+
+          while (size--) {
+               *p++ = rgFillValue[i++ % uNumFillValues];
+          }
+     }
+
+     return pMem;
+}
+
+void mbdyn_operator_delete(void* pMem)
+{
+     free(pMem);
+}
+#endif
+
+#ifdef DEBUG
 
 /* Funzioni usate anche senza memory manager */
 void 

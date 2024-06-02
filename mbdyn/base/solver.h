@@ -72,6 +72,7 @@ class Solver;
 #include "precond.h"
 #include "rtsolver.h"
 #include "TimeStepControl.h"
+#include "mynewmem.h"
 
 extern "C" int mbdyn_stop_at_end_of_iteration(void);
 extern "C" int mbdyn_stop_at_end_of_time_step(void);
@@ -506,6 +507,8 @@ public:
 
              return os;
         }
+
+        MBDYN_DEFINE_OPERATOR_NEW_DELETE
 };
 
 inline void

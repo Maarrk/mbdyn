@@ -193,6 +193,7 @@ dnl General "enable" options
 OL_ARG_ENABLE(Werror,[  --enable-Werror          enable building with -Werror], yes)dnl
 OL_ARG_ENABLE(debug,[  --enable-debug          enable debugging], no)dnl
 OL_ARG_WITH(debug_mode,[  --with-debug-mode[={none|mem}] with debug mode {none|mem}],none,[none mem])
+OL_ARG_ENABLE(override_operator_new,[  --enable-override-operator-new         operator new will return memory initialized to unusual values (e.g. 0xFF 0xFE ...)],auto,[auto yes no])
 OL_ARG_ENABLE(runtime_loading,[  --enable-runtime-loading    enable runtime loading], auto)dnl
 OL_ARG_WITH(static_modules,[  --with-static-modules   build (known) modules as static],auto,[no yes auto])
 OL_ARG_ENABLE(crypt,[  --enable-crypt          enable crypt (deprecated)], no)dnl
@@ -532,6 +533,14 @@ if test "$ol_enable_debug" != no -o "$ol_enable_debug_mpi" != no ; then
         if test "$ol_with_debug_mode" = "mem" ; then
                 AC_DEFINE(DEBUG_MEMMANAGER,1,[define this to add memory debugging code])
         fi
+fi
+
+if test "$ol_enable_override_operator_new" = auto; then
+        ol_enable_override_operator_new="$ol_enable_debug"
+fi
+
+if test "$ol_enable_override_operator_new" != no; then
+        AC_DEFINE(OVERRIDE_OPERATOR_NEW,1,[if defined, operator new will return memory initilized to 0xFF])
 fi
 
 have_environ=no

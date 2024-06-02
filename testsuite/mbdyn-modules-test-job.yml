@@ -82,6 +82,7 @@ mbdyn-modules-test-job:   # This job runs in the test stage.
       - export TESTSUITE_TIME_CMD
       - export JUNIT_XML_KEEP_ALL_OUTPUT
       - export MBDYN_EXEC
+      - export MBDYN_ARGS_ADD
       - MBD_MODULE_TESTS_INPUT_DIR=${CI_PROJECT_DIR}/modules
       - export LD_LIBRARY_PATH=${MBD_INSTALL_PREFIX}/libexec:${LD_LIBRARY_PATH}
       - log_file="${MBD_MODULE_TESTS_OUTPUT_DIR}/${MBD_MODULE_TESTS_LOG_FILE}"
@@ -144,6 +145,7 @@ mbdyn-modules-test-job-gcov:   # This job runs in the test stage.
       - export TESTSUITE_TIME_CMD
       - export JUNIT_XML_KEEP_ALL_OUTPUT
       - export MBDYN_EXEC
+      - export MBDYN_ARGS_ADD
       - export OCTAVE_EXEC="${GTEST_OCTAVE_EXEC}"
       - MBD_MODULE_TESTS_INPUT_DIR=${CI_PROJECT_DIR}/modules
       - export LD_LIBRARY_PATH=${MBD_INSTALL_PREFIX}/libexec:${LD_LIBRARY_PATH}

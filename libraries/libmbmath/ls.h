@@ -101,6 +101,8 @@ public:
 	
 	/* returns true if the condition number is available, and sets dCond */
 	virtual bool bGetConditionNumber(doublereal& dCond);
+
+        MBDYN_DEFINE_OPERATOR_NEW_DELETE
 };
 
 /* LinearSolver - end */

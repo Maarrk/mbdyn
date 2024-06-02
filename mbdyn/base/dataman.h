@@ -70,6 +70,7 @@
 #include "linsol.h"
 #include "converged.h"
 #include "invdyn.h"
+#include "mynewmem.h"
 
 #ifdef USE_SOCKET
 #include "usesock.h"
@@ -892,6 +893,8 @@ public:
         virtual DofOrder::Equality GetEqualityType(int iDof) const;
         doublereal dGetStepIntegratorCoef(unsigned int iDof) const;     
         bool bUseAutoDiff() const { return bAutoDiff; }
+
+        MBDYN_DEFINE_OPERATOR_NEW_DELETE
 private:
         bool bAutoDiff; // Create nodes and elements with support for automatic differentiation if applicable
 };

@@ -69,6 +69,7 @@ octave-pkg-test-job:   # This job runs in the test stage.
       - export TESTSUITE_TIME_CMD
       - export OCTAVE_EXEC="${GTEST_OCTAVE_EXEC}"
       - export MBDYN_EXEC
+      - export MBDYN_ARGS_ADD
       - mkdir -p "${OCT_PKG_TEST_OUTPUT_DIR}"
       - log_file="${OCT_PKG_TEST_OUTPUT_DIR}/${OCT_PKG_TEST_JOB_LOG}"
       - echo "octave packages test job" | tee "${log_file}"
