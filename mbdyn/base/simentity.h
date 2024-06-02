@@ -44,6 +44,7 @@
 #include "hint.h"
 #include "invdyn.h"
 #include "solverbase.h"
+#include "mynewmem.h"
 /* SimulationEntity - begin */
 
 /*
@@ -224,6 +225,7 @@ public:
 
 	virtual void ReadInitialState(MBDynParser& HP);
 
+        MBDYN_DEFINE_OPERATOR_NEW_DELETE
 };
 
 /* SimulationEntity - end */

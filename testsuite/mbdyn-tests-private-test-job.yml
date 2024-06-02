@@ -86,6 +86,7 @@ mbdyn-tests-private-test-job:   # This job runs in the test stage.
       - export TESTSUITE_TIME_CMD
       - export JUNIT_XML_KEEP_ALL_OUTPUT
       - export MBDYN_EXEC
+      - export MBDYN_ARGS_ADD
       - mkdir -p "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" ## needed for realpath
       - log_file="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/${MBD_TESTS_PRIVATE_LOG_FILE}"
       - |
@@ -155,6 +156,7 @@ mbdyn-tests-private-test-job-gcov:   # This job runs in the test stage.
       - export TESTSUITE_TIME_CMD
       - export JUNIT_XML_KEEP_ALL_OUTPUT
       - export MBDYN_EXEC
+      - export MBDYN_ARGS_ADD
       - mkdir -p "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" ## needed for realpath
       - log_file="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/${MBD_TESTS_PRIVATE_LOG_FILE}"
       - |

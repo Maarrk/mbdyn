@@ -43,6 +43,7 @@ set -o pipefail ## Needed for commands like "octave --eval ${cmd} |& tee logfile
 
 program_name="$0"
 MBDYN_EXEC="${MBDYN_EXEC:-mbdyn}"
+MBDYN_ARGS_ADD="${MBDYN_ARGS_ADD:--CGF}"
 TESTSUITE_TIME_CMD="${TESTSUITE_TIME_CMD:-/usr/bin/time --verbose}"
 OCT_PKG_LIST="${OCT_PKG_LIST:-mboct-mbdyn-pkg:no:master:yes:unlimited}"
 OCT_PKG_TEST_DIR="${OCT_PKG_TEST_DIR:-octave-pkg-testsuite}"
@@ -308,7 +309,7 @@ function octave_pkg_testsuite_run()
         return 1
     fi
 
-    export MBOCT_MBDYN_PKG_MBDYN_SOLVER_COMMAND="${MBOCT_MBDYN_PKG_MBDYN_SOLVER_COMMAND:-${MBDYN_EXEC} -CG --gtest_output=xml:${junit_xml_report_file}}"
+    export MBOCT_MBDYN_PKG_MBDYN_SOLVER_COMMAND="${MBOCT_MBDYN_PKG_MBDYN_SOLVER_COMMAND:-${MBDYN_EXEC} ${MBDYN_ARGS_ADD} --gtest_output=xml:${junit_xml_report_file}}"
 
     case "${OCT_PKG_TESTS_VERBOSE}" in
         yes)
@@ -469,6 +470,8 @@ for pkgname_and_flags in ${OCT_PKG_LIST}; do
         export OCT_GREP_FILTER_EXPR
         export OCT_PKG_TEST_MODE
         export OCT_PKG_TESTS_VERBOSE
+        export MBDYN_ARGS_ADD
+        export MBDYN_EXEC
         export -f octave_pkg_testsuite_run
         octave_status_file=`printf "${octave_status_file_format}" '{#}'`
         octave_parallel_args="-j${MBD_NUM_TASKS} -n1 octave_pkg_testsuite_run --status ${octave_status_file} --exec {} --pkg ${pkgname} --task-id {#}"

@@ -44,6 +44,7 @@
 #include "external.h"
 #include "nonlinpb.h"
 #include "solman.h"
+#include "mynewmem.h"
 
 #include <iomanip>
 #include <chrono>
@@ -561,7 +562,8 @@ public:
     }
 
      std::ostream& PrintSolverTime(std::ostream& os) const;
-     
+
+     MBDYN_DEFINE_OPERATOR_NEW_DELETE
 #ifdef USE_EXTERNAL
 	void SetExternal(const External::ExtMessage Ty);
 	

@@ -154,6 +154,10 @@ variables:
       - "valgrind --leak-check=full --show-leak-kinds=all mbdyn"
     description: "Command to run MBDyn from the shell"
 
+  MBDYN_ARGS_ADD:
+    value: "-CGF"
+    description: "Additional arguments which should be passed to mbdyn (See also `man mbdyn` or `mbdyn --help`)"
+
   ## Compiler flags for MBDyn and mboct-*-pkg
   MBD_COMPILER_FLAGS: "-Ofast -Wall -march=native -mtune=native -Wno-unused-variable"
 

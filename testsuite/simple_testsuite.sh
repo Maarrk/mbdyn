@@ -49,7 +49,6 @@ mbdyn_verbose_output="no"
 mbdyn_keep_output="unexpected"
 mbdyn_print_res="no"
 mbdyn_patch_input="no"
-mbdyn_args_add="-CG"
 mbdyn_exec_gen="yes"
 mbdyn_exec_solver="yes"
 declare -i mbdyn_exclude_inverse_dynamics=0
@@ -58,6 +57,7 @@ mbdyn_suppressed_errors=""
 
 declare -i mbd_exit_status_mask=0 ## Define the errors codes which should not cause the pipeline to fail
 MBDYN_EXEC="${MBDYN_EXEC:-mbdyn}"
+MBDYN_ARGS_ADD="${MBDYN_ARGS_ADD:--CGF}"
 OCTAVE_EXEC="${OCTAVE_EXEC:-octave}"
 TESTSUITE_TIME_CMD="${TESTSUITE_TIME_CMD:-/usr/bin/time --verbose}"
 JUNIT_XML_KEEP_ALL_OUTPUT="${JUNIT_XML_KEEP_ALL_OUTPUT:-none}"
@@ -148,7 +148,7 @@ while ! test -z "$1"; do
             shift
             ;;
         --mbdyn-args-add)
-            mbdyn_args_add="$2"
+            MBDYN_ARGS_ADD="$2"
             shift
             ;;
         --exec-gen)
@@ -384,7 +384,7 @@ function simple_testsuite_run_test()
                                 mbd_exec_solver="yes"
                             else
                                 ## Generate the input and execute MBDyn
-                                mbd_command="${mbd_command}; ${MBDYN_EXEC} ${mbdyn_args_add} -f ${mbd_filename} -o ${mbd_output_file}"
+                                mbd_command="${mbd_command}; ${MBDYN_EXEC} ${MBDYN_ARGS_ADD} -f ${mbd_filename} -o ${mbd_output_file}"
                             fi
                         fi
                         ;;
@@ -414,7 +414,7 @@ function simple_testsuite_run_test()
 
         if test -z "${mbd_command}"; then
             echo "No custom test script was found for input file ${mbd_filename}; The default command will be used to run the model"
-            mbd_command="${MBDYN_EXEC} ${mbdyn_args_add} -f ${mbd_filename_patched} -o ${mbd_output_file} --gtest_output=xml:${junit_xml_report_file}"
+            mbd_command="${MBDYN_EXEC} ${MBDYN_ARGS_ADD} -f ${mbd_filename_patched} -o ${mbd_output_file} --gtest_output=xml:${junit_xml_report_file}"
         fi
 
         case "${mbdyn_print_res}" in
@@ -691,12 +691,13 @@ else
     export mbdyn_testsuite_prefix_output
     export mbdyn_sed_prefix
     export mbdyn_patch_input
-    export mbdyn_args_add
     export mbdyn_testsuite_timeout
     export mbdyn_verbose_output
     export mbdyn_keep_output
     export mbdyn_print_res
     export mbdyn_suppressed_errors
+    export MBDYN_EXEC
+    export MBDYN_ARGS_ADD
     export MBD_NUM_THREADS
     export MBDYN_EXEC
     export OCTAVE_EXEC

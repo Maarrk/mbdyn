@@ -41,6 +41,7 @@
 #define NONLINPB_H
 
 #include <solman.h>
+#include <mynewmem.h>
 
 class NonlinearSolverTest;
 
@@ -64,6 +65,8 @@ public:
 	
 	virtual void EvalProd(doublereal Tau, const VectorHandler& f0,
 			const VectorHandler& w, VectorHandler& z) const = 0;
+
+        MBDYN_DEFINE_OPERATOR_NEW_DELETE
 };   
 
 #endif /* NONLINPB_H */

@@ -137,7 +137,7 @@ test: all
 		"mbdyn/struct/solidshapetest ${MBD_TEST_PROGS_GTEST_FLAGS}" \
                 "mbdyn/solidcsltest ${MBD_TEST_PROGS_GTEST_FLAGS}" ; do \
 		printf "running command: \"%s\"\n" "$${cmd}" ; \
-		$${cmd} ; \
+		MBDYN_MALLOC_FILL=1 $${cmd} ; \
 		rc=$$? ; \
 		printf "status: %d\n" $${rc} ; \
 		if test $${rc} -ne 0; then exit 1; fi ; \
