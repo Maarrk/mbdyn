@@ -848,11 +848,11 @@ Solver::Prepare(void)
 	 * Dialoga con il DataManager per dargli il tempo iniziale
 	 * e per farsi inizializzare i vettori di soluzione e derivata
 	 */
-	/* FIXME: the time is already set by DataManager, but FileDrivers
-	 * have not been ServePending'd
+	/* FIXME: the time is already set by DataManager, immediately before InitialAssembly,
+	 * but dInitialTimeStep was not set
 	 */
 	dTime = dInitialTime;
-	pDM->SetTime(dTime, dInitialTimeStep, 0);
+	pDM->SetTime(dTime, dInitialTimeStep, 0, false);
 
 	/*
 	 * If first eigenanalysis requested at time *before* initial time,
