@@ -544,6 +544,7 @@ bAutoDiff(false)
 		  }
 	     }
 
+	     SetTime(dInitialTime, 0., 0, true);
 	     if (bInitialJointAssemblyToBeDone) {
 		  if (!bSkipInitialJointAssembly && !bInverseDynamics) {
 		       InitialJointAssembly();
