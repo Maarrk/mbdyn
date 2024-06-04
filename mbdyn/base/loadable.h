@@ -44,11 +44,12 @@
 
 #define LOADABLE_VERSION_SET(maj, min, fix)	\
 	(((maj) << 24) | ((min) << 16) | (fix))
-#define LOADABLE_VERSION	LOADABLE_VERSION_SET(1, 6, 0)
+#define LOADABLE_VERSION	LOADABLE_VERSION_SET(1, 7, 0)
 #define LOADABLE_VERSION_OUT(v) \
 	((v & 0xFF000000U) >> 24) << '.' << ((v & 0x00FF0000U) >> 16) << '.' << (v & 0x0000FFFFU)
 /*
  * CHANGELOG:
+ * 2006-02-08: 1.7.0 add set_eq
  * 2006-02-08: 1.5.0 changed connectivity API
  * 2005-10-11: 1.4.0 changed SetValue API (hints and so...)
  * 2004-06-13: 1.3.0 allow modules to be statically linked
@@ -108,6 +109,7 @@ typedef void *
 (* p_read)(LoadableElem*, DataManager*, MBDynParser&);
 typedef unsigned int (* p_i_get_num_dof)(const LoadableElem*);
 typedef DofOrder::Order (* p_set_dof)(const LoadableElem*, unsigned int);
+typedef DofOrder::Order (* p_set_eq)(const LoadableElem*, unsigned int);
 typedef void (* p_output)(const LoadableElem*, OutputHandler&);
 typedef std::ostream& (* p_restart)(const LoadableElem*, std::ostream&);
 typedef void (* p_work_space_dim)(const LoadableElem*, integer*, integer*);
@@ -194,6 +196,7 @@ struct LoadableCalls {
 	 */
 	p_i_get_num_dof			i_get_num_dof;
 	p_set_dof 			set_dof;
+	p_set_eq			set_eq;
 	p_output 			output;
 	p_restart 			restart;
 	p_work_space_dim 		work_space_dim;
@@ -246,6 +249,7 @@ public:
 
    	virtual unsigned int iGetNumDof(void) const;
    	virtual DofOrder::Order GetDofType(unsigned int i) const;
+	virtual DofOrder::Order GetEqType(unsigned int i) const;
 
    	virtual void Output(OutputHandler& OH) const;
    	virtual std::ostream& Restart(std::ostream& out) const;

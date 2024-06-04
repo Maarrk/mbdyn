@@ -50,6 +50,12 @@ int_set_dof(const LoadableElem*, unsigned int /* i */ )
    	throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 }
 
+static DofOrder::Order 
+int_set_eq(const LoadableElem*, unsigned int /* i */ )
+{
+	return DofOrder::DIFFERENTIAL;
+}
+
 static void
 int_output(const LoadableElem* /* pEl */ , OutputHandler& /* OH */ )
 {
@@ -382,6 +388,10 @@ LoadableElem::BindCalls(DataManager* pDM, MBDynParser& HP)
 		calls->set_dof = int_set_dof;
 	}
 
+	if (calls->set_eq == 0) {
+		calls->set_eq = int_set_eq;
+	}
+
 	if (calls->output == 0) {
 		calls->output = int_output;
 	}
@@ -504,6 +514,14 @@ LoadableElem::GetDofType(unsigned int i) const
    	ASSERT(i < iGetNumDof());
 	ASSERT(calls->set_dof != 0);
    	return calls->set_dof(this, i);
+}
+
+DofOrder::Order 
+LoadableElem::GetEqType(unsigned int i) const
+{
+	ASSERT(i < iGetNumDof());
+	ASSERT(calls->set_eq != 0);
+	return (*calls->set_eq)(this, i);
 }
 
 void
