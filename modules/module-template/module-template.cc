@@ -79,6 +79,13 @@ set_dof(const LoadableElem*, unsigned int i)
 	return DofOrder::UNKNOWN;
 }
 
+static DofOrder::Order
+set_eq(const LoadableElem*, unsigned int i)
+{
+	DEBUGCOUTFNAME("set_eq");
+	return DofOrder::UNKNOWN;
+}
+
 static void
 output(const LoadableElem* pEl, OutputHandler& OH)
 {
@@ -387,7 +394,7 @@ get_connected_nodes(const LoadableElem* pEl,
 
 static struct
 LoadableCalls lc = {
-	LOADABLE_VERSION_SET(1, 5, 0),
+	LOADABLE_VERSION_SET(1, 7, 0),
 
 	"template",
 	"1.1",
@@ -397,6 +404,7 @@ LoadableCalls lc = {
 	read,
 	i_get_num_dof,
 	set_dof,
+	set_eq,
 	output,
 	restart,
 	work_space_dim,
