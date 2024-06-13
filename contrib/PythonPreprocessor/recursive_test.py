@@ -1,4 +1,7 @@
+from dataclasses import dataclass
 from io import StringIO
+from numbers import Integral
+from typing import Optional, Union
 import unittest
 
 import MBDynLib as l
@@ -45,13 +48,6 @@ class TestConstDrive(unittest.TestCase):
         cdc_r = r.ConstDriveCaller.from_dict(data)
         self.assertEqual(str(cdc_l), str(cdc_r))
 
-    def test_abstract_class(self):
-        """Check that user can't create abstract classes, which are only used to share functionality"""
-        with self.assertRaises(TypeError):
-            e = r._MBEntity()
-        with self.assertRaises(TypeError):
-            dc = r.DriveCaller()
-
     def test_missing_arguments(self):
         with self.assertRaises(ErrprintCalled):
             l.ConstDriveCaller()
@@ -79,7 +75,10 @@ class TestConstDrive(unittest.TestCase):
     def test_extra_arguments(self):
         with self.assertRaises(Exception):
             r.ConstDriveCaller(const_value=42, foo=1.0)
-        # that also prevents touching constants in constructor
+        # allows to catch typos in optional arguments
+        with self.assertRaises(Exception):
+            r.ConstDriveCaller(const_value=42, ibx=1)
+        # that also prevents wrongly assigning other members in constructor
         with self.assertRaises(Exception):
             r.ConstDriveCaller(const_value=42, drive_type='bar')
 
@@ -87,6 +86,31 @@ class TestConstDrive(unittest.TestCase):
     def test_extra_arguments_lib(self):
         with self.assertRaises(Exception):
             l.ConstDriveCaller(const_value=42, foo=1.0)
+
+    def test_abstract_class(self):
+        """Check that user can't create abstract classes, which are only used to share functionality"""
+        with self.assertRaises(TypeError):
+            e = r._MBEntity()
+        with self.assertRaises(TypeError):
+            dc = r.DriveCaller()
+
+    def test_missing_redefine(self):
+        """Check that the library developer is forced to redefine attributes with `@redefine_default`"""
+        with self.assertRaises(TypeError):
+            @dataclass
+            class BadDriveCaller(r.DriveCaller):
+                def drive_type(self) -> str:
+                    return "bad"
+
+                useless: int
+                values: int = 0
+                # The test will fail if you uncomment the line below
+                # idx: Optional[Union[r.MBVar, Integral]] = None
+
+                def __str__(self):
+                    return f'''{self.drive_header()}, {self.useless}, {self.values}'''
+
+            bad = BadDriveCaller(1, 2)
 
 
 if __name__ == '__main__':
