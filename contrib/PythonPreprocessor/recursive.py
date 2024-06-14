@@ -21,10 +21,33 @@ Objectives:
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from numbers import Number, Integral
+from enum import Enum
 from typing import Optional, Union
 
+try:
+    import pydantic.dataclasses
 
+    def forbidden_extra(*args, **kwargs):
+        """Set extra fields to forbidden and call normal dataclass decorator"""
+        new_config = {'extra': 'forbid'}
+        config = dict()
+        if 'config' in kwargs and isinstance(kwargs['config'], dict):
+            config = kwargs['config'].update(new_config)
+        else:
+            config = new_config
+
+        if 'config' in kwargs:
+            del kwargs['config']
+        return pydantic.dataclasses.dataclass(*args, **kwargs, config=config)
+
+    # Set the code to use this modified dataclass
+    # HACK: hidden from code analysis in exec to keep the default type hints
+    exec('dataclass = forbidden_extra')
+except ImportError:
+    pass
+
+
+@dataclass
 class _MBEntity(ABC):
     """Base class for every 'thing' to put in MBDyn file, other than numbers"""
 
@@ -39,8 +62,37 @@ class _MBEntity(ABC):
         return cls(**data)
 
 
+class MBVarType(str, Enum):
+    """Built-in types in math parser"""
+    BOOL = 'bool'
+    """Boolean number (promoted to `integer`, `real`,or `string` (0 or 1), whenever required)"""
+    INTEGER = 'integer'
+    """Integer number (promoted to `real`, or `string`, whenever required)"""
+    REAL = 'real'
+    """Real number (promoted to `string` whenever required)"""
+    STRING = 'string'
+    """Text string"""
+
+
+@dataclass
 class MBVar(_MBEntity):
-    pass
+    """
+    Every time a numeric value is expected, the result of evaluating
+    a mathematical expression can be used, including variable declaration
+    and assignment (variable names and values are kept in memory throughout
+    the input phase and the simulation) and simple math functions.
+    Limited math on strings is also supported.
+    Named variables and non-named constants are strongly typed.
+    """
+    name: str
+    """Name of the variable"""
+    var_type: MBVarType
+    """Type as defined in MBDyn"""
+    expression: str
+    """For now just a string, TODO: finish implementing expressions and MBVar"""
+
+    def __str__(self) -> str:
+        return self.name
 
 
 def redefine_default(func):
@@ -99,7 +151,7 @@ class DriveCaller(_MBEntity):
     The family of the `DriveCaller` object is very large.
     """
     @redefine_default
-    def idx(self) -> Optional[Union[MBVar, Integral]]:
+    def idx(self) -> Optional[Union[MBVar, int]]:
         """Index of this drive to reuse with references"""
         return None
 
@@ -126,10 +178,23 @@ class ConstDriveCaller(DriveCaller):
     def drive_type(self):
         return 'const'
 
-    const_value: Union[Number, MBVar]
+    const_value: Union[MBVar, float, int]
     """Value that will be output by the drive"""
-    idx: Optional[Union[MBVar, Integral]] = None
+    idx: Optional[Union[MBVar, int]] = None
     """Index of this drive to reuse with references"""
 
     def __str__(self):
         return f'''{self.drive_header()}, {self.const_value}'''
+
+
+if __name__ == '__main__':
+    # write out the schema
+    try:
+        import json
+        from pydantic import TypeAdapter
+
+        with open('json/schema_const_drive_caller.json', 'w') as out:
+            # FIXME: dataclass fields don't get the descriptions like BaseModel fields do
+            json.dump(TypeAdapter(ConstDriveCaller).json_schema(), out, indent=2)
+    except ImportError:
+        print('Generating JSON schema depends on pydantic package')

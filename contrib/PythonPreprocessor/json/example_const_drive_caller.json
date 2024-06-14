@@ -1,0 +1,5 @@
+{
+  "$schema": "./schema_const_drive_caller.json",
+  "const_value": 42,
+  "idx": 1
+}

@@ -7,6 +7,11 @@ import unittest
 import MBDynLib as l
 import recursive as r
 
+try:
+    import pydantic
+except ImportError:
+    pydantic = None
+
 
 class ErrprintCalled(Exception):
     """Exception raised instead of `errprint` function outputting to stderr"""
@@ -43,6 +48,11 @@ class TestConstDrive(unittest.TestCase):
         self.assertEqual(cdc_r.const_value, 42)
         self.assertEqual(str(cdc_l), str(cdc_r))
 
+        # just positional arguments (they get type hints)
+        cdc_r = r.ConstDriveCaller(42, 1)
+        self.assertEqual(cdc_r.idx, 1)
+        self.assertEqual(cdc_r.const_value, 42)
+
         # create from a dictionary
         data = {'idx': 1, 'const_value': 42}
         cdc_r = r.ConstDriveCaller.from_dict(data)
@@ -58,7 +68,9 @@ class TestConstDrive(unittest.TestCase):
         with self.assertRaises(Exception):
             r.ConstDriveCaller(idx=1)
 
+    @unittest.skipIf(pydantic is None, "depends on library, since it doesn't prevent correct models from running")
     def test_wrong_argument_types(self):
+        """"""
         with self.assertRaises(AssertionError):
             l.ConstDriveCaller(idx=1.0)
         with self.assertRaises(Exception):
@@ -66,9 +78,6 @@ class TestConstDrive(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             l.ConstDriveCaller(const_value='a')
-
-        # FIXME: doesn't validate here, but doesn't stop the model from correctly generating,
-        # so it would be acceptable to fix this depending on a package
         with self.assertRaises(Exception):
             r.ConstDriveCaller(const_value='a')
 
@@ -82,10 +91,14 @@ class TestConstDrive(unittest.TestCase):
         with self.assertRaises(Exception):
             r.ConstDriveCaller(const_value=42, drive_type='bar')
 
-    @unittest.expectedFailure
+    @unittest.skip('not a feature of the current library')
     def test_extra_arguments_lib(self):
         with self.assertRaises(Exception):
             l.ConstDriveCaller(const_value=42, foo=1.0)
+
+    @unittest.skipIf(pydantic is None, "depends on library, since it doesn't prevent correct models from running")
+    def test_schema(self):
+        pydantic.TypeAdapter(r.ConstDriveCaller).json_schema()
 
     def test_abstract_class(self):
         """Check that user can't create abstract classes, which are only used to share functionality"""
@@ -104,7 +117,7 @@ class TestConstDrive(unittest.TestCase):
 
                 useless: int
                 values: int = 0
-                # The test will fail if you uncomment the line below
+                # The class will be valid (the test will fail) if you uncomment the line below
                 # idx: Optional[Union[r.MBVar, Integral]] = None
 
                 def __str__(self):

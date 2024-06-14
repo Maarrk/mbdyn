@@ -1,0 +1,77 @@
+{
+  "$defs": {
+    "MBVar": {
+      "additionalProperties": false,
+      "description": "Every time a numeric value is expected, the result of evaluating\na mathematical expression can be used, including variable declaration\nand assignment (variable names and values are kept in memory throughout\nthe input phase and the simulation) and simple math functions.\nLimited math on strings is also supported.\nNamed variables and non-named constants are strongly typed.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "var_type": {
+          "$ref": "#/$defs/MBVarType"
+        },
+        "expression": {
+          "title": "Expression",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "var_type",
+        "expression"
+      ],
+      "title": "MBVar",
+      "type": "object"
+    },
+    "MBVarType": {
+      "description": "Built-in types in math parser",
+      "enum": [
+        "bool",
+        "integer",
+        "real",
+        "string"
+      ],
+      "title": "MBVarType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "An example of `DriveCaller` that always returns the same constant value",
+  "properties": {
+    "const_value": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MBVar"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "title": "Const Value"
+    },
+    "idx": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MBVar"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Idx"
+    }
+  },
+  "required": [
+    "const_value"
+  ],
+  "title": "ConstDriveCaller",
+  "type": "object"
+}
