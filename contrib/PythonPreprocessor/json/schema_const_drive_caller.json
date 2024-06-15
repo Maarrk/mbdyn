@@ -33,14 +33,30 @@
     },
     "MBVarType": {
       "description": "Built-in types in math parser",
-      "enum": [
-        "bool",
-        "integer",
-        "real",
-        "string"
-      ],
       "title": "MBVarType",
-      "type": "string"
+      "type": "string",
+      "anyOf": [
+        {
+          "const": "bool",
+          "title": "BOOL",
+          "description": "Boolean number (promoted to `integer`, `real`,or `string` (0 or 1), whenever required)"
+        },
+        {
+          "const": "integer",
+          "title": "INTEGER",
+          "description": "Integer number (promoted to `real`, or `string`, whenever required)"
+        },
+        {
+          "const": "real",
+          "title": "REAL",
+          "description": "Real number (promoted to `string` whenever required)"
+        },
+        {
+          "const": "string",
+          "title": "STRING",
+          "description": "Text string"
+        }
+      ]
     }
   },
   "additionalProperties": false,

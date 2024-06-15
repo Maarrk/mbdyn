@@ -21,15 +21,40 @@ Objectives:
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 try:
     from pydantic import BaseModel, ConfigDict
+    # HACK: this is not public, but does exactly what we need
+    from pydantic._internal._docs_extraction import extract_docstrings_from_cls
 
     class _EntityBase(BaseModel):
         """Configuration for Entity with pydantic available"""
         model_config = ConfigDict(extra='forbid',
                                   use_attribute_docstrings=True)
+
+        @classmethod
+        # FIXME: Due to limitations of JSON Schema when using this anyOf the enum member annotation goes onto variable
+        def model_json_schema(cls, *args, **kwargs) -> dict[str, Any]:
+            """Changes enum definitions to `anyOf` with a list of `const` values and adds descriptions.
+
+            Needs the enum types to be imported with their name (without prefix)"""
+            schema = super().model_json_schema(cls, *args, **kwargs)
+            for typename in schema['$defs']:
+                if 'enum' in schema['$defs'][typename]:
+                    type_var = globals()[typename]
+                    docstrings = extract_docstrings_from_cls(type_var, True)
+                    constants = []  # based on https://stackoverflow.com/a/64296043
+                    for entry in schema['$defs'][typename]['enum']:
+                        constants.append({
+                            'const': entry,
+                            'title': type_var(entry).name,
+                            'description': docstrings[type_var(entry).name]
+                        })
+                    del schema['$defs'][typename]['enum']
+                    schema['$defs'][typename]['anyOf'] = constants
+            return schema
+
 except ImportError:
     class _EntityBase:
         """Placeholder with minimal functionality for running a correct model when pydantic isn't available"""
@@ -56,16 +81,16 @@ class MBEntity(_EntityBase, ABC):
         return cls(**data)
 
 
-# FIXME: Get value docstrings into schema
+# HACK: We need to annotate types on enum entries to find descriptions for schema same way as other classes
 class MBVarType(str, Enum):
     """Built-in types in math parser"""
-    BOOL = 'bool'
-    """Boolean number (promoted to `integer`, `real`,or `string` (0 or 1), whenever required)"""
-    INTEGER = 'integer'
+    BOOL: str = 'bool'
+    """Boolean number (promoted to `integer`, `real`, or `string` (0 or 1), whenever required)"""
+    INTEGER: str = 'integer'
     """Integer number (promoted to `real`, or `string`, whenever required)"""
-    REAL = 'real'
+    REAL: str = 'real'
     """Real number (promoted to `string` whenever required)"""
-    STRING = 'string'
+    STRING: str = 'string'
     """Text string"""
 
 
@@ -145,7 +170,6 @@ if __name__ == '__main__':
         import json
 
         with open('json/schema_const_drive_caller.json', 'w') as out:
-            # FIXME: enum fields don't get the descriptions like BaseModel fields do
             json.dump(ConstDriveCaller.model_json_schema(), out, indent=2)
     except ImportError:
         print('Generating JSON schema depends on pydantic package')

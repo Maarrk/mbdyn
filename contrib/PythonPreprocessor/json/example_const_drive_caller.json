@@ -1,5 +1,9 @@
 {
   "$schema": "./schema_const_drive_caller.json",
-  "const_value": 42,
+  "const_value": {
+    "var_type": "bool",
+    "name": "SOME_NAME",
+    "expression": "42"
+  },
   "idx": 1
 }
