@@ -32,31 +32,15 @@
       "type": "object"
     },
     "MBVarType": {
-      "description": "Built-in types in math parser",
+      "description": "Built-in types in math parser\nEntries:\n- bool: Boolean number (promoted to `integer`, `real`, or `string` (0 or 1), whenever required)\n- integer: Integer number (promoted to `real`, or `string`, whenever required)\n- real: Real number (promoted to `string` whenever required)\n- string: Text string",
+      "enum": [
+        "bool",
+        "integer",
+        "real",
+        "string"
+      ],
       "title": "MBVarType",
-      "type": "string",
-      "anyOf": [
-        {
-          "const": "bool",
-          "title": "BOOL",
-          "description": "Boolean number (promoted to `integer`, `real`,or `string` (0 or 1), whenever required)"
-        },
-        {
-          "const": "integer",
-          "title": "INTEGER",
-          "description": "Integer number (promoted to `real`, or `string`, whenever required)"
-        },
-        {
-          "const": "real",
-          "title": "REAL",
-          "description": "Real number (promoted to `string` whenever required)"
-        },
-        {
-          "const": "string",
-          "title": "STRING",
-          "description": "Text string"
-        }
-      ]
+      "type": "string"
     }
   },
   "additionalProperties": false,
@@ -92,6 +76,9 @@
       ],
       "description": "Value that will be output by the drive",
       "title": "Const Value"
+    },
+    "$schema": {
+      "type": "string"
     }
   },
   "required": [

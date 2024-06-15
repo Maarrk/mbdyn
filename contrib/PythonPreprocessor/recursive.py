@@ -34,7 +34,6 @@ try:
                                   use_attribute_docstrings=True)
 
         @classmethod
-        # FIXME: Due to limitations of JSON Schema when using this anyOf the enum member annotation goes onto variable
         def model_json_schema(cls, *args, **kwargs) -> dict[str, Any]:
             """Changes enum definitions to `anyOf` with a list of `const` values and adds descriptions.
 
@@ -44,15 +43,17 @@ try:
                 if 'enum' in schema['$defs'][typename]:
                     type_var = globals()[typename]
                     docstrings = extract_docstrings_from_cls(type_var, True)
-                    constants = []  # based on https://stackoverflow.com/a/64296043
+                    values = ['', 'Entries:']
                     for entry in schema['$defs'][typename]['enum']:
-                        constants.append({
-                            'const': entry,
-                            'title': type_var(entry).name,
-                            'description': docstrings[type_var(entry).name]
-                        })
-                    del schema['$defs'][typename]['enum']
-                    schema['$defs'][typename]['anyOf'] = constants
+                        values.append(
+                            f'- {entry}: {docstrings[type_var(entry).name]}'
+                        )
+                    schema['$defs'][typename]['description'] \
+                        += '\n'.join(values)
+
+            # allow specifying the schema in the root object
+            schema['properties']['$schema'] = {"type": "string"}
+
             return schema
 
 except ImportError:
