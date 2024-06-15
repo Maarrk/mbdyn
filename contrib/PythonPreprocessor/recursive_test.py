@@ -1,7 +1,4 @@
-from dataclasses import dataclass
 from io import StringIO
-from numbers import Integral
-from typing import Optional, Union
 import unittest
 
 import MBDynLib as l
@@ -48,16 +45,18 @@ class TestConstDrive(unittest.TestCase):
         self.assertEqual(cdc_r.const_value, 42)
         self.assertEqual(str(cdc_l), str(cdc_r))
 
-        # just positional arguments (they get type hints)
-        cdc_r = r.ConstDriveCaller(42, 1)
-        self.assertEqual(cdc_r.idx, 1)
-        self.assertEqual(cdc_r.const_value, 42)
+        # can't use positional arguments, arguably better
+        with self.assertRaises(Exception):
+            cdc_r = r.ConstDriveCaller(42, 1)
+            self.assertEqual(cdc_r.idx, 1)
+            self.assertEqual(cdc_r.const_value, 42)
 
         # create from a dictionary
         data = {'idx': 1, 'const_value': 42}
         cdc_r = r.ConstDriveCaller.from_dict(data)
         self.assertEqual(str(cdc_l), str(cdc_r))
 
+    @unittest.skipIf(pydantic is None, "depends on library, since it doesn't prevent correct models from running")
     def test_missing_arguments(self):
         with self.assertRaises(ErrprintCalled):
             l.ConstDriveCaller()
@@ -70,7 +69,6 @@ class TestConstDrive(unittest.TestCase):
 
     @unittest.skipIf(pydantic is None, "depends on library, since it doesn't prevent correct models from running")
     def test_wrong_argument_types(self):
-        """"""
         with self.assertRaises(AssertionError):
             l.ConstDriveCaller(idx=1.0)
         with self.assertRaises(Exception):
@@ -81,6 +79,7 @@ class TestConstDrive(unittest.TestCase):
         with self.assertRaises(Exception):
             r.ConstDriveCaller(const_value='a')
 
+    @unittest.skipIf(pydantic is None, "depends on library, since it doesn't prevent correct models from running")
     def test_extra_arguments(self):
         with self.assertRaises(Exception):
             r.ConstDriveCaller(const_value=42, foo=1.0)
@@ -103,27 +102,9 @@ class TestConstDrive(unittest.TestCase):
     def test_abstract_class(self):
         """Check that user can't create abstract classes, which are only used to share functionality"""
         with self.assertRaises(TypeError):
-            e = r._MBEntity()
+            e = r.MBEntity()
         with self.assertRaises(TypeError):
             dc = r.DriveCaller()
-
-    def test_missing_redefine(self):
-        """Check that the library developer is forced to redefine attributes with `@redefine_default`"""
-        with self.assertRaises(TypeError):
-            @dataclass
-            class BadDriveCaller(r.DriveCaller):
-                def drive_type(self) -> str:
-                    return "bad"
-
-                useless: int
-                values: int = 0
-                # The class will be valid (the test will fail) if you uncomment the line below
-                # idx: Optional[Union[r.MBVar, Integral]] = None
-
-                def __str__(self):
-                    return f'''{self.drive_header()}, {self.useless}, {self.values}'''
-
-            bad = BadDriveCaller(1, 2)
 
 
 if __name__ == '__main__':

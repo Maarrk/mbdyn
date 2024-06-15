@@ -20,35 +20,29 @@ Objectives:
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, Union
 
 try:
-    import pydantic.dataclasses
+    from pydantic import BaseModel, ConfigDict
 
-    def forbidden_extra(*args, **kwargs):
-        """Set extra fields to forbidden and call normal dataclass decorator"""
-        new_config = {'extra': 'forbid'}
-        config = dict()
-        if 'config' in kwargs and isinstance(kwargs['config'], dict):
-            config = kwargs['config'].update(new_config)
-        else:
-            config = new_config
-
-        if 'config' in kwargs:
-            del kwargs['config']
-        return pydantic.dataclasses.dataclass(*args, **kwargs, config=config)
-
-    # Set the code to use this modified dataclass
-    # HACK: hidden from code analysis in exec to keep the default type hints
-    exec('dataclass = forbidden_extra')
+    class _EntityBase(BaseModel):
+        """Configuration for Entity with pydantic available"""
+        model_config = ConfigDict(extra='forbid',
+                                  use_attribute_docstrings=True)
 except ImportError:
-    pass
+    class _EntityBase:
+        """Placeholder with minimal functionality for running a correct model when pydantic isn't available"""
+
+        def __init__(self, *args, **kwargs):
+            if len(args) > 0:
+                raise TypeError(
+                    'MBDyn entities cannot be initialized using positional arguments')
+            for key, value in kwargs.items():
+                setattr(self, key, value)
 
 
-@dataclass
-class _MBEntity(ABC):
+class MBEntity(_EntityBase, ABC):
     """Base class for every 'thing' to put in MBDyn file, other than numbers"""
 
     @abstractmethod
@@ -62,6 +56,7 @@ class _MBEntity(ABC):
         return cls(**data)
 
 
+# FIXME: Get value docstrings into schema
 class MBVarType(str, Enum):
     """Built-in types in math parser"""
     BOOL = 'bool'
@@ -74,8 +69,7 @@ class MBVarType(str, Enum):
     """Text string"""
 
 
-@dataclass
-class MBVar(_MBEntity):
+class MBVar(MBEntity):
     """
     Every time a numeric value is expected, the result of evaluating
     a mathematical expression can be used, including variable declaration
@@ -95,44 +89,7 @@ class MBVar(_MBEntity):
         return self.name
 
 
-def redefine_default(func):
-    '''
-    TL;DR: When inheriting this class, redefine it as a field
-
-    ```python
-    # example:
-    class Parent:
-        @redefine_default
-        def foo(self) -> FieldType:
-            """Shared member for all `Parent`"""
-            return bar
-
-    # you're expected to copy it like this:
-    @dataclass
-    class Child(Parent):
-        baz: OtherType
-        """Required property specific to `Child`"""
-        foo: FieldType = bar
-        """Shared member for all`Parent`"""
-    ```
-
-    A function with this decorator should be redefined as dataclass property in every child class.
-    In here it returns the expected default, and is defined with a documentation string.
-
-    This creates some duplication, but a redefinition is required to reorder members with defaults,
-    and gives correct type hints and docstring everywhere it's used. Modifying the `dataclass` decorator
-    doesn't help because of special treatment and assumptions from code analysis tools.
-    It is a known limitation, which in Python 3.10 is solved by adding the `kw_only` option to dataclass,
-    however this would make the library code simpler, and user code more verbose, which is not a goal.
-
-    Marking this as `abstractmethod` enforces it to be defined, and `property` shows that it should be
-    accessed like a field here (which it will in fact be in the derived classes)
-    '''
-    return property(abstractmethod(func))
-
-
-@dataclass
-class DriveCaller(_MBEntity):
+class DriveCaller(MBEntity):
     """
     Abstract class for C++ type `DriveCaller`. Every time some entity can be driven, i.e. a value can be expressed
     as dependent on some external input, an object of the class  `DriveCaller` is used.
@@ -150,10 +107,8 @@ class DriveCaller(_MBEntity):
 
     The family of the `DriveCaller` object is very large.
     """
-    @redefine_default
-    def idx(self) -> Optional[Union[MBVar, int]]:
-        """Index of this drive to reuse with references"""
-        return None
+    idx: Optional[Union[MBVar, int]] = None
+    """Index of this drive to reuse with references"""
 
     @abstractmethod
     def drive_type(self) -> str:
@@ -170,7 +125,6 @@ class DriveCaller(_MBEntity):
             return self.drive_type()
 
 
-@dataclass
 class ConstDriveCaller(DriveCaller):
     """An example of `DriveCaller` that always returns the same constant value"""
 
@@ -180,8 +134,6 @@ class ConstDriveCaller(DriveCaller):
 
     const_value: Union[MBVar, float, int]
     """Value that will be output by the drive"""
-    idx: Optional[Union[MBVar, int]] = None
-    """Index of this drive to reuse with references"""
 
     def __str__(self):
         return f'''{self.drive_header()}, {self.const_value}'''
@@ -191,10 +143,9 @@ if __name__ == '__main__':
     # write out the schema
     try:
         import json
-        from pydantic import TypeAdapter
 
         with open('json/schema_const_drive_caller.json', 'w') as out:
-            # FIXME: dataclass fields don't get the descriptions like BaseModel fields do
-            json.dump(TypeAdapter(ConstDriveCaller).json_schema(), out, indent=2)
+            # FIXME: enum fields don't get the descriptions like BaseModel fields do
+            json.dump(ConstDriveCaller.model_json_schema(), out, indent=2)
     except ImportError:
         print('Generating JSON schema depends on pydantic package')

@@ -5,13 +5,20 @@
       "description": "Every time a numeric value is expected, the result of evaluating\na mathematical expression can be used, including variable declaration\nand assignment (variable names and values are kept in memory throughout\nthe input phase and the simulation) and simple math functions.\nLimited math on strings is also supported.\nNamed variables and non-named constants are strongly typed.",
       "properties": {
         "name": {
+          "description": "Name of the variable",
           "title": "Name",
           "type": "string"
         },
         "var_type": {
-          "$ref": "#/$defs/MBVarType"
+          "allOf": [
+            {
+              "$ref": "#/$defs/MBVarType"
+            }
+          ],
+          "description": "Type as defined in MBDyn"
         },
         "expression": {
+          "description": "For now just a string, TODO: finish implementing expressions and MBVar",
           "title": "Expression",
           "type": "string"
         }
@@ -39,20 +46,6 @@
   "additionalProperties": false,
   "description": "An example of `DriveCaller` that always returns the same constant value",
   "properties": {
-    "const_value": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/MBVar"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "integer"
-        }
-      ],
-      "title": "Const Value"
-    },
     "idx": {
       "anyOf": [
         {
@@ -66,7 +59,23 @@
         }
       ],
       "default": null,
+      "description": "Index of this drive to reuse with references",
       "title": "Idx"
+    },
+    "const_value": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MBVar"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "Value that will be output by the drive",
+      "title": "Const Value"
     }
   },
   "required": [
