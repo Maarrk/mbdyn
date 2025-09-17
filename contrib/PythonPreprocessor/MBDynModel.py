@@ -1,6 +1,11 @@
 from abc import ABC
 from typing import List, Optional, Annotated
-from MBDynLib import *
+
+# HACK: Handle import both as module and package
+try:
+    from MBDynLib import *
+except ImportError:
+    from .MBDynLib import *
 
 if imported_pydantic:
     from pydantic import BaseModel, ConfigDict, field_validator, validate_call, Field
@@ -62,7 +67,7 @@ class MBDynModel(MBEntity):
 
         # Nodes block
         if len(self.nodes) == 0:
-            raise ValueError("Nodes block is required")
+            raise ValueError("Nodes block is required, add some in constructor or using add_node")
 
         output.append("begin: nodes;")
         for node in self.nodes:
@@ -78,7 +83,7 @@ class MBDynModel(MBEntity):
 
         # Elements block
         if len(self.elements) == 0:
-            raise ValueError("Elements block is required")
+            raise ValueError("Elements block is required, add some in constructor or using add_element")
 
         output.append("begin: elements;")
         for element in self.elements:
