@@ -514,7 +514,7 @@ class Position(MBEntity):
     """Position definition for MBDyn elements"""
         
     relative_position: List[Union[float, MBVar, null, eye]]
-    reference: Union['Reference', Literal['global', 'node', 'other node', '']] # TODO: Make reference an optional field (remove '')
+    reference: Optional[Union['Reference', Literal['global', 'node', 'other node']]] = None
 
     @field_validator('relative_position', mode='before')
     def ensure_list(cls, v):
@@ -527,13 +527,15 @@ class Position(MBEntity):
         if isinstance(v, str):
             if v not in {'global', 'node', 'other node', ''}:
                 raise ValueError("Invalid literal for reference")
+        elif v is None:
+            pass
         elif not isinstance(v, Reference):
             raise ValueError("reference must be either a Reference instance or one of the specified strings")
         return v
 
     def __str__(self):
         s = ''
-        if self.reference != '':
+        if self.reference is not None:
             s = 'reference, ' + str(self.reference) + ', '
         s = s + ', '.join(str(i) for i in self.relative_position)
         return s
@@ -543,6 +545,8 @@ class Position(MBEntity):
 
     def iseye(self) -> bool:
         return (self.reference == '') and isinstance(self.relative_position[0], eye)
+
+PositionSpec = Union[Position, null, eye]
     
 class Reference(MBEntity):
     idx: Union[int, MBVar]
@@ -566,10 +570,10 @@ class Node(MBEntity):
     """This class isn't directly used to create instances, but it's child classes are."""
 
     idx: Union[int, MBVar]
-    position: Position
-    orientation: Position
-    velocity: Position
-    angular_velocity: Position
+    position: PositionSpec
+    orientation: PositionSpec
+    velocity: PositionSpec
+    angular_velocity: PositionSpec
     node_type: Literal['dynamic', 'static', 'modal'] = 'dynamic'
     scale: Optional[Union[Literal['default'], float, MBVar]] = 'default'
     output: Optional[Union[Literal['yes', 'no'], int, bool]] = 'yes'
@@ -703,9 +707,9 @@ class Element(MBEntity):
 class Body(Element):
     node: Node
     mass: Union[float, MBVar]
-    position: Position
-    inertial_matrix: Position 
-    inertial: Optional[Position] = None
+    position: PositionSpec
+    inertial_matrix: PositionSpec
+    inertial: Optional[PositionSpec] = None
 
     def element_type(self):
         return 'body'
@@ -724,10 +728,10 @@ class Body(Element):
 class StructuralForce(Element):
     node: Node
     ftype: Literal['absolute', 'follower', 'total']
-    position: Optional[Position] = None
+    position: Optional[PositionSpec] = None
     force_drive: Optional[List] = None # TODO: Needs TplDriveCaller
-    force_orientation: Optional[Position] = None
-    moment_orientation: Optional[Position] = None
+    force_orientation: Optional[PositionSpec] = None
+    moment_orientation: Optional[PositionSpec] = None
     moment_drive: Optional[List] = None # TODO: Needs TplDriveCaller
     
     @model_validator(mode='after')
@@ -747,7 +751,10 @@ class StructuralForce(Element):
         s = f'{self.element_header()}, {self.ftype}'
         s += f',\n\t{self.node.idx}'
         if self.ftype == 'absolute' or self.ftype == 'follower':
-            s += f',\n\t\tposition, {self.position}'
+            if self.force_orientation is not None:
+                s += f',\n\t\tforce orientation, {self.force_orientation}'
+            if self.position is not None:
+                s += f',\n\t\tposition, {self.position}'
             s += f',\n\t\t'
             s += ', '.join(str(i) for i in self.force_drive)
         elif self.ftype == 'total':
