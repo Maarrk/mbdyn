@@ -31,10 +31,10 @@ class MBDynModel(MBEntity):
     data: Data
     problem: InitialValue  
     control_data: ControlData
-    nodes: List[Node]
-    drivers: Optional[List[FileDriver]] = []
-    elements: List[Element]
-    
+    nodes: List[Node] = []
+    drivers: List[FileDriver] = []
+    elements: List[Element] = []
+
     def add_node(self, node: Node) -> None:
         self.nodes.append(node)
 
@@ -46,7 +46,7 @@ class MBDynModel(MBEntity):
 
     def __str__(self) -> str:
         """Generate complete MBDyn input file content"""
-        output = []
+        output: List[str] = []
 
         # Data block
         output.append(str(self.data))
@@ -61,6 +61,9 @@ class MBDynModel(MBEntity):
         output.append("")
 
         # Nodes block
+        if len(self.nodes) == 0:
+            raise ValueError("Nodes block is required")
+
         output.append("begin: nodes;")
         for node in self.nodes:
             output.append(str(node))
@@ -74,6 +77,9 @@ class MBDynModel(MBEntity):
             output.append("end: drivers;\n")
 
         # Elements block
+        if len(self.elements) == 0:
+            raise ValueError("Elements block is required")
+
         output.append("begin: elements;")
         for element in self.elements:
             output.append(str(element))
