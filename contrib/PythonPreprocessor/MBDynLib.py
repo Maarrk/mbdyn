@@ -587,6 +587,7 @@ class Node(MBEntity):
             s += f",\n\tscale, {self.scale}"
         if self.output != 'yes':
             s += f",\n\toutput, {self.output}"
+        s += ';\n'
         return s
     
 class DynamicNode(Node):
@@ -751,10 +752,10 @@ class StructuralForce(Element):
         s = f'{self.element_header()}, {self.ftype}'
         s += f',\n\t{self.node.idx}'
         if self.ftype == 'absolute' or self.ftype == 'follower':
-            if self.force_orientation is not None:
-                s += f',\n\t\tforce orientation, {self.force_orientation}'
             if self.position is not None:
                 s += f',\n\t\tposition, {self.position}'
+            if self.force_orientation is not None:
+                s += f',\n\t\t{self.force_orientation}'
             s += f',\n\t\t'
             s += ', '.join(str(i) for i in self.force_drive)
         elif self.ftype == 'total':
@@ -5718,8 +5719,8 @@ class ControlData(MBEntity):
     output_frequency: Optional[Union[int, MBVar]] = None
     output_meter: Optional[DriveCaller] = None
     output_results: Optional[OutputResults] = None
-    default_orientation: Union[Literal["euler123", "euler313", "euler321", "orientation vector", "orientation matrix"]] = "euler123"
-    model: Literal["static"] = "static"
+    default_orientation: Optional[Literal["euler123", "euler313", "euler321", "orientation vector", "orientation matrix"]] = None
+    model: Optional[Literal["static"]] = None
     rbk_data: Optional[Union[ConstRBK, DriveRBK]] = None
 
     ## Model Counter Cards
@@ -5799,8 +5800,10 @@ class ControlData(MBEntity):
         if self.output_results:
             s += f'\t{self.output_results};\n'
 
-        s += f'\tdefault orientation: {self.default_orientation};\n'
-        s += f'\tmodel: {self.model};\n'
+        if self.default_orientation:
+            s += f'\tdefault orientation: {self.default_orientation};\n'
+        if self.model:
+            s += f'\tmodel: {self.model};\n'
 
         if self.rbk_data:
             s += f'\trigid body kinematics: {self.rbk_data};\n'
