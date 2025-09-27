@@ -56,10 +56,13 @@ apt-get install -y --no-install-recommends \
     gfortran\
     libblas-dev liblapack-dev libltdl-dev libnetcdf-dev \
     libnetcdf-c++4-dev libreadline-dev libsuitesparse-dev
-# Create a nonroo`t user
+# Create a nonroot user
 useradd -ms /bin/bash mbdynuser
 # Change ownership of the MBDyn directory to the nonroot user
 chown -R mbdynuser:mbdynuser /usr/local/mbdyn
+# Create a home folder for the user with correct permissions for outputs
+mkdir -p /home/mbdynuser
+chown -R mbdynuser:mbdynuser /home/mbdynuser
 EOF
 # Adjust PATH so that the mbdyn binary is available
 ENV PATH="/usr/local/mbdyn/bin:${PATH}"
