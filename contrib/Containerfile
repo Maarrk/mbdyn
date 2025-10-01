@@ -4,23 +4,34 @@
 FROM debian:bookworm AS builder
 
 LABEL version="develop"
+
 # Set noninteractive mode for apt-get
 ENV DEBIAN_FRONTEND=noninteractive
-RUN <<'EOF'
-apt-get update
-apt-get install -y --no-install-recommends \
+# Install system packages for building
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    autoconf \
+    automake \
+    build-essential \
     ca-certificates \
-    autoconf automake build-essential gfortran git \
-    libblas-dev liblapack-dev libltdl-dev libnetcdf-dev \
-    libnetcdf-c++4-dev libreadline-dev libsuitesparse-dev \
-    libtool pkg-config wget
-update-ca-certificates
-rm -rf /var/lib/apt/lists/*
-git clone -b develop https://public.gitlab.polimi.it/DAER/mbdyn.git /opt/mbdyn
-EOF
+    gfortran \
+    git \
+    libblas-dev \
+    liblapack-dev \
+    libltdl-dev \
+    libnetcdf-c++4-dev \
+    libnetcdf-dev \
+    libreadline-dev \
+    libsuitesparse-dev \
+    libtool \
+    pkg-config \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Get sources
+RUN git clone -b develop https://public.gitlab.polimi.it/DAER/mbdyn.git /opt/mbdyn
 WORKDIR /opt/mbdyn
+RUN ./bootstrap.sh
 RUN <<'EOF'
-./bootstrap.sh
 ./configure
 make -j$(nproc)
 make install
@@ -28,34 +39,32 @@ make test
 make clean
 EOF
 
-# Clean up unnecessary files to reduce image size.
-# 1. Unnecessary dependencies
-RUN <<'EOF'
-apt-get remove -y autoconf automake build-essential git libtool pkg-config wget
-apt-get autoremove -y
-apt-get clean
-rm -rf /var/lib/apt/lists/*
-EOF
-# 2. Source code
-WORKDIR /opt
-RUN rm -rf /opt/mbdyn
-
 #############################
 # Final Stage (Debian)
 #############################
 FROM debian:bookworm AS final
+
 LABEL version="develop"
-# Set noninteractive mode for apt-get
-ENV DEBIAN_FRONTEND=noninteractive
-WORKDIR /opt
+
 # Copy the MBDyn binaries and libraries from the builder stage
 COPY --from=builder /usr/local/mbdyn /usr/local/mbdyn
+
+# Set noninteractive mode for apt-get
+ENV DEBIAN_FRONTEND=noninteractive
+# Install packages for runtime requirements
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gfortran \
+    libblas-dev \
+    liblapack-dev \
+    libltdl-dev \
+    libnetcdf-c++4-dev \
+    libnetcdf-dev \
+    libreadline-dev \
+    libsuitesparse-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Setup mbdynuser
 RUN <<'EOF'
-apt-get update
-apt-get install -y --no-install-recommends \
-    gfortran\
-    libblas-dev liblapack-dev libltdl-dev libnetcdf-dev \
-    libnetcdf-c++4-dev libreadline-dev libsuitesparse-dev
 # Create a nonroot user
 useradd -ms /bin/bash mbdynuser
 # Change ownership of the MBDyn directory to the nonroot user
@@ -64,11 +73,13 @@ chown -R mbdynuser:mbdynuser /usr/local/mbdyn
 mkdir -p /home/mbdynuser
 chown -R mbdynuser:mbdynuser /home/mbdynuser
 EOF
+
 # Adjust PATH so that the mbdyn binary is available
 ENV PATH="/usr/local/mbdyn/bin:${PATH}"
+
 # Switch to nonroot user
 USER mbdynuser
-# Use mbdyn as the entrypoint (or override as needed)
+WORKDIR /home/mbdynuser
+
+# Use mbdyn as the entrypoint (override with /bin/bash to get an interactive shell)
 ENTRYPOINT ["mbdyn"]
-# If interactive debugging is needed, this CMD will open a shell
-CMD ["/bin/bash"]
