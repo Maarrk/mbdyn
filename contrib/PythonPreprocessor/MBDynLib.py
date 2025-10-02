@@ -502,25 +502,33 @@ class IfndefMBVar(MBVar):
             super().__init__(name=name, var_type=f'ifndef {var_type}', expression=value)
 
 
-class null(MBEntity):
+# Capitalize the class name and ALL_CAPS the constant so Python tooling treats them accordingly
+class Null(MBEntity):
     def __str__(self):
         return 'null'
 
-class eye(MBEntity):
+NULL = Null()
+"""Corresponds to MBDyn's "null" literal, for vector of zeros"""
+
+class Eye(MBEntity):
     def __str__(self):
         return 'eye'
+
+EYE = Eye()
+"""Corresponds to MBDyn's "eye" literal, for identity vector"""
 
 class Position(MBEntity):
     """Position definition for MBDyn elements"""
         
-    relative_position: List[Union[float, MBVar, null, eye]]
+    # The literals "null" and "eye" replace the whole vector, not one value
+    relative_position: Union[Null, Eye, List[Union[float, MBVar]]]
     reference: Optional[Union['Reference', Literal['global', 'node', 'other node']]] = None
 
-    @field_validator('relative_position', mode='before')
-    def ensure_list(cls, v):
-        if not isinstance(v, list):
-            return [v]
-        return v
+    # @field_validator('relative_position', mode='before')
+    # def ensure_list(cls, v):
+    #     if not isinstance(v, list):
+    #         return [v]
+    #     return v
 
     @field_validator('reference')
     def validate_reference(cls, v):
@@ -541,19 +549,19 @@ class Position(MBEntity):
         return s
 
     def isnull(self) -> bool:
-        return (self.reference == '') and isinstance(self.relative_position[0], null)
+        return (self.reference == '') and isinstance(self.relative_position, Null)
 
     def iseye(self) -> bool:
-        return (self.reference == '') and isinstance(self.relative_position[0], eye)
+        return (self.reference == '') and isinstance(self.relative_position, Eye)
 
-PositionSpec = Union[Position, null, eye]
+PositionSpec = Union[Position, Null, Eye]
     
 class Reference(MBEntity):
     idx: Union[int, MBVar]
-    position: Position
-    orientation: Position
-    velocity: Position
-    angular_velocity: Position    
+    position: PositionSpec
+    orientation: PositionSpec
+    velocity: PositionSpec
+    angular_velocity: PositionSpec
     def __str__(self):
         s = 'reference: '
         s = s + str(self.idx) + ', \n'
