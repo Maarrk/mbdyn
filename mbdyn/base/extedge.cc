@@ -760,8 +760,8 @@ ReadExtFileHandlerEDGE(DataManager* pDM,
 {
 	ExtFileHandlerBase *pEFH = 0;
 
-	const char *s = HP.GetFileName();
-	if (s == 0) {
+	std::string s = HP.GetFileName();
+	if (s.empty()) {
 		silent_cerr("ExtForceEDGE(" << uLabel << "): "
 			"unable to get flag file name "
 			"at line " << HP.GetLineData() << std::endl);
@@ -770,7 +770,7 @@ ReadExtFileHandlerEDGE(DataManager* pDM,
 	std::string fflagname = s;
 
 	s = HP.GetFileName();
-	if (s == 0) {
+	if (s.empty()) {
 		silent_cerr("ExtForceEDGE(" << uLabel << "): "
 			"unable to get data file name "
 			"at line " << HP.GetLineData() << std::endl);
@@ -787,4 +787,3 @@ ReadExtFileHandlerEDGE(DataManager* pDM,
 
 	return pEFH;
 }
-

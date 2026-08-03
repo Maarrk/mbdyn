@@ -81,9 +81,9 @@ ChDirDR::Read(HighParser& HP)
 	IncludeParser *pIP = dynamic_cast<IncludeParser *>(&HP);
 	ASSERT(pIP != 0);
    
-	const char* sfname = pIP->GetFileName();
+	const std::string sfname = pIP->GetFileName();
 
-	if (chdir(sfname)) {
+	if (chdir(sfname.c_str())) {
 		silent_cerr("Error in chdir, path=\"" << sfname << "\" at line "
 			<< HP.GetLineData() << std::endl);
 		throw ErrFileSystem(MBDYN_EXCEPT_ARGS);
@@ -122,7 +122,7 @@ IncludeParser::IncludeParser(MathParser& MP,
 			     const std::string sInitialFile)
 : HighParser(MP, streamIn)
 {
-	ASSERT(sInitialFile != NULL);
+	ASSERT(!sInitialFile.empty());
 #ifdef USE_INCLUDE_PARSER
    	char s[PATH_MAX];
    	if (getcwd(s, sizeof(s)) == NULL) {
@@ -266,12 +266,12 @@ IncludeParser::Include_int()
       		throw HighParser::ErrColonExpected(MBDYN_EXCEPT_ARGS);
    	}
    
-   	const char* sfname = GetFileName();
+	const std::string sfname = GetFileName();
 
-	if (sfname != 0) {
+	if (!sfname.empty()) {
 		struct stat	s;
 
-		if (stat(sfname, &s)) {
+		if (stat(sfname.c_str(), &s)) {
 			int save_errno = errno;
 
 			silent_cerr("Cannot stat file <" << sfname << "> "
@@ -300,11 +300,6 @@ IncludeParser::Include_int()
 		throw ErrFile(MBDYN_EXCEPT_ARGS);
 	}
 
-	/* NOTE: GetFileName() returns a pointer into sStringBuf; copy it
-	 * before any further parsing overwrites the buffer */
-	std::string sfn(sfname);
-	sfname = sfn.c_str();
-
 	std::ifstream *pf_old = pf;
 	InputStream *pIn_old = pIn;
 	std::string sOldPath = sCurrPath;
@@ -315,9 +310,9 @@ IncludeParser::Include_int()
 
 #ifdef _WIN32
 	// open the file in non translated mode in order not to break seek operations
-   	SAFENEWWITHCONSTRUCTOR(pf, std::ifstream, std::ifstream(sfname, std::ios::binary));
+	SAFENEWWITHCONSTRUCTOR(pf, std::ifstream, std::ifstream(sfname, std::ios::binary));
 #else
-   	SAFENEWWITHCONSTRUCTOR(pf, std::ifstream, std::ifstream(sfname));
+	SAFENEWWITHCONSTRUCTOR(pf, std::ifstream, std::ifstream(sfname));
 #endif
    	if (!(*pf)) {
 #ifdef DEBUG
@@ -347,9 +342,9 @@ IncludeParser::Include_int()
    	sCurrPath.clear();
    	sCurrFile.clear();
 
-	std::string::size_type sep = sfn.find_last_of(DIR_SEP);
+	std::string::size_type sep = sfname.find_last_of(DIR_SEP);
 	if (sep != std::string::npos) {
-		std::string sDir(sfn, 0, sep + 1);
+		std::string sDir(sfname, 0, sep + 1);
  		if (chdir(sDir.c_str())) {
 			silent_cerr("Error in chdir, path="
 				<< sDir << std::endl);
@@ -364,10 +359,10 @@ IncludeParser::Include_int()
  		DEBUGCOUT("Current directory is \"" << sCurrPath
 			<< "\"" << std::endl);
 
-		sCurrFile = sfn.substr(sep + 1);
+		sCurrFile = sfname.substr(sep + 1);
 
 	} else {
-		sCurrFile = sfn;
+		sCurrFile = sfname;
 	}
    	DEBUGCOUT("Opening file <" << sCurrFile << '>' << std::endl);
 
@@ -413,12 +408,12 @@ IncludeParser::Eof(void)
  * returns false (leaving "out" in an undefined state) on failure
  */
 static bool
-expand_environment(const char *in, std::string& out)
+expand_environment(const std::string& in, std::string& out)
 {
 	DEBUGCOUT(">> expand_environment: " << in << std::endl);
 
 	out.clear();
-	for (unsigned c = 0; in[c]; c++) {
+	for (std::string::size_type c = 0; c < in.size(); c++) {
 		if (in[c] != '$') {
 			out += in[c];
 			continue;
@@ -432,12 +427,12 @@ expand_environment(const char *in, std::string& out)
 		}
 
 		c++;
-		unsigned namepos = c;
+		std::string::size_type namepos = c;
 		const char *value = NULL;
 		if (in[c] == '{') {
-			const char *end = std::strchr(&in[c], '}');
+			const std::string::size_type end = in.find('}', c);
 
-			if (end == NULL) {
+			if (end == std::string::npos) {
 				silent_cerr("missing trailing \"}\" "
 						"in \"" << in << "\""
 						<< std::endl);
@@ -445,7 +440,7 @@ expand_environment(const char *in, std::string& out)
 			}
 
 			namepos++;
-			std::string buf(in + namepos, end);
+			std::string buf(in, namepos, end - namepos);
 			value = getenv(buf.c_str());
 			if (value == NULL) {
 				silent_cerr("unable to find "
@@ -458,7 +453,7 @@ expand_environment(const char *in, std::string& out)
 
 			/* skip past the closing brace ('}';
 			 * the for loop increments c) */
-			c = end - &in[0];
+			c = end;
 
 		} else {
 			if (in[c] != '_' && !isalpha(in[c])) {
@@ -470,13 +465,13 @@ expand_environment(const char *in, std::string& out)
 				return false;
 			}
 
-			for (c++; in[c]; c++) {
+			for (c++; c < in.size(); c++) {
 				if (in[c] != '_' && !isalnum(in[c])) {
 					break;
 				}
 			}
 
-			std::string buf(in + namepos, in + c);
+			std::string buf(in, namepos, c - namepos);
 			value = getenv(buf.c_str());
 			if (value == NULL) {
 				silent_cerr("unable to find "
@@ -504,11 +499,11 @@ expand_environment(const char *in, std::string& out)
  * returns false (leaving "res" in an undefined state) on failure
  */
 static bool
-resolve_filename(const char *filename_in, std::string& res)
+resolve_filename(const std::string& filename_in, std::string& res)
 {
         std::string filename;
 
-        if (std::strchr(filename_in, '$')) {
+        if (filename_in.find('$') != std::string::npos) {
                 if (!expand_environment(filename_in, filename)) {
                         return false;
                 }
@@ -548,35 +543,31 @@ resolve_filename(const char *filename_in, std::string& res)
         return true;
 }
 
-const char*
+std::string
 IncludeParser::GetFileName(enum Delims Del)
 {
-   	const char *s = GetStringWithDelims(Del);
-	if (s == 0) {
-		return 0;
+	const std::string s = GetStringWithDelims(Del);
+	if (s.empty()) {
+		return std::string();
 	}
 
    	std::string stmp;
-   	if (!resolve_filename(s, stmp)) {
-      		return 0;
-   	}
+	if (!resolve_filename(s, stmp)) {
+		return std::string();
+	}
 
-	sStringBuf = stmp;
-
-   	return sStringBuf.c_str();
+	return stmp;
 }
 
 HighParser::ErrOut
 IncludeParser::GetLineData(void) const
 {
    	ErrOut LineData;
-   	LineData.sFileName = sCurrFile.empty() ? 0 : sCurrFile.c_str();
-   	LineData.sPathName = (sCurrPath.empty() || sCurrPath == sInitialPath)
-		? 0 : sCurrPath.c_str();
+	LineData.sFileName = sCurrFile;
+	LineData.sPathName = (sCurrPath.empty() || sCurrPath == sInitialPath)
+		? std::string() : sCurrPath;
    	LineData.iLineNumber = GetLineNumber();
    	return LineData;
 }
 
 /* IncludeParser - end */
-
-

@@ -376,8 +376,8 @@ struct AnnElasticCLR : public ConstitutiveLawRead<T, Tder> {
 			bUnit = HP.GetYesNoOrBool();
 		}
 
-		const char *s = HP.GetFileName();
-		if (s == 0) {
+		const std::string s = HP.GetFileName();
+		if (s.empty()) {
 			silent_cerr("AnnElasticCLR: "
 				"unable to get ann file name "
 				"at line " << HP.GetLineData() << std::endl);
@@ -404,8 +404,8 @@ struct AnnViscoElasticCLR : public ConstitutiveLawRead<T, Tder> {
 			bUnit = HP.GetYesNoOrBool();
 		}
 
-		const char *s = HP.GetFileName();
-		if (s == 0) {
+		const std::string s = HP.GetFileName();
+		if (s.empty()) {
 			silent_cerr("AnnViscoElasticCLR: "
 				"unable to get ann file name "
 				"at line " << HP.GetLineData() << std::endl);

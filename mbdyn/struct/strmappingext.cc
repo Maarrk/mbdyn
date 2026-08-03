@@ -2079,8 +2079,8 @@ ReadStructMappingExtForce(DataManager* pDM,
 	}
 
 	if (HP.IsKeyWord("echo")) {
-		const char *s = HP.GetFileName();
-		if (s == NULL) {
+		const std::string s = HP.GetFileName();
+		if (s.empty()) {
 			silent_cerr("StructMappingExtForce(" << uLabel << "): "
 				"unable to parse echo file name "
 				"at line " << HP.GetLineData()
@@ -2349,8 +2349,8 @@ ReadStructMappingExtForce(DataManager* pDM,
 		if (bLabels) {
 			MappedLabels.resize(nMappedPoints);
 			if (HP.IsKeyWord("mapped" "labels" "file")) {
-				const char *sFileName = HP.GetFileName();
-				if (sFileName == 0) {
+				const std::string sFileName = HP.GetFileName();
+				if (sFileName.empty()) {
 					silent_cerr("StructMappingExtForce(" << uLabel << "): "
 						"unable to read mapped labels file name "
 						"at line " << HP.GetLineData() << std::endl);
@@ -2476,4 +2476,3 @@ ReadStructMappingExtForce(DataManager* pDM,
 
 	return pEl;
 }
-

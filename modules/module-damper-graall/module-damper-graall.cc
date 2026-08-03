@@ -130,7 +130,7 @@ private:
 public:
 	GRAALLDamperConstitutiveLaw(const DriveCaller* pDC,
 		const doublereal& rla,
-		const char* const filename)
+		const std::string& filename)
 	: ConstitutiveLaw<doublereal, doublereal>(),
 	NPDMR(0), NPDMA(0), NPCVR(0), NPCVA(0), NPVT(0),
 	TBDMR(NULL), TBDMA(NULL), TBCVR(NULL), TBCVA(NULL), VETVIS(NULL),
@@ -423,7 +423,7 @@ struct GRAALLDamperCLR : public ConstitutiveLawRead<doublereal, doublereal> {
 
 		CLType = ConstLawType::VISCOELASTIC;
 
-		const char* filename = HP.GetFileName();
+		const std::string filename = HP.GetFileName();
 		DEBUGCOUT("Graall damper input file: \""
 				<< filename << "\"" << std::endl);
 
@@ -466,4 +466,3 @@ module_init(const char *module_name, void *pdm, void *php)
 
 	return 0;
 }
-

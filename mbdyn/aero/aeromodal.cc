@@ -669,7 +669,7 @@ ReadAerodynamicModal(DataManager* pDM,
 	}
 
 	/* apre il file contenente le matrici A B C D0 D1 D2 */
-	const char *sFileData = HP.GetFileName();
+	const std::string sFileData = HP.GetFileName();
 	std::ifstream fdat(sFileData);
 	DEBUGCOUT("Reading Aerodynamic State Space Matrices from file '"
 		<< sFileData << '\'' << std::endl);

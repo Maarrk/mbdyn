@@ -275,14 +275,14 @@ LoadableElem::GetCalls(MBDynParser& HP)
 {
 #ifdef USE_RUNTIME_LOADING
    	/* nome del modulo */
-   	const char* s = HP.GetFileName();
-	if (s == 0) {
+	const std::string s = HP.GetFileName();
+	if (s.empty()) {
 		silent_cerr("Loadable(" << GetLabel()
 			<< "): unable to get module name" << std::endl);
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 	}
 
-   	SAFESTRDUP(module_name, s);
+	SAFESTRDUP(module_name, s.c_str());
 	handle = lt_dlopenext(module_name);
 
 	if (handle == 0) {
@@ -299,7 +299,7 @@ LoadableElem::GetCalls(MBDynParser& HP)
    	}
 
 	/* default LoadableCalls struct */
-	const char *data_name = "calls";
+	std::string data_name = "calls";
 
 	LoadableCalls **tmpcalls = 0;
 	if (HP.IsKeyWord("name")) {
@@ -307,7 +307,7 @@ LoadableElem::GetCalls(MBDynParser& HP)
 	}
    	DEBUGCOUT("binding to data \"" << data_name
      		<< "\" (must be def'd!)" << std::endl);
-	tmpcalls = (LoadableCalls **)lt_dlsym(handle, data_name);
+	tmpcalls = (LoadableCalls **)lt_dlsym(handle, data_name.c_str());
 
    	if (tmpcalls == 0) {
       		const char* err = lt_dlerror();
@@ -699,7 +699,7 @@ LoadableElemRead::Read(unsigned int uLabel, const DofOwner* pDO,
 	UserDefinedElem* pEl = 0;
 
 	if (HP.IsKeyWord("reference")) {
-		const char *s = HP.GetStringWithDelims();
+		const std::string s = HP.GetStringWithDelims();
 
 		const LoadableCalls *c = pDM->GetLoadableElemModule(s);
 

@@ -305,14 +305,14 @@ void SocketStreamOutputElemCreator::getSocketStreamOutParam(DataManager *pDM, MB
 	bool bGotCreate(false);
 
 	if (HP.IsKeyWord("name") || HP.IsKeyWord("stream" "name")) {
-		const char *m = HP.GetStringWithDelims();
-		if (m == 0) {
+		const std::string m = HP.GetStringWithDelims();
+		if (m.empty()) {
 			silent_cerr("SocketStreamElem(" << uLabel << "): "
 				"unable to read stream name "
 				"at line " << HP.GetLineData() << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 
-		} else if (socketStreamOutputDataTmp.bIsRTAI && strlen(m) != 6) {
+		} else if (socketStreamOutputDataTmp.bIsRTAI && m.size() != 6) {
 			silent_cerr("SocketStreamElem(" << uLabel << "): "
 				"illegal stream name \"" << m << "\" "
 				"(must be exactly 6 chars) "
@@ -365,9 +365,9 @@ void SocketStreamOutputElemCreator::getSocketStreamOutParam(DataManager *pDM, MB
             << std::endl);
         throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 #else
-		const char *m = HP.GetFileName();
+		const std::string m = HP.GetFileName();
 
-		if (m == 0) {
+		if (m.empty()) {
 			silent_cerr("SocketStreamElem(" << uLabel << "): "
 				"unable to read local path "
 				"at line " << HP.GetLineData() << std::endl);
@@ -407,10 +407,8 @@ void SocketStreamOutputElemCreator::getSocketStreamOutParam(DataManager *pDM, MB
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
 
-		const char *h;
-
-		h = HP.GetStringWithDelims();
-		if (h == 0) {
+		const std::string h = HP.GetStringWithDelims();
+		if (h.empty()) {
 			silent_cerr("SocketStreamElem(" << uLabel << "): "
 				"unable to read host "
 				"at line " << HP.GetLineData() << std::endl);

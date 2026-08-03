@@ -108,7 +108,7 @@ pFlags(NULL)
 
 #ifndef _WIN32
 SocketDrive::SocketDrive(unsigned int uL, const DriveHandler* pDH,
-	const char *path,
+	const std::string& path,
 	integer nd, const std::vector<doublereal>& v0)
 : FileDrive(uL, pDH, "socket", nd, v0),
 type(AF_LOCAL),
@@ -118,13 +118,13 @@ pFlags(NULL)
 	int save_errno;
 	int rc;
 
-   	ASSERT(path != NULL);
+	ASSERT(!path.empty());
    	ASSERT(nd > 0);
 
 	SAFENEW(auth, NoAuth);
 
    	/* Create the socket and set it up to accept connections. */
-	SAFESTRDUP(data.Path, path);
+	SAFESTRDUP(data.Path, path.c_str());
    	rc = mbdyn_make_named_socket(&sock, 0, data.Path, 1, &save_errno);
    	if (rc == -1) {
 		const char	*err_msg = strerror(save_errno);
@@ -582,7 +582,7 @@ SocketDR::Read(unsigned uLabel, const DataManager *pDM, MBDynParser& HP)
 
 	integer idrives = HP.GetInt();
 	unsigned short int port = MBDynSocketDrivePort;
-	const char *path = NULL;
+	std::string path;
 
 	std::vector<doublereal> v0;
 	if (HP.IsKeyWord("initial" "values")) {
@@ -601,7 +601,7 @@ SocketDR::Read(unsigned uLabel, const DataManager *pDM, MBDynParser& HP)
         throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 #else /* _WIN32 */
 		path = HP.GetFileName();
-		ASSERT(path != NULL);
+		ASSERT(!path.empty());
 #endif /* _WIN32 */
 	} else if (HP.IsKeyWord("port")) {
 		port = HP.GetInt();
@@ -620,7 +620,7 @@ SocketDR::Read(unsigned uLabel, const DataManager *pDM, MBDynParser& HP)
 #endif /* IPPORT_USERRESERVED */
 	}
 
-	if (path == NULL) {
+	if (path.empty()) {
 		AuthMethod* pAuth = ReadAuthMethod(pDM, HP);
 
 		if (pAuth == NULL) {

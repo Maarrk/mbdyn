@@ -302,8 +302,8 @@ public:
 
 public:
         struct ErrOut {
-                const char* sFileName;
-                const char* sPathName;
+                std::string sFileName;
+                std::string sPathName;
                 unsigned int iLineNumber;
         };
 
@@ -507,9 +507,9 @@ public:
         /* legge una keyword */
         virtual int GetWord(void);
         /* legge una stringa */
-        virtual const char* GetString(unsigned flags = HighParser::NONE);
+        virtual std::string GetString(unsigned flags = HighParser::NONE);
         /* stringa delimitata */
-        virtual const char* GetStringWithDelims(enum Delims Del = DEFAULTDELIM, bool escape = true);
+        virtual std::string GetStringWithDelims(enum Delims Del = DEFAULTDELIM, bool escape = true);
 
         /* Returns the current input stream */
         virtual InputStream& GetInputStream(void) const;

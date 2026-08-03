@@ -392,8 +392,8 @@ ReadRTAISolver(Solver *pS, MBDynParser& HP)
 	std::string LogProcName;
 	if (HP.IsKeyWord("real" "time" "log")) {
 		if (HP.IsKeyWord("file" "name")){
-			const char *m = HP.GetFileName();
-			if (m == 0) {
+			const std::string m = HP.GetFileName();
+			if (m.empty()) {
 				silent_cerr("RTAISolver: unable to get "
 					"log process name (\"file name\") "
 					"at line " << HP.GetLineData()
@@ -418,4 +418,3 @@ ReadRTAISolver(Solver *pS, MBDynParser& HP)
 
 	return pRTSolver;
 }
-

@@ -421,9 +421,9 @@ ReadExtSocketHandler(DataManager* pDM,
 				<< std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 #else /* _WIN32 */
-		const char *m = HP.GetFileName();
+		const std::string m = HP.GetFileName();
 
-		if (m == 0) {
+		if (m.empty()) {
 			silent_cerr("ExtSocketHandler"
 				"(" << uLabel << "): "
 				"unable to read local path "
@@ -477,10 +477,8 @@ ReadExtSocketHandler(DataManager* pDM,
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
 
-		const char *h;
-
-		h = HP.GetStringWithDelims();
-		if (h == 0) {
+		const std::string h = HP.GetStringWithDelims();
+		if (h.empty()) {
 			silent_cerr("ExtSocketHandler"
 				"(" << uLabel << "): "
 				"unable to read host "

@@ -400,8 +400,8 @@ JoystickDR::Read(unsigned uLabel, const DataManager* pDM, MBDynParser& HP)
 		}
 	}
 
-	const char *s = HP.GetFileName();
-	if (s == 0) {
+	const std::string s = HP.GetFileName();
+	if (s.empty()) {
 		// error
 	}
 	std::string sFileName(s);
@@ -455,4 +455,3 @@ module_init(const char *module_name, void *pdm, void *php)
 
 	return 0;
 }
-

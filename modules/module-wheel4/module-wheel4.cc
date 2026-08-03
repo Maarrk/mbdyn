@@ -1891,8 +1891,8 @@ module_init(const char *module_name, void *pdm, void *php)
 	MBDynParser *pHP = (MBDynParser *)php;
 
 	while (pHP->IsArg()) {
-		const char *s = pHP->GetString();
-		if (s == 0) {
+		const std::string s = pHP->GetString();
+		if (s.empty()) {
 			silent_cerr("RigidRingTire: "
 				"unable to get arg; "
 				"module_init(" << module_name << ") "
@@ -1922,4 +1922,3 @@ module_init(const char *module_name, void *pdm, void *php)
 
 	return 0;
 }
-

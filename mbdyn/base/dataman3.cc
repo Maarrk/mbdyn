@@ -531,8 +531,8 @@ DataManager::ReadControl(MBDynParser& HP,
 				add = true;
 			}
 
-			const char *s = HP.GetFileName();
-			if (s == NULL) {
+			const std::string s = HP.GetFileName();
+			if (s.empty()) {
 				silent_cerr("missing path "
 					"in \"loadable path\" statement "
 					"at line " << HP.GetLineData()
@@ -541,7 +541,7 @@ DataManager::ReadControl(MBDynParser& HP,
 			}
 
 			if (add) {
-				if (lt_dladdsearchdir(s) != 0) {
+				if (lt_dladdsearchdir(s.c_str()) != 0) {
 					silent_cerr("unable to add path "
 						"\"" << s << "\" "
 						"in \"loadable path\" "
@@ -551,7 +551,7 @@ DataManager::ReadControl(MBDynParser& HP,
 					throw DataManager::ErrGeneric(MBDYN_EXCEPT_ARGS);
 				}
 			} else {
-				if (lt_dlsetsearchpath(s) != 0) {
+				if (lt_dlsetsearchpath(s.c_str()) != 0) {
 					silent_cerr("unable to set path "
 						"\"" << s << "\" "
 						"in \"loadable path\" "
@@ -873,12 +873,8 @@ EndOfUse:
 
 		/* Titolo */
 		case TITLE: {
-			ASSERT(sSimulationTitle == NULL);
-			if (sSimulationTitle != NULL) {
-				SAFEDELETEARR(sSimulationTitle);
-			}
-			const char* sTmp(HP.GetStringWithDelims());
-			SAFESTRDUP(sSimulationTitle, sTmp);
+			ASSERT(sSimulationTitle.empty());
+			sSimulationTitle = HP.GetStringWithDelims();
 			DEBUGLCOUT(MYDEBUG_INPUT, "Simulation title: "
 				"\"" << sSimulationTitle << '"' << std::endl);
 		} break;
@@ -1002,8 +998,8 @@ EndOfUse:
 								sAdamsModelName = 0;
 							}
 
-							const char *tmp = HP.GetStringWithDelims();
-							SAFESTRDUP(sAdamsModelName, tmp);
+							const std::string tmp = HP.GetStringWithDelims();
+							SAFESTRDUP(sAdamsModelName, tmp.c_str());
 						}
 
 						/* default; conservative: output is very verbose */
@@ -1927,8 +1923,7 @@ DataManager::ReadNodes(MBDynParser& HP)
 			/* Nome del nodo */
 			std::string sName;
 			if (HP.IsKeyWord("name")) {
-				const char *sTmp = HP.GetStringWithDelims();
-				sName = sTmp;
+				sName = HP.GetStringWithDelims();
 			}
 
 			/* in base al tipo, avviene l'allocazione */
@@ -2869,5 +2864,3 @@ ReadOptionalOrientationDescription(DataManager *pDM, MBDynParser& HP, Orientatio
 
 	return dod;
 }
-
-

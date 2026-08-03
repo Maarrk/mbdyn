@@ -34,6 +34,7 @@
 
 #include <unistd.h>
 #include <string.h>
+#include <string>
 
 class AuthMethod {
 public:
@@ -76,7 +77,8 @@ protected:
 	char Cred[33];
 
 public:
-	PasswordAuth(const char *u, const char *c, const char *salt_format = NULL);
+	PasswordAuth(const std::string& u, const std::string& c,
+		const std::string& salt_format = std::string());
 
 	AuthMethod::AuthRes Auth(const char *user, const char *cred) const;
 	AuthMethod::AuthRes Auth(int sock) const;
@@ -95,10 +97,10 @@ public:
 
 class PAM_Auth: public AuthMethod {
 protected:
-	char* User;
+	std::string User;
 
 public:
-	PAM_Auth(const char *u = NULL);
+	PAM_Auth(const std::string& u = std::string());
 
 	AuthMethod::AuthRes Auth(const char *user, const char *cred) const;
 	AuthMethod::AuthRes Auth(int sock) const;

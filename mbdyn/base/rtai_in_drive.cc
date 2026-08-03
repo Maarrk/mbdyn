@@ -127,14 +127,14 @@ ReadRTMBDynInDrive(const DataManager *pDM, MBDynParser& HP, unsigned int uLabel)
 	bool create = false;
 
 	if (HP.IsKeyWord("stream" "drive" "name")) {
-		const char *m = HP.GetStringWithDelims();
-		if (m == NULL) {
+		const std::string m = HP.GetStringWithDelims();
+		if (m.empty()) {
 			silent_cerr("RTMBDynInDrive(" << uLabel << "): "
 				"unable to read mailbox name "
 				"at line " << HP.GetLineData() << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 
-		} else if (strlen(m) != 6) {
+		} else if (m.size() != 6) {
 			silent_cerr("RTMBDynInDrive(" << uLabel << "): "
 				"illegal mailbox name \"" << m << "\" "
 				"(must be exactly 6 chars) "
@@ -167,7 +167,7 @@ ReadRTMBDynInDrive(const DataManager *pDM, MBDynParser& HP, unsigned int uLabel)
 	}
 
 	if (HP.IsKeyWord("local") || HP.IsKeyWord("path")) {
-		const char *m = HP.GetStringWithDelims();
+		const std::string m = HP.GetStringWithDelims();
 		
 		silent_cout("RTMBDynInDrive(" << uLabel << "): "
 			"local path \"" << m << "\" silently ignored"
@@ -182,10 +182,8 @@ ReadRTMBDynInDrive(const DataManager *pDM, MBDynParser& HP, unsigned int uLabel)
 	}
 	
 	if (HP.IsKeyWord("host")) {
-		const char *h;
-		
-		h = HP.GetStringWithDelims();
-		if (h == NULL) {
+		const std::string h = HP.GetStringWithDelims();
+		if (h.empty()) {
 			silent_cerr("RTMBDynInDrive(" << uLabel << "): "
 				"unable to read host "
 				"at line " << HP.GetLineData() << std::endl);

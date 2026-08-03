@@ -157,7 +157,7 @@ protected:
 	};
 	unsigned uPrintFlags;
 	/* Parametri vari */
-	char* sSimulationTitle;
+	std::string sSimulationTitle;
 
 public:
         enum eRestartWhen: unsigned {

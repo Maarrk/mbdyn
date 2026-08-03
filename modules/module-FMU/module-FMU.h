@@ -57,8 +57,7 @@ class ModuleFMU
 : public UserDefinedElem {
 private:
        	fmu* model;
-        char FMUlocation[1000];
-        const char* simType;
+	std::string FMUlocation;
 	double currTime;
 	double initialTime;
 	double timeStep;
@@ -129,4 +128,3 @@ public:
 	fmu::SimulationTypes SIMTYPE;
 
 };
-

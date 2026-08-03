@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <stack>
 #include <map>
+#include <list>
 
 #include "mathtyp.h"
 #include "parser.h"
@@ -401,7 +402,7 @@ PrintSymbolTableDR::Read(HighParser& HP)
         }
 
         while (HP.IsArg()) {
-                const char *sName = HP.GetString();
+                const std::string sName = HP.GetString();
                 MathParser::NameSpace *pN = HP.GetMathParser().GetNameSpace(sName);
                 if (pN == 0) {
                         silent_cerr("PrintSymbolTableDR::Read(): warning, unable to find namespace \"" << sName << "\" at line "
@@ -467,19 +468,22 @@ SetEnvDR::Read(HighParser& HP)
                 overwrite = b ? 1 : 0;
         }
 
-        const char *ava = HP.GetStringWithDelims();
-        if (ava == NULL) {
+        const std::string ava = HP.GetStringWithDelims();
+        if (ava.empty()) {
                 silent_cerr("unable to get AVA for \"setenv\" at line "
                                 << HP.GetLineData() << std::endl);
                 throw ErrGeneric(MBDYN_EXCEPT_ARGS);
         }
 
-        char *avasep = std::strchr(const_cast<char *>(ava), '=');
-        if (avasep == NULL) {
+        const std::string::size_type sep = ava.find('=');
+        if (sep == std::string::npos) {
 #ifdef HAVE_UNSETENV
-                unsetenv(ava);
+                unsetenv(ava.c_str());
 #elif defined(HAVE_PUTENV)
-                if (putenv(ava)) {
+		static std::list<std::string> environmentStorage;
+		environmentStorage.push_back(ava);
+		if (putenv(environmentStorage.back().data())) {
+			environmentStorage.pop_back();
                         silent_cerr("unable to unset the environment variable "
                                         "\"" << ava << "\" at line "
                                         << HP.GetLineData() << std::endl);
@@ -488,41 +492,41 @@ SetEnvDR::Read(HighParser& HP)
 #endif	/* !HAVE_UNSETENV && !HAVE_PUTENV */
 
         } else {
-                if (avasep == ava) {
+                if (sep == 0) {
                         silent_cerr("illegal AVA \"" << ava
                                         << "\" at line "
                                         << HP.GetLineData() << std::endl);
                         throw ErrGeneric(MBDYN_EXCEPT_ARGS);
                 }
 
-                avasep[0] = '\0';
-                avasep++;
-                bool bPresent(getenv(ava) != NULL);
-                int rc = setenv(ava, avasep, overwrite);
+		const std::string name = ava.substr(0, sep);
+		const std::string value = ava.substr(sep + 1);
+		bool bPresent(getenv(name.c_str()) != NULL);
+		int rc = setenv(name.c_str(), value.c_str(), overwrite);
                 if (rc) {
                         silent_cerr("unable to set the environment variable \""
-                                        << ava << "\" to \"" << avasep
+					<< name << "\" to \"" << value
                                         << "\" at line " << HP.GetLineData()
                                         << std::endl);
                         throw ErrGeneric(MBDYN_EXCEPT_ARGS);
                 }
 
                 if (bPresent && overwrite == 0) {
-                        silent_cout("Environment variable \"" << ava
-                                << "\" _not_ overwritten with \"" << avasep
-                                << "\" (current value is \"" << getenv(ava)
+			silent_cout("Environment variable \"" << name
+				<< "\" _not_ overwritten with \"" << value
+				<< "\" (current value is \"" << getenv(name.c_str())
                                 << "\") at line " << HP.GetLineData()
                                 << std::endl);
 
                 } else if (!bPresent) {
-                        silent_cout("Environment variable \"" << ava
-                                << "\" set to \"" << avasep
+			silent_cout("Environment variable \"" << name
+				<< "\" set to \"" << value
                                 << "\" at line " << HP.GetLineData()
                                 << std::endl);
 
                 } else {
-                        silent_cout("Environment variable \"" << ava
-                                << "\" overwritten to \"" << avasep
+			silent_cout("Environment variable \"" << name
+				<< "\" overwritten to \"" << value
                                 << "\" at line " << HP.GetLineData()
                                 << std::endl);
                 }
@@ -688,8 +692,8 @@ HighParser::GetLineData(void) const
 {
         ErrOut LineData;
         LineData.iLineNumber = GetLineNumber();
-        LineData.sFileName = NULL;
-        LineData.sPathName = NULL;
+        LineData.sFileName.clear();
+        LineData.sPathName.clear();
         return LineData;
 }
 
@@ -1118,7 +1122,7 @@ HighParser::GetWord(void)
         return i;
 }
 
-const char*
+std::string
 HighParser::GetString(unsigned flags)
 {
         const char sFuncName[] = "HighParser::GetString()";
@@ -1133,14 +1137,14 @@ HighParser::GetString(unsigned flags)
                 throw HighParser::ErrStringExpected(MBDYN_EXCEPT_ARGS);
         }
 
-        sStringBuf.clear();
+        std::string result;
 
         char cIn = '\0';
 	for (;;) {
 		pIn->get(cIn);
 		if (pIn->eof()) {
                 	CurrToken = HighParser::ENDOFFILE;
-                	return NULL;
+			return result;
 		}
 
 		if (!isspace(cIn)) {
@@ -1153,7 +1157,7 @@ HighParser::GetString(unsigned flags)
 		pIn->get(cIn);
 		if (pIn->eof()) {
                         CurrToken = HighParser::ENDOFFILE;
-                        return sStringBuf.c_str();
+                        return result;
 		}
 
 		if (!(cIn != ',' && cIn != ';')) {
@@ -1169,7 +1173,7 @@ HighParser::GetString(unsigned flags)
                                 c = toupper(c);
                         }
 
-                        sStringBuf += c;
+                        result += c;
                 }
         }
 
@@ -1177,7 +1181,7 @@ HighParser::GetString(unsigned flags)
 
         NextToken(sFuncName);
 
-        return sStringBuf.c_str();
+        return result;
 }
 
 void
@@ -1235,7 +1239,7 @@ HighParser::IsStringWithDelims(enum Delims Del)
         return (cIn == cLdelim);
 }
 
-const char*
+std::string
 HighParser::GetStringWithDelims(enum Delims Del, bool escape)
 {
         const char sFuncName[] = "HighParser::GetStringWithDelims()";
@@ -1247,14 +1251,14 @@ HighParser::GetStringWithDelims(enum Delims Del, bool escape)
                 throw HighParser::ErrStringExpected(MBDYN_EXCEPT_ARGS);
         }
 
-        sStringBuf.clear();
+        std::string result;
 
         char cLdelim, cRdelim;
         SetDelims(Del, cLdelim, cRdelim);
 
         char cIn;
         if (skip_remarks(*this, *pIn, cIn)) {
-                return NULL;
+                return result;
         }
 
         // Se trova il delimitatore sinistro, legge la stringa
@@ -1263,7 +1267,7 @@ HighParser::GetStringWithDelims(enum Delims Del, bool escape)
 			pIn->get(cIn);
                         if (pIn->eof()) {
                                 // FIXME: this should be an error ...
-				silent_cerr("End-of-file encountered in " << sFuncName << " while looking for right string delimiter '" << cRdelim << "' after " << unsigned(sStringBuf.size()) << " characters at line " << GetLineData() << std::endl);
+				silent_cerr("End-of-file encountered in " << sFuncName << " while looking for right string delimiter '" << cRdelim << "' after " << unsigned(result.size()) << " characters at line " << GetLineData() << std::endl);
                 		throw EndOfFile(MBDYN_EXCEPT_ARGS);
 			}
 
@@ -1275,7 +1279,7 @@ HighParser::GetStringWithDelims(enum Delims Del, bool escape)
                                 pIn->get(cIn);
                 		if (pIn->eof()) {
                 		        // FIXME: this should be an error ...
-					silent_cerr("End-of-file encountered in " << sFuncName << " while escaping a char after " << unsigned(sStringBuf.size()) << " characters at line " << GetLineData() << std::endl);
+					silent_cerr("End-of-file encountered in " << sFuncName << " while escaping a char after " << unsigned(result.size()) << " characters at line " << GetLineData() << std::endl);
         				throw EndOfFile(MBDYN_EXCEPT_ARGS);
 				}
 
@@ -1293,7 +1297,7 @@ HighParser::GetStringWithDelims(enum Delims Del, bool escape)
                                         pIn->get(cIn);
         				if (pIn->eof()) {
         		       			// FIXME: this should be an error ...
-						silent_cerr("End-of-file encountered in " << sFuncName << " while escaping a newline ('\\n') after " << unsigned(sStringBuf.size()) << " characters at line " << GetLineData() << std::endl);
+						silent_cerr("End-of-file encountered in " << sFuncName << " while escaping a newline ('\\n') after " << unsigned(result.size()) << " characters at line " << GetLineData() << std::endl);
         					throw EndOfFile(MBDYN_EXCEPT_ARGS);
 					}
 
@@ -1301,7 +1305,7 @@ HighParser::GetStringWithDelims(enum Delims Del, bool escape)
                                         pIn->get(cIn);
         				if (pIn->eof()) {
         		       			// FIXME: this should be an error ...
-						silent_cerr("End-of-file encountered in " << sFuncName << " while escaping a 'carriage return' ('\\r') after " << unsigned(sStringBuf.size()) << " characters at line " << GetLineData() << std::endl);
+						silent_cerr("End-of-file encountered in " << sFuncName << " while escaping a 'carriage return' ('\\r') after " << unsigned(result.size()) << " characters at line " << GetLineData() << std::endl);
         					throw EndOfFile(MBDYN_EXCEPT_ARGS);
 					}
 
@@ -1313,13 +1317,13 @@ HighParser::GetStringWithDelims(enum Delims Del, bool escape)
                                         pIn->get(cIn);
         				if (pIn->eof()) {
         		       			// FIXME: this should be an error ...
-						silent_cerr("End-of-file encountered in " << sFuncName << " after escaping a 'carriage return' ('\\r') after " << unsigned(sStringBuf.size()) << " characters at line " << GetLineData() << std::endl);
+						silent_cerr("End-of-file encountered in " << sFuncName << " after escaping a 'carriage return' ('\\r') after " << unsigned(result.size()) << " characters at line " << GetLineData() << std::endl);
         					throw EndOfFile(MBDYN_EXCEPT_ARGS);
 					}
 
                                 } else if ((cIn == ESCAPE_CHAR) || (cIn == cRdelim)) {
                                         if (!escape) {
-                                                sStringBuf += ESCAPE_CHAR;
+                                                result += ESCAPE_CHAR;
                                         }
 
                                 } else {
@@ -1338,7 +1342,7 @@ escaped_generic:;
 						pIn->get(cIn);
         					if (pIn->eof()) {
         		       				// FIXME: this should be an error ...
-							silent_cerr("End-of-file encountered in " << sFuncName << " while escaping a hexpair char ('\\dd', where 'dd' are two hex digits) after " << unsigned(sStringBuf.size()) << " characters at line " << GetLineData() << std::endl);
+							silent_cerr("End-of-file encountered in " << sFuncName << " while escaping a hexpair char ('\\dd', where 'dd' are two hex digits) after " << unsigned(result.size()) << " characters at line " << GetLineData() << std::endl);
         						throw EndOfFile(MBDYN_EXCEPT_ARGS);
 						}
                                                 hex[1] = cIn;
@@ -1371,11 +1375,11 @@ escaped_generic:;
                                                 cIn = c;
 
                                         } else {
-                                                sStringBuf += ESCAPE_CHAR;
+                                                result += ESCAPE_CHAR;
                                         }
                                 }
                         }
-                        sStringBuf += cIn;
+                        result += cIn;
                 }
 
                 /* Se trova una virgola o un punto e virgola, le rimette nello stream
@@ -1396,7 +1400,7 @@ escaped_generic:;
         }
 
         NextToken(sFuncName);
-        return sStringBuf.c_str();
+        return result;
 }
 
 /* Returns the current input stream */
@@ -1421,9 +1425,9 @@ operator << (std::ostream& out, const HighParser::ErrOut& err)
 {
         out << err.iLineNumber;
 
-        if (err.sFileName != 0) {
+        if (!err.sFileName.empty()) {
                 out << ", file <";
-                if (err.sPathName != 0) {
+                if (!err.sPathName.empty()) {
                         out << err.sPathName << DIR_SEP;
                 }
                 out << err.sFileName << '>';

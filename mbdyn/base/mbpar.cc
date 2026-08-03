@@ -300,8 +300,7 @@ MBDynParser::Reference_int(void)
 	/* Nome del reference */
 	std::string sName;
 	if (IsKeyWord("name")) {
-		const char *sTmp = GetStringWithDelims();
-		sName = sTmp;
+		sName = GetStringWithDelims();
 	}
 	
 	DEBUGLCOUT(MYDEBUG_INPUT, "Reference frame " << uLabel << std::endl);
@@ -421,8 +420,7 @@ MBDynParser::HydraulicFluid_int(void)
 	/* Nome del fluido */
 	std::string sName;
 	if (IsKeyWord("name")) {
-		const char *sTmp = GetStringWithDelims();
-		sName = sTmp;
+		sName = GetStringWithDelims();
 	}
 	
 	HydraulicFluid* pHF = ReadHydraulicFluid(*this, uLabel);
@@ -468,8 +466,7 @@ MBDynParser::C81Data_int(void)
 	/* Nome del profilo c81 */
 	std::string sName;
 	if (IsKeyWord("name")) {
-		const char *sTmp = GetStringWithDelims();
-		sName = sTmp;
+		sName = GetStringWithDelims();
 	}
 	
 	std::string filename = GetFileName();
@@ -596,8 +593,8 @@ MBDynParser::C81Data_int(void)
 	}
 
 	if (IsKeyWord("echo")) {
-		const char *sOutName = GetFileName();
-		if (sOutName == NULL) {
+		const std::string sOutName = GetFileName();
+		if (sOutName.empty()) {
 			silent_cerr("C81Data(" << uLabel << "): "
 				"unable to read output file name "
 				"at line " << GetLineData() << std::endl);
@@ -675,8 +672,7 @@ MBDynParser::ConstitutiveLaw_int(void)
 	/* Constitutive law name */
 	std::string sName;
 	if (IsKeyWord("name")) {
-		const char *sTmp = GetStringWithDelims();
-		sName = sTmp;
+		sName = GetStringWithDelims();
 	}
 
 	int dim = GetInt();
@@ -927,8 +923,7 @@ MBDynParser::DriveCaller_int(void)
 	/* drive name */
 	std::string sName;
 	if (IsKeyWord("name")) {
-		const char *sTmp = GetStringWithDelims();
-		sName = sTmp;
+		sName = GetStringWithDelims();
 	}
 
 	bool bDeferred(false);
@@ -987,8 +982,7 @@ MBDynParser::TplDriveCaller_int(void)
 	/* drive name */
 	std::string sName;
 	if (IsKeyWord("name")) {
-		const char *sTmp = GetStringWithDelims();
-		sName = sTmp;
+		sName = GetStringWithDelims();
 	}
 
 	enum {
@@ -1000,25 +994,25 @@ MBDynParser::TplDriveCaller_int(void)
 	} Dim;
 
 	if (IsStringWithDelims()) {
-		const char *s = GetStringWithDelims();
-		if (strcasecmp(s, "1") == 0) {
+		const std::string s = GetStringWithDelims();
+		if (strcasecmp(s.c_str(), "1") == 0) {
 			Dim = DIM_1;
 
-		} else if (strcasecmp(s, "3") == 0) {
+		} else if (strcasecmp(s.c_str(), "3") == 0) {
 			Dim = DIM_3;
 
-		} else if (strcasecmp(s, "6") == 0) {
+		} else if (strcasecmp(s.c_str(), "6") == 0) {
 			Dim = DIM_6;
 
-		} else if (strcasecmp(s, "3x3") == 0) {
+		} else if (strcasecmp(s.c_str(), "3x3") == 0) {
 			Dim = DIM_3x3;
 
-		} else if (strcasecmp(s, "6x6") == 0) {
+		} else if (strcasecmp(s.c_str(), "6x6") == 0) {
 			Dim = DIM_6x6;
 
 		} else {
 			silent_cerr("unable to read template drive caller " << uLabel
-				<< " (" << (sName.empty() ? "unknown" : sName.c_str()) << ") "
+				<< " (" << (sName.empty() ? "unknown" : sName) << ") "
 				"unsupported type \"" << s << "\" "
 				"at line " << GetLineData() << std::endl);
 			throw MBDynParser::ErrGeneric(MBDYN_EXCEPT_ARGS);
@@ -1229,8 +1223,8 @@ MBDynParser::ModuleLoad_int(void)
 	}
 
    	/* nome del modulo */
-   	const char* s = GetFileName();
-	if (s == NULL) {
+	const std::string s = GetFileName();
+	if (s.empty()) {
 		silent_cerr("ModuleLoad_int: unable to get module name"
 			<< std::endl);
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
@@ -3260,4 +3254,3 @@ MBDynParser_dummy_init(void)
 // end of icc hack
 
 /* MBDynParser - end */
-

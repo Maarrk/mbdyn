@@ -1219,7 +1219,7 @@ static SFWordSetType SFWordSet;
 const BasicScalarFunction *const
 ParseScalarFunction(MBDynParser& HP, DataManager* const pDM)
 {
-	std::string func_name(HP.GetStringWithDelims());
+	std::string func_name = HP.GetStringWithDelims();
 	
 	const BasicScalarFunction *sf = HP.GetScalarFunction(func_name);
 	if (sf == 0) {
@@ -1749,4 +1749,3 @@ DestroySF(void)
 	}
 	SFRead.clear();
 }
-

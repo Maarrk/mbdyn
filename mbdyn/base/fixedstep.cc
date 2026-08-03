@@ -47,7 +47,7 @@ static const doublereal dFromFile = -std::numeric_limits<doublereal>::max();
 
 FixedStepFileDrive::FixedStepFileDrive(unsigned int uL,
 		const DriveHandler* pDH,
-		const char* const sFileName_a,
+		const std::string& sFileName_a,
 		integer ins, integer ind,
 		doublereal t0, doublereal dt,
 		bool bl, bool pz, Drive::Bailout bo)
@@ -56,7 +56,7 @@ dT0(t0), dDT(dt), iNumSteps(ins),
 bLinear(bl), bPadZeroes(pz), boWhen(bo), pd(0), pvd(0)
 {
 	ASSERT(iNumDrives > 0);
-	ASSERT(sFileName_a != NULL);
+	ASSERT(!sFileName_a.empty());
 	ASSERT(dDT > 0.);
 
 	std::ifstream in(sFileName);
@@ -423,7 +423,7 @@ FixedStepDR::Read(unsigned uLabel, const DataManager *pDM, MBDynParser& HP)
 		}
 	}
 
-	const char* filename = HP.GetFileName();
+	const std::string filename = HP.GetFileName();
 
 	Drive* pDr = NULL;
 	SAFENEWWITHCONSTRUCTOR(pDr,
@@ -434,4 +434,3 @@ FixedStepDR::Read(unsigned uLabel, const DataManager *pDM, MBDynParser& HP)
 
 	return pDr;
 }
-

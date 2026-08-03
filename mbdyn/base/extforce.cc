@@ -657,8 +657,8 @@ ReadExtFileHandler(DataManager* pDM,
 	ExtFileHandlerBase *pEFH = 0;
 
 	// default
-	const char	*s = HP.GetFileName();
-	if (s == 0) {
+	std::string s = HP.GetFileName();
+	if (s.empty()) {
 		silent_cerr("ExtForce(" << uLabel << "): "
 			"unable to get input file name "
 			"at line " << HP.GetLineData() << std::endl);
@@ -672,7 +672,7 @@ ReadExtFileHandler(DataManager* pDM,
 	}
 
 	s = HP.GetFileName();
-	if (s == 0) {
+	if (s.empty()) {
 		silent_cerr("ExtForce(" << uLabel << "): "
 			"unable to get output file name "
 			"at line " << HP.GetLineData() << std::endl);

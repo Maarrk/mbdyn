@@ -61,20 +61,18 @@ void setup_callbacks(jm_callbacks* callbacks){
 	printf("Callback Setup Done! \n");
 }
 
-std::string UncompressLocation(const char* location){
-        int length = strlen(location);
-        int i;
+std::string UncompressLocation(const std::string& location){
+	std::string::size_type i = location.size();
 
-        for (i=length; i>0; i--){
-                if(location[i]==47){
-                        break;
-                }
-        }
+	for (; i > 0; --i) {
+		if(location[i]==47){
+			break;
+		}
+	}
 
 	std::string destination(location);
-//        char* destination = (char*) malloc(length*sizeof(char) );
 	destination.resize(i+1);
-        return destination.c_str();
+	return destination;
 }
 
 	

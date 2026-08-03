@@ -1669,8 +1669,8 @@ ReadStructExtForce(DataManager* pDM,
 
 	std::ofstream out;
 	if (HP.IsKeyWord("echo")) {
-		const char *s = HP.GetFileName();
-		if (s == NULL) {
+		const std::string s = HP.GetFileName();
+		if (s.empty()) {
 			silent_cerr("StructMappingExtForce(" << uLabel << "): "
 				"unable to parse echo file name "
 				"at line " << HP.GetLineData()
@@ -1758,4 +1758,3 @@ ReadStructExtForce(DataManager* pDM,
 
 	return pEl;
 }
-

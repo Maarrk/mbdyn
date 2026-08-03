@@ -23828,15 +23828,15 @@ namespace {
 
      std::string HydroMesh::ParseFileName(MBDynParser& HP)
      {
-          const char* pszFileName = HP.GetFileName();
+	     const std::string strFileName = HP.GetFileName();
 
-          if (!pszFileName || strlen(pszFileName) == 0) {
+	     if (strFileName.empty()) {
                silent_cerr("hydrodynamic plain bearing2(" << pGetParent()->GetLabel()
                            << "): file name expected at line " << HP.GetLineData() << std::endl);
                throw ErrGeneric(MBDYN_EXCEPT_ARGS);
           }
 
-          return pszFileName;
+	     return strFileName;
      }
 
      void HydroMesh::ParseComplianceModel(DataManager* pDM, MBDynParser& HP)

@@ -2836,7 +2836,7 @@ StringDCR::Read(const DataManager* pDM, MBDynParser& HP, bool bDeferred)
 
 	/* driver stringa da valutare */
 	/* lettura dei dati specifici */
-	std::string s(HP.GetStringWithDelims());
+	std::string s = HP.GetStringWithDelims();
 
 #ifndef DO_NOT_USE_EE
 	std::istringstream in(s);
@@ -3049,7 +3049,7 @@ ElementDCR::Read(const DataManager* pDM, MBDynParser& HP, bool bDeferred)
 	KeyTable Kel(HP, psReadElemsElems);
 	int k = HP.IsKeyWord();
 	if (k == -1) {
-		const char *s = HP.GetString();
+		const std::string s = HP.GetString();
 		silent_cerr("unknown element type \"" << s
 			<< "\" at line " << HP.GetLineData()
 			<< std::endl);
@@ -3092,7 +3092,7 @@ NodeDCR::Read(const DataManager* pDM, MBDynParser& HP, bool bDeferred)
 	KeyTable Kel(HP, psReadNodesNodes);
 	int k = HP.IsKeyWord();
 	if (k == -1) {
-		const char *s = HP.GetString();
+		const std::string s = HP.GetString();
 		silent_cerr("unknown node type \"" << s
 			<< "\" at line " << HP.GetLineData()
 			<< std::endl);

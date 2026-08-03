@@ -132,7 +132,7 @@ iIDJointTotNumDofs(0),
 moduleInitialized(false),
 #endif // USE_RUNTIME_LOADING
 uPrintFlags(PRINT_NONE),		/* Morandini, 2003-11-17 */
-sSimulationTitle(0),
+sSimulationTitle(),
 RestartEvery(RESTART_NEVER),
 RestartType(RESTART_CLASSIC),
 iRestartIterations(0),
@@ -651,10 +651,6 @@ DataManager::~DataManager(void)
              pdRestartTimes = nullptr;
         }
         
-	if (sSimulationTitle != 0) {
-		SAFEDELETEARR(sSimulationTitle);
-		sSimulationTitle = 0;
-	}
 
 	if (pOutputMeter) {
 		SAFEDELETE(pOutputMeter);
@@ -779,7 +775,7 @@ void DataManager::MakeRestart(void)
                   }
              }
 
-             if (sSimulationTitle != 0) {
+             if (!sSimulationTitle.empty()) {
                   OutHdl.Restart() << "  title: \""
                   << sSimulationTitle << "\";" << std::endl;
              }

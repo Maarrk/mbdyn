@@ -1044,10 +1044,9 @@ DataManager::ReadElems(MBDynParser& HP)
 
 					std::vector<std::string> hints;
 					for (unsigned i = 1; HP.IsKeyWord("hint"); i++) {
-						// const char *hint = HP.GetStringWithDelims(HighParser::DEFAULTDELIM, false);
 						// do escape; needed to deal with quotes in the hint specification
-						const char *hint = HP.GetStringWithDelims();
-						if (hint == 0) {
+						const std::string hint = HP.GetStringWithDelims();
+						if (hint.empty()) {
 							silent_cerr("Driven(" << uLabel << "): "
 								"unable to read hint #" << i
 								<< " at line " << HP.GetLineData()
@@ -1473,8 +1472,8 @@ DataManager::ReadElems(MBDynParser& HP)
 					/* Nome dell'elemento */
 					std::string sName;
 					if (HP.IsKeyWord("name")) {
-						const char *sTmp = HP.GetStringWithDelims();
-						if (sTmp == 0) {
+						const std::string sTmp = HP.GetStringWithDelims();
+						if (sTmp.empty()) {
 							silent_cerr("error - element type "
 								<< sKeyWords[CurrDesc] << ": "
 								"unable to parse name"

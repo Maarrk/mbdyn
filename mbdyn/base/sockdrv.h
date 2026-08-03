@@ -76,9 +76,9 @@ public:
 		        const std::vector<doublereal>& v0);
 
 #ifndef _WIN32
-   	SocketDrive(unsigned int uL,
+	SocketDrive(unsigned int uL,
                 const DriveHandler* pDH,
-	        const char *path,
+	        const std::string& path,
 		        integer nd,
 		        const std::vector<doublereal>& v0);
 #endif /* _WIN32 */
@@ -105,4 +105,3 @@ public:
 
 
 #endif /* SOCKDRV_H */
-

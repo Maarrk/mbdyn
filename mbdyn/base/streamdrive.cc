@@ -286,8 +286,8 @@ ReadStreamDriveEcho(const DataManager *pDM, MBDynParser& HP)
 	doublereal dShift = 0.;
 
 	if (HP.IsKeyWord("echo")) {
-		const char *s = HP.GetFileName();
-		if (s == NULL) {
+		const std::string s = HP.GetFileName();
+		if (s.empty()) {
 			silent_cerr("ReadStreamDriveEcho: "
 				"unable to parse echo file name "
 				"at line " << HP.GetLineData()
@@ -319,4 +319,3 @@ ReadStreamDriveEcho(const DataManager *pDM, MBDynParser& HP)
 }
 
 /* StreamDriveEcho - end */
-

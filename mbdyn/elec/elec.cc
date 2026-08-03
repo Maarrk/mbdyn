@@ -521,8 +521,7 @@ ReadElectric(DataManager* pDM,
 		switch (HP.GetWord()) {
 		case CONTROL: {
 			// Add the file with control data
-			const char* s = HP.GetFileName();
-			std::string infile = s;
+			const std::string infile = HP.GetFileName();
 
 			DEBUGCOUT("Getting control matrices "
 				"from file \"" << infile << "\""
@@ -561,8 +560,7 @@ ReadElectric(DataManager* pDM,
 
 			std::string outfile;
 			if (HP.IsKeyWord("file")) {
-				const char *s = HP.GetFileName();
-				outfile = s;
+				outfile = HP.GetFileName();
 			}
 
 			/* Construction of controller */
@@ -733,9 +731,8 @@ ReadElectric(DataManager* pDM,
 
 			std::string outfile;
 			if (HP.IsKeyWord("file") || HP.IsKeyWord("output" "file")) {
-				const char *s = HP.GetFileName();
-				outfile = s;
-				DEBUGCOUT("Identified matrices will be output in file \"" << s << "\"" << std::endl);
+				outfile = HP.GetFileName();
+				DEBUGCOUT("Identified matrices will be output in file \"" << outfile << "\"" << std::endl);
 			}
 
 			/* Construction of controller */
@@ -829,4 +826,3 @@ ReadElectric(DataManager* pDM,
 
 	return pEl;
 } /* ReadElectric() */
-
