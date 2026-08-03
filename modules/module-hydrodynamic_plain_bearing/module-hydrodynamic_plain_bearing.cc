@@ -206,7 +206,7 @@ private:
      static const doublereal s_r3[3], s_alpha3[3];
      static const doublereal s_r6[6], s_alpha6[6];
 
-     static const integer sm_iNumPrivData = 18;
+     static const integer sm_iNumPrivData = 24;
      static const struct PrivData {
           char szName[13];
      } sm_rgPrivData[sm_iNumPrivData];
@@ -253,15 +253,21 @@ const HydrodynamicPlainBearing::PrivData HydrodynamicPlainBearing::sm_rgPrivData
      {"epsilon"},  // 6
      {"epsilonP"}, // 7
      {"delta"},    // 8
-     {"F2x"},      // 9
-     {"F2y"},      // 10
-     {"M2z"},      // 11
+     {"f2x"},      // 9
+     {"f2y"},      // 10
+     {"m2z"},      // 11
      {"SoD"},      // 12
      {"SoV"},      // 13
      {"mu"},       // 14
      {"beta"},     // 15
      {"minh"},     // 16
-     {"Pff"}       // 17
+     {"Pff"},      // 17
+     {"F2x"},      // 18
+     {"F2y"},      // 19
+     {"F2z"},      // 20
+     {"M2x"},      // 21
+     {"M2y"},      // 22
+     {"M2z"}       // 23
 };
 
 HydrodynamicPlainBearing::HydrodynamicPlainBearing(
@@ -937,6 +943,14 @@ doublereal HydrodynamicPlainBearing::dGetPrivData(unsigned int i) const
           return 0.5 * (1. - fabs(m_output[oIndex.quot].eps)) * m_bdat.s;
      case 17:
           return (m_output[oIndex.quot].omega_proj(2) - m_output[oIndex.quot].omega_proj(1)) * m_output[oIndex.quot].M2_R2(3);
+     case 18:
+     case 19:
+     case 20:
+	  return m_output[oIndex.quot].F2_I(oIndex.rem - 17);
+     case 21:
+     case 22:
+     case 23:
+	  return m_output[oIndex.quot].M2_I(oIndex.rem - 20);
      default:
           silent_cerr("hydrodynamic_plain_bearing_with_offset(" << GetLabel() << "): invalid private data index " << i << std::endl);
           throw ErrGeneric(MBDYN_EXCEPT_ARGS);

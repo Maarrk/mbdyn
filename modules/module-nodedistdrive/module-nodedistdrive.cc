@@ -31,12 +31,12 @@
 
 /*
  AUTHOR: Reinhard Resch <mbdyn-user@a1.net>
-        Copyright (C) 2015(-2023) all rights reserved.
+	Copyright (C) 2015(-2023) all rights reserved.
 
-        The copyright of this code is transferred
-        to Pierangelo Masarati and Paolo Mantegazza
-        for use in the software MBDyn as described
-        in the GNU Public License version 2.1
+	The copyright of this code is transferred
+	to Pierangelo Masarati and Paolo Mantegazza
+	for use in the software MBDyn as described
+	in the GNU Public License version 2.1
 */
 
 #ifdef HAVE_CONFIG_H
@@ -58,12 +58,18 @@
 class NodeDistDriveCaller : public DriveCaller
 {
 public:
+	enum OutputRefFrame {
+		RFM_Node1,
+		RFM_Node2
+	};
+
 	NodeDistDriveCaller(const DriveHandler* pDH,
-						const StructNode* pNode1,
-						const Vec3& o1,
-						const StructNode* pNode2,
-						const Vec3& o2,
-						const Vec3& e1);
+			    const StructNode* pNode1,
+			    const Vec3& o1,
+			    const StructNode* pNode2,
+			    const Vec3& o2,
+			    const Vec3& e1,
+			    OutputRefFrame eOutputRefFrame);
 	virtual ~NodeDistDriveCaller(void);
 	virtual DriveCaller* pCopy(void) const;
 	virtual std::ostream& Restart(std::ostream& out) const;
@@ -72,23 +78,23 @@ public:
 	virtual bool bIsDifferentiable(void) const;
 	inline virtual doublereal dGetP(void) const;
 	inline virtual doublereal dGetP(const doublereal& dVar) const;
-
 private:
 	const StructNode* const pNode1;
 	const Vec3 o1;
 	const StructNode* const pNode2;
 	const Vec3 o2;
 	const Vec3 e1;
+	const OutputRefFrame eOutputRefFrame;
 };
 
 class NodeRotDriveCaller : public DriveCaller
 {
 public:
 	NodeRotDriveCaller(const DriveHandler* pDH,
-                           const StructNode* pNode1,
-                           const Mat3x3& e1,
-                           const StructNode* pNode2,
-                           const Mat3x3& e2);
+			   const StructNode* pNode1,
+			   const Mat3x3& e1,
+			   const StructNode* pNode2,
+			   const Mat3x3& e2);
 	virtual ~NodeRotDriveCaller(void);
 	virtual DriveCaller* pCopy(void) const;
 	virtual std::ostream& Restart(std::ostream& out) const;
@@ -100,7 +106,7 @@ public:
 
 private:
 	const StructNode* const pNode1;
-        const Mat3x3 e1;
+	const Mat3x3 e1;
 	const StructNode* const pNode2;
 	const Mat3x3 e2;
 };
@@ -137,7 +143,13 @@ NodeDistDCR::Read(const DataManager* pDM, MBDynParser& HP, bool bDeferred)
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 	}
 
-	StructNode* const pNode1 = pDM->ReadNode<StructNode, StructDispNode, Node::STRUCTURAL>(HP);
+	// Allow us to use dymmy nodes
+	StructNode* const pNode1 = dynamic_cast<StructNode*>(pDM->ReadNode(HP, Node::STRUCTURAL));
+
+	if (!pNode1) {
+		silent_cerr("A structural node is required at line " << HP.GetLineData() << "\n");
+		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+	}
 
 	const Vec3 o1 = HP.IsKeyWord("offset") ? HP.GetPosRel(ReferenceFrame(pNode1)) : Zero3;
 
@@ -147,9 +159,29 @@ NodeDistDCR::Read(const DataManager* pDM, MBDynParser& HP, bool bDeferred)
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 	}
 
-	StructNode* const pNode2 = pDM->ReadNode<StructNode, StructDispNode, Node::STRUCTURAL>(HP);
+	// Allow us to use dummy nodes
+	StructNode* const pNode2 = dynamic_cast<StructNode*>(pDM->ReadNode(HP, Node::STRUCTURAL));
+
+	if (!pNode2) {
+		silent_cerr("A structural node is required at line " << HP.GetLineData() << "\n");
+		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+	}
 
 	const Vec3 o2 = HP.IsKeyWord("offset") ? HP.GetPosRel(ReferenceFrame(pNode2)) : Zero3;
+
+	NodeDistDriveCaller::OutputRefFrame eOutputRefFrame(NodeDistDriveCaller::RFM_Node2);
+
+	if (HP.IsKeyWord("output" "reference" "frame"))
+	{
+		if (HP.IsKeyWord("node1")) {
+			eOutputRefFrame = NodeDistDriveCaller::RFM_Node1;
+		} else if (HP.IsKeyWord("node2")) {
+			eOutputRefFrame = NodeDistDriveCaller::RFM_Node2;
+		} else {
+			silent_cerr("node distance drive caller: keyword \"node1\" or \"node2\" expected at line " << HP.GetLineData() << std::endl);
+			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
+		}
+	}
 
 	if ( !HP.IsKeyWord("direction") )
 	{
@@ -157,13 +189,13 @@ NodeDistDCR::Read(const DataManager* pDM, MBDynParser& HP, bool bDeferred)
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 	}
 
-	Vec3 e1 = HP.GetVecRel(ReferenceFrame(pNode2));
+	Vec3 e1 = HP.GetVecRel(ReferenceFrame(eOutputRefFrame == NodeDistDriveCaller::RFM_Node1 ? pNode1 : pNode2));
 
 	e1 /= e1.Norm();
 
 	SAFENEWWITHCONSTRUCTOR(pDC,
-		NodeDistDriveCaller,
-		NodeDistDriveCaller(pDrvHdl, pNode1, o1, pNode2, o2, e1));
+			       NodeDistDriveCaller,
+			       NodeDistDriveCaller(pDrvHdl, pNode1, o1, pNode2, o2, e1, eOutputRefFrame));
 
 	pDM->GetLogFile()
 		<< "nodedistdrive: " << pDC->GetLabel()
@@ -180,7 +212,7 @@ NodeDistDCR::Read(const DataManager* pDM, MBDynParser& HP, bool bDeferred)
 doublereal
 NodeDistDriveCaller::dGet(const doublereal& dVar) const
 {
-	return dGetP();
+	return dGet();
 }
 
 doublereal
@@ -190,8 +222,9 @@ NodeDistDriveCaller::dGet(void) const
 	const Mat3x3& R1 = pNode1->GetRCurr();
 	const Vec3& X2 = pNode2->GetXCurr();
 	const Mat3x3& R2 = pNode2->GetRCurr();
+	const Mat3x3& Rout = RFM_Node1 == eOutputRefFrame ? R1 : R2;
 
-	const doublereal dX = e1.Dot(R2.MulTV(X2 - X1 - R1 * o1) + o2);
+	const doublereal dX = e1.Dot(Rout.MulTV(X2 + R2 * o2 - X1 - R1 * o1));
 
 	return dX;
 }
@@ -213,7 +246,10 @@ doublereal NodeDistDriveCaller::dGetP(void) const
 	const Mat3x3& R2 = pNode2->GetRCurr();
 	const Vec3& omega2 = pNode2->GetWCurr();
 
-	const doublereal dXP = e1.Dot(R2.MulTV(-omega2.Cross(X2 - X1 - R1 * o1) + X2Dot - X1Dot - omega1.Cross(R1 * o1)));
+	const Mat3x3& Rout = RFM_Node1 == eOutputRefFrame ? R1 : R2;
+	const Vec3& omegaout = RFM_Node1 == eOutputRefFrame ? omega1 : omega2;
+
+	const doublereal dXP = e1.Dot(Rout.MulTV(-omegaout.Cross(X2 + R2 * o2 - X1 - R1 * o1) + X2Dot + omega2.Cross(R2 * o2) - X1Dot - omega1.Cross(R1 * o1)));
 
 	return dXP;
 }
@@ -229,11 +265,13 @@ NodeDistDriveCaller::NodeDistDriveCaller(
 		const Vec3& o1Arg,
 		const StructNode* pNode2Arg,
 		const Vec3& o2Arg,
-		const Vec3& e1Arg)
+		const Vec3& e1Arg,
+		OutputRefFrame eOutputRefFrameArg)
 : DriveCaller(pDH),
   pNode1(pNode1Arg), o1(o1Arg),
   pNode2(pNode2Arg), o2(o2Arg),
-  e1(e1Arg)
+  e1(e1Arg),
+  eOutputRefFrame(eOutputRefFrameArg)
 {
 	NO_OP;
 };
@@ -254,7 +292,8 @@ NodeDistDriveCaller::pCopy(void) const
 				pDrvHdl,
 				pNode1, o1,
 				pNode2, o2,
-				e1));
+				e1,
+				eOutputRefFrame));
 
 	return pDC;
 }
@@ -318,16 +357,16 @@ NodeRotDCR::Read(const DataManager* pDM, MBDynParser& HP, bool bDeferred)
 	const Mat3x3 e2 = HP.IsKeyWord("orientation") ? HP.GetRotRel(ReferenceFrame(pNode2)) : Eye3;
 
 	SAFENEWWITHCONSTRUCTOR(pDC,
-                               NodeRotDriveCaller,
-                               NodeRotDriveCaller(pDrvHdl, pNode1, e1, pNode2, e2));
+			       NodeRotDriveCaller,
+			       NodeRotDriveCaller(pDrvHdl, pNode1, e1, pNode2, e2));
 
 	pDM->GetLogFile()
-            << "noderotdrive: " << pDC->GetLabel()
-            << " (" << pDC->GetName() << ") "
-            << pNode1->GetLabel() << " "
-            << e1 << " "
-            << pNode2->GetLabel() << " "
-            << e2 << std::endl;
+	    << "noderotdrive: " << pDC->GetLabel()
+	    << " (" << pDC->GetName() << ") "
+	    << pNode1->GetLabel() << " "
+	    << e1 << " "
+	    << pNode2->GetLabel() << " "
+	    << e2 << std::endl;
 
 	return pDC;
 }
@@ -359,7 +398,7 @@ doublereal NodeRotDriveCaller::dGetP(void) const
     const Vec3& omega1 = pNode1->GetWCurr();
     const Vec3& omega2 = pNode2->GetWCurr();
     const Mat3x3& R2 = pNode2->GetRCurr();
-    
+
     return e2.GetCol(3).Dot(R2.MulTV(omega1 - omega2));
 }
 
@@ -422,13 +461,13 @@ bool nodedistdrive_set()
 		return false;
 	}
 
-        rf = new NodeRotDCR;
+	rf = new NodeRotDCR;
 
 	if (!SetDriveCallerData("node" "rotation", rf)) {
 		delete rf;
 		return false;
 	}
-        
+
     return true;
 }
 

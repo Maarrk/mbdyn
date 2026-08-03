@@ -113,6 +113,7 @@ begin: control data;
        tolerance: 1e-10;
        initial stiffness: 1e10;
        output meter: closest next, (0), forever, const, (5.66893e-05);
+       output precision: 16;
        structural nodes: 3;
        rigid bodies: 2;
        loadable elements: 1;
@@ -785,12 +786,48 @@ begin: elements;
         element, (7001), loadable, string, "maxp", direct,
         output trace, yes;
 
+    drive caller: (8016), name, "maxplocx",
+        element, (7001), loadable, string, "maxplocx", direct,
+        output trace, yes;
+
+    drive caller: (8017), name, "maxplocz",
+        element, (7001), loadable, string, "maxplocz", direct,
+        output trace, yes;
+
     drive caller: (8008), name, "maxpc",
         element, (7001), loadable, string, "maxpc", direct,
         output trace, yes;
 
+    drive caller: (8018), name, "maxpclocx",
+        element, (7001), loadable, string, "maxpclocx", direct,
+        output trace, yes;
+
+    drive caller: (8019), name, "maxpclocz",
+        element, (7001), loadable, string, "maxpclocz", direct,
+        output trace, yes;
+
+    drive caller: (8015), name, "maxptot",
+        element, (7001), loadable, string, "maxptot", direct,
+        output trace, yes;
+
+    drive caller: (8020), name, "maxptotlocx",
+        element, (7001), loadable, string, "maxptotlocx", direct,
+        output trace, yes;
+
+    drive caller: (8021), name, "maxptotlocz",
+        element, (7001), loadable, string, "maxptotlocz", direct,
+        output trace, yes;
+
     drive caller: (8009), name, "minh",
         element, (7001), loadable, string, "minh", direct,
+        output trace, yes;
+
+    drive caller: (8022), name, "minhlocx",
+        element, (7001), loadable, string, "minhlocx", direct,
+        output trace, yes;
+
+    drive caller: (8023), name, "minhlocz",
+        element, (7001), loadable, string, "minhlocz", direct,
         output trace, yes;
 
     drive caller: (8010), name, "minrho",

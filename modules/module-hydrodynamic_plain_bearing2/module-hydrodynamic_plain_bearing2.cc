@@ -209,9 +209,18 @@ namespace {
 
           enum PrivateDataType {
                PD_CLEARANCE,
+               PD_CLEARANCE_LOC_X,
+               PD_CLEARANCE_LOC_Z,
                PD_TOTAL_DEFORMATION,
                PD_PRESSURE,
+               PD_PRESSURE_LOC_X,
+               PD_PRESSURE_LOC_Z,
                PD_CONT_PRESSURE,
+               PD_CONT_PRESSURE_LOC_X,
+               PD_CONT_PRESSURE_LOC_Z,
+               PD_TOT_PRESSURE,
+               PD_TOT_PRESSURE_LOC_X,
+               PD_TOT_PRESSURE_LOC_Z,
                PD_DENSITY,
                PD_TEMPERATURE,
                PD_F1x,
@@ -279,7 +288,7 @@ namespace {
 
      class Rectangle2D: public Geometry2D {
      public:
-          Rectangle2D(const SpColVector<doublereal, 2>& x, doublereal w, doublereal h);
+          Rectangle2D(const SpColVector<doublereal, 2>& x, doublereal w, doublereal h, doublereal Phi);
           virtual std::unique_ptr<Geometry2D> Clone(const SpColVector<doublereal, 2>& x) const override;
           virtual bool bPointIsInside(const SpColVector<doublereal, 2>& p1) const override;
           virtual bool bPointIsInside(const SpColVector<SpGradient, 2>& p1) const override;
@@ -287,7 +296,7 @@ namespace {
      private:
           template <typename T>
           inline bool bPointIsInsideTpl(const SpColVector<T, 2>& p1) const;
-          const doublereal w, h;
+	  const doublereal w, h, Phi;
      };
 
      class CompleteSurface2D: public Geometry2D {
@@ -6198,7 +6207,7 @@ namespace {
           static const Node2D::NodeType rgNodeOutLoc[iNumNodeOutLoc];
           static const int iNumFrictionLoss = 2;
           static const int iNumReactionForce = 12;
-          static const int iNumPrivData = 12 + iNumFrictionLoss + iNumReactionForce;
+          static const int iNumPrivData = 21 + iNumFrictionLoss + iNumReactionForce;
 
           union PrivDataU {
                PrivDataVal a[iNumPrivData];
@@ -6206,8 +6215,13 @@ namespace {
                     PrivDataVal MaxTimeStep;
                     PrivDataVal rgPf[iNumFrictionLoss];
                     PrivDataVal Maxp;
+                    PrivDataVal Maxploc[2];
                     PrivDataVal Maxpc;
+                    PrivDataVal Maxpcloc[2];
+                    PrivDataVal Maxptot;
+                    PrivDataVal Maxptotloc[2];
                     PrivDataVal Minh;
+                    PrivDataVal Minhloc[2];
                     PrivDataVal Minwtot;
                     PrivDataVal Maxwtot;
                     PrivDataVal Minrho;
@@ -6222,7 +6236,7 @@ namespace {
           mutable bool bUpdatePrivData;
 
           static const struct PrivateData {
-               char szName[8];
+               char szName[12];
                doublereal dDefault;
           } rgPrivData[iNumPrivData];
 
@@ -6258,8 +6272,17 @@ namespace {
           {"Pff",           0.},
           {"Pfc",           0.},
           {"max" "p",   -std::numeric_limits<doublereal>::max()},
+          {"max" "p" "loc" "x", -std::numeric_limits<doublereal>::max()},
+          {"max" "p" "loc" "z", -std::numeric_limits<doublereal>::max()},
           {"max" "pc",  -std::numeric_limits<doublereal>::max()},
+          {"max" "pc" "loc" "x", -std::numeric_limits<doublereal>::max()},
+          {"max" "pc" "loc" "z", -std::numeric_limits<doublereal>::max()},
+          {"max" "ptot", -std::numeric_limits<doublereal>::max()},
+          {"max" "ptot" "loc" "x", -std::numeric_limits<doublereal>::max()},
+          {"max" "ptot" "loc" "z", -std::numeric_limits<doublereal>::max()},
           {"min" "h",    std::numeric_limits<doublereal>::max()},
+          {"min" "h" "loc" "x",    -std::numeric_limits<doublereal>::max()},
+          {"min" "h" "loc" "z",    -std::numeric_limits<doublereal>::max()},
           {"min" "wtot", std::numeric_limits<doublereal>::max()},
           {"max" "wtot", -std::numeric_limits<doublereal>::max()},
           {"min" "rho",  std::numeric_limits<doublereal>::max()},
@@ -7055,18 +7078,40 @@ namespace {
 
                     if ((*i)->bGetPrivateData(PD_CLEARANCE, h) && h < PrivData.s.Minh.dCurr) {
                          PrivData.s.Minh.dCurr = h;
+
+                         for (index_type j = 0; j < 2; ++j) {
+                              PrivData.s.Minhloc[j].dCurr = (*i)->GetPosition2D()(j + 1);
+                         }
                     }
 
                     doublereal p;
 
                     if ((*i)->bGetPrivateData(PD_PRESSURE, p) && p > PrivData.s.Maxp.dCurr) {
                          PrivData.s.Maxp.dCurr = p;
+
+                         for (index_type j = 0; j < 2; ++j) {
+                              PrivData.s.Maxploc[j].dCurr = (*i)->GetPosition2D()(j + 1);
+                         }
                     }
 
                     doublereal pc;
 
                     if ((*i)->bGetPrivateData(PD_CONT_PRESSURE, pc) &&  pc > PrivData.s.Maxpc.dCurr) {
                          PrivData.s.Maxpc.dCurr = pc;
+
+                         for (index_type j = 0; j < 2; ++j) {
+                              PrivData.s.Maxpcloc[j].dCurr = (*i)->GetPosition2D()(j + 1);
+                         }
+                    }
+
+                    doublereal ptot;
+
+                    if ((*i)->bGetPrivateData(PD_TOT_PRESSURE, ptot) &&  ptot > PrivData.s.Maxptot.dCurr) {
+                         PrivData.s.Maxptot.dCurr = ptot;
+
+                         for (index_type j = 0; j < 2; ++j) {
+                              PrivData.s.Maxptotloc[j].dCurr = (*i)->GetPosition2D()(j + 1);
+                         }
                     }
 
                     doublereal rho;
@@ -7725,7 +7770,9 @@ namespace {
 
                const doublereal h = HP.GetReal();
 
-               return std::unique_ptr<Geometry2D>{new Rectangle2D{xc, w, h}};
+	       const doublereal Phi = HP.IsKeyWord("angle") ? HP.GetReal() : 0.;
+
+               return std::unique_ptr<Geometry2D>{new Rectangle2D{xc, w, h, Phi}};
           } else if (HP.IsKeyWord("complete" "surface")) {
                return std::unique_ptr<Geometry2D>{new CompleteSurface2D{xc}};
           } else if (HP.IsKeyWord("surface" "grid")) {
@@ -7893,15 +7940,15 @@ namespace {
           return sqrt(dx * dx + dz * dz) <= r;
      }
 
-     Rectangle2D::Rectangle2D(const SpColVector<doublereal, 2>& x_a, doublereal w_a, doublereal h_a)
-          :Geometry2D(x_a), w(w_a), h(h_a)
+     Rectangle2D::Rectangle2D(const SpColVector<doublereal, 2>& x_a, doublereal w_a, doublereal h_a, doublereal Phi_a)
+          :Geometry2D(x_a), w(w_a), h(h_a), Phi(Phi_a)
      {
 
      }
 
      std::unique_ptr<Geometry2D> Rectangle2D::Clone(const SpColVector<doublereal, 2>& x_a) const
      {
-          return std::unique_ptr<Geometry2D>{new Rectangle2D(x_a, w, h)};
+          return std::unique_ptr<Geometry2D>{new Rectangle2D(x_a, w, h, Phi)};
      }
 
      bool Rectangle2D::bPointIsInside(const SpColVector<doublereal, 2>& p1) const
@@ -7922,13 +7969,14 @@ namespace {
      template <typename T>
      bool Rectangle2D::bPointIsInsideTpl(const SpColVector<T, 2>& p1) const
      {
-          const doublereal p1x = SpGradientTraits<T>::dGetValue(p1(1));
-          const doublereal p1z = SpGradientTraits<T>::dGetValue(p1(2));
-          const bool bInside = std::abs(p1x - x(1)) <= 0.5 * w
-                            && std::abs(p1z - x(2)) <= 0.5 * h;
+	  const SpMatrix<doublereal, 2, 2> R{cos(Phi), sin(Phi), -sin(Phi), cos(Phi)};
+	  const SpColVector<T, 2> dx = Transpose(R) * (p1 - x);
+	  
+          const bool bInside = fabs(dx(1)) <= 0.5 * w
+                            && fabs(dx(2)) <= 0.5 * h;
 
           HYDRO_TRACE("point p1(" << p1 << ") is " << (bInside ? "inside" : "outside")
-                      << " rectangle " << w << "x" << h << " at x(" << x << ")" << std::endl);
+                      << " rectangle " << w << "x" << h << " / " << Phi << " at x(" << x << ")" << std::endl);
 
           return bInside;
      }
@@ -10082,6 +10130,13 @@ namespace {
           case HydroRootBase::PD_CONT_PRESSURE:
                GetContactPressure(dPrivData);
                return true;
+
+          case HydroRootBase::PD_TOT_PRESSURE: {
+               doublereal pc;
+               pGetMesh()->GetPressure(this, dPrivData);
+               GetContactPressure(pc);
+               dPrivData += pc;
+          } return true;
 
           case HydroRootBase::PD_DENSITY:
                GetDensity(dPrivData);
