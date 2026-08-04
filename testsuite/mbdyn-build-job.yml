@@ -596,6 +596,8 @@ mbdyn-build-job-clang:       # This job runs in the build stage, which runs firs
   stage: build
   variables:
     MBD_FORCE_CONFIGURE: "yes"
+    CC: clang
+    CXX: clang++
   needs:
     - job: siconos-build-job
       artifacts: true
@@ -640,6 +642,8 @@ mbdyn-build-job-clang:       # This job runs in the build stage, which runs firs
     - export MBD_WITH_MODULE
     - export MBD_FORCE_CONFIGURE
     - export MBD_SKIP_BUILD
+    - export CC
+    - export CXX
     - scan-build -sarif -o "${MBD_BUILD_DIR}/sarif" testsuite/mbdyn_build_job.sh --configure-flags-add
     - cd "${MBD_BUILD_DIR}/sarif"
     - find "." -name '*.sarif' -print0 | xargs -0 "${CI_PROJECT_DIR}/testsuite/sarif_relative_path.py" --root "file://${CI_PROJECT_DIR}"
