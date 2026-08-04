@@ -1,0 +1,65 @@
+# module-marsh manual verification deck.
+#
+# A single clamped rigid body under gravity: since it never moves, the
+# specific force reported in SIM_STATE/MOTION_CUE_EXTRA should equal
+# -gravity (a constant, easy sanity check of the gravity-subtraction
+# convention). MANUAL_CONTROL.x, once received from the MARSH Manager (or
+# a throwaway UDP test script), is clamped onto an abstract node so its
+# value shows up in the .mov output.
+
+begin: data;
+	problem: initial value;
+end: data;
+
+begin: initial value;
+	initial time: 0.;
+	final time: 10.;
+	time step: 1.e-2;
+
+	tolerance: 1.e-6;
+	max iterations: 10;
+
+	method: ms, 0.6;
+end: initial value;
+
+begin: control data;
+	structural nodes: 1;
+	abstract nodes: 1;
+	rigid bodies: 1;
+	joints: 1;
+	genels: 1;
+	loadable elements: 1;
+	gravity;
+end: control data;
+
+module load: "libmodule-marsh.la";
+# module load: "libmodule-marsh.so";
+
+begin: nodes;
+	structural: 1, dynamic, null, eye, null, null;
+	abstract: 2, differential;
+end: nodes;
+
+begin: elements;
+	body: 1, 1, 1., null, eye;
+
+	joint: 1, clamp, 1, node, node;
+
+	gravity: uniform, 0., 0., -1., const, 9.81;
+
+	user defined: 3, marsh,
+		manager address, "127.0.0.1",
+		manager port, 24400,
+		local port, 25000,
+		heartbeat rate, 1.,
+		send, "SIM_STATE",
+			node, 1,
+		send, "MOTION_CUE_EXTRA",
+			node, 1,
+		subscribe, "MANUAL_CONTROL";
+
+	genel: 1, clamp, 2, abstract, differential,
+		element, 3, loadable, string, "MANUAL_CONTROL.x", direct;
+end: elements;
+
+# vim:ft=mbd
