@@ -58,8 +58,10 @@ dBankPrev(0.)
 	dMeasure[INIT_X1] = X(1);
 	/*------------------------------------------------------------------------*/
 	/*Matteo Daniele edits--------------------------------------------------------*/
-	const Vec3& LINACC(pNode->GetXPPCurr());
-	const Vec3& ANGACC(pNode->GetWPCurr());
+	// NOTE: in the aircraft frame, as documented and as computed by Update()
+	const Mat3x3 Ra(pNode->GetRCurr()*Rh);
+	const Vec3 LINACC(Ra.MulTV(pNode->GetXPPCurr()));
+	const Vec3 ANGACC(Ra.MulTV(pNode->GetWPCurr()));
 	dMeasure[NODE_BODY_ACC_X] = LINACC(1);
 	dMeasure[NODE_BODY_ACC_Y] = LINACC(2);
 	dMeasure[NODE_BODY_ACC_Z] = LINACC(3);
@@ -248,11 +250,32 @@ AircraftInstruments::Update(void)
 	dMeasure[PITCHRATE] = VecTmp(2);
 	dMeasure[YAWRATE] = VecTmp(3);
 
+	// attitude of the aircraft frame, as Euler parameters
+	doublereal e0;
+	Vec3 e;
+	MatR2EulerParams(R, e0, e);
+	dMeasure[E0] = e0;
+	dMeasure[E1] = e(1);
+	dMeasure[E2] = e(2);
+	dMeasure[E3] = e(3);
+
+	// node velocity in "world" NED components; note that the "world"
+	// of this element is North-West-Up (see the longitude formula above),
+	// hence the sign of the East and Down components.
+	// Unlike VERTICALSPEED, these are ground velocity components: the wind
+	// is not subtracted.
+	dMeasure[VNORTH] = V(1);
+	dMeasure[VEAST] = -V(2);
+	dMeasure[VDOWN] = -V(3);
+
 	const DynamicStructNode* pDSN = dynamic_cast<const DynamicStructNode *>(pNode);
 	if (pDSN) {
 		/* Matteo Daniele edits */
-		const Vec3& LINACC(pNode->GetXPPCurr());
-		const Vec3& ANGACC(pNode->GetWPCurr());
+		// NOTE: these are the linear and angular accelerations of the node
+		// in the aircraft frame, as documented; they used to be erroneously
+		// stored in the global frame.
+		const Vec3 LINACC(R.MulTV(pNode->GetXPPCurr()));
+		const Vec3 ANGACC(R.MulTV(pNode->GetWPCurr()));
 		dMeasure[NODE_BODY_ACC_X] = LINACC(1);
 		dMeasure[NODE_BODY_ACC_Y] = LINACC(2);
 		dMeasure[NODE_BODY_ACC_Z] = LINACC(3);
@@ -411,6 +434,14 @@ AircraftInstruments::iGetPrivDataIdx(const char *s) const
 		{ "sound" "celerity", SOUND_CELERITY, false },
 		{ "static" "pressure", STATIC_PRESSURE, false },
 		{ "temperature", TEMPERATURE, false },
+		// attitude as Euler parameters, and velocity in NED components
+		{ "e0", E0, false },
+		{ "e1", E1, false },
+		{ "e2", E2, false },
+		{ "e3", E3, false },
+		{ "vnorth", VNORTH, false },
+		{ "veast", VEAST, false },
+		{ "vdown", VDOWN, false },
 
 		{ 0 }
 	};
