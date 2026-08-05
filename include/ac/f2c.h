@@ -80,7 +80,7 @@ typedef integer flag;
 #endif
 typedef integer ftnlen;
 typedef integer ftnint;
-typedef char *address;
+// typedef char *address;
 typedef struct { doublereal r, i; } doublecomplex;
 
 #endif /* !HAVE_G2C_H && !HAVE_F2C_H */
