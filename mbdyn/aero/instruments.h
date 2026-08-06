@@ -77,6 +77,15 @@ public:
 		STATIC_PRESSURE,
 		TEMPERATURE,
 
+		E0,			// attitude of the aircraft frame, as Euler parameters
+		E1,
+		E2,
+		E3,
+
+		VNORTH,			// node velocity, in "world" NED components
+		VEAST,
+		VDOWN,
+
 		LASTMEASURE
 	};
 

@@ -432,7 +432,7 @@ All quantities are expressed in inches and pounds.
 
 
 
-\subsection{Aircraft Instruments}
+\subsection{Aircraft Instruments}\label{sec:EL:AERO:AIRCRAFTINSTRUMENTS}
 %\begin{verbatim}
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{elem_type} ::= \kw{aircraft instruments}
@@ -549,7 +549,24 @@ Additional data, not available through usual aircraft instruments, are available
 \item \kw{"soundcelerity"}: sound celerity at the body's altitude
 \item \kw{"staticpressure"}: static pressure at the body's altitude
 \item \kw{"temperature"}: temperature at the body's altitude
+\item \kw{"e0"}, \kw{"e1"}, \kw{"e2"}, \kw{"e3"}: the orientation of the
+  aircraft, namely of the local frame, with respect to the ``world'',
+  as Euler parameters; unlike \kw{"attitude"}, \kw{"bank"} and
+  \kw{"heading"}, these are free from any ambiguity
+\item \kw{"vnorth"}, \kw{"veast"}, \kw{"vdown"}: the components of the node
+  velocity in a North-East-Down frame, in m/s.
+  Note that, unlike \kw{"verticalspeed"}, these are ground velocity
+  components: the airstream velocity is not subtracted
 \end{itemize}
+Note that the linear and angular accelerations, \kw{"body\_axb"} and the
+following ones, used to be erroneously expressed in the global frame,
+rather than in the body frame as documented above.
+
+Since some of the measures it provides depend on the properties of the air
+(\kw{"density"}, \kw{"soundcelerity"}, \kw{"staticpressure"},
+\kw{"temperature"}), this element requires an
+\htmlref{\kw{air properties}}{sec:EL:AERO:AIRPROPERTIES} element to be
+defined as well; the simulation is otherwise refused.
 
 \paragraph{Example.} \
 \begin{verbatim}
