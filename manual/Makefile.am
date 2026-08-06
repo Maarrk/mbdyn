@@ -25,6 +25,7 @@ input/logfile.tex \
 input/modal-fem-format.tex \
 input/modules.tex \
 input/module-hfelem.tex \
+input/module-marsh.tex \
 input/netcdfout.tex \
 input/nodes.tex \
 input/outputresults.tex \
