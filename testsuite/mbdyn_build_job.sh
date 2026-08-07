@@ -409,7 +409,7 @@ else
 fi
 
 if ! test -z "${MBD_WITH_MODULE}"; then
-    MBD_COMPILER_FLAGS="${MBD_COMPILER_FLAGS} -rdynamic" ## Needed for --enable-runtime-loading
+    LDFLAGS="${LDFLAGS} -rdynamic" ## Needed for --enable-runtime-loading
 fi
 
 CPPFLAGS="${CPPFLAGS} -I${MGIS_INC_DIR}"

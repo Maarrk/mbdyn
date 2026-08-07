@@ -52,7 +52,7 @@ protected:
 
 public:
 	FixedStepFileDrive(unsigned int uL, const DriveHandler* pDH,
-			const char* const sFileName, integer is, integer id,
+			const std::string& sFileName, integer is, integer id,
 			doublereal t0, doublereal dt,
 			bool bl, bool pz, Drive::Bailout bo);
 	virtual ~FixedStepFileDrive(void);
@@ -75,4 +75,3 @@ public:
 };
 
 #endif /* FIXEDSTEP_H */
-

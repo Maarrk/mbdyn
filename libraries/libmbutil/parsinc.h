@@ -158,7 +158,7 @@ public:
 
 	virtual void Close(void);                  /* "Chiude" i flussi */
 
-	virtual const char* GetFileName(enum Delims Del = DEFAULTDELIM);
+	virtual std::string GetFileName(enum Delims Del = DEFAULTDELIM);
 
 	virtual HighParser::ErrOut GetLineData(void) const;
 };
@@ -195,4 +195,3 @@ public:
 /* IncludeParser - end */
 
 #endif /* PARSINC_H */
-

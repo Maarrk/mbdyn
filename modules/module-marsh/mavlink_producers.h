@@ -14,6 +14,7 @@
 #define MODULE_MARSH_PRODUCERS_H
 
 #include <cstring>
+#include <string>
 #include <vector>
 
 /* pulls in dataman.h, which instruments.h and scalarvalue.h rely upon */
@@ -155,11 +156,11 @@ ReadMavlinkFieldOverrides(DataManager *pDM, MBDynParser& HP,
 	std::vector<MavlinkFieldValue<M> >& fields)
 {
 	while (HP.IsKeyWord("field")) {
-		const char *name = HP.GetStringWithDelims();
+		const std::string name = HP.GetStringWithDelims();
 
 		float M::*pMember = 0;
 		for (unsigned i = 0; desc[i].name != 0; i++) {
-			if (strcmp(name, desc[i].name) == 0) {
+			if (name == desc[i].name) {
 				pMember = desc[i].pMember;
 				break;
 			}

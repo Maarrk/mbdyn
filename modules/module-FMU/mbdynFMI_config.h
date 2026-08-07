@@ -51,4 +51,4 @@ int error(const char* test, int value);
 
 int sumde(int x, int y);
 
-std::string UncompressLocation(const char* location);
+std::string UncompressLocation(const std::string& location);

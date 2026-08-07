@@ -294,8 +294,8 @@ ReadStreamDrive(const DataManager *pDM, MBDynParser& HP, unsigned uLabel)
 	std::string path;
 
 	if (HP.IsKeyWord("name") || HP.IsKeyWord("stream" "drive" "name")) {
-		const char *m = HP.GetStringWithDelims();
-		if (m == 0) {
+		const std::string m = HP.GetStringWithDelims();
+		if (m.empty()) {
 			silent_cerr("SocketStreamDrive(" << uLabel << "): "
 				"unable to read stream drive name "
 				"at line " << HP.GetLineData()
@@ -334,9 +334,9 @@ ReadStreamDrive(const DataManager *pDM, MBDynParser& HP, unsigned uLabel)
             << std::endl);
         throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 #else /* _WIN32 */
-		const char *m = HP.GetFileName();
+		const std::string m = HP.GetFileName();
 		
-		if (m == 0) {
+		if (m.empty()) {
 			silent_cerr("SocketStreamDrive"
 				"(" << uLabel << ", \"" << name << "\"): "
 				"unable to read local path "
@@ -391,10 +391,8 @@ ReadStreamDrive(const DataManager *pDM, MBDynParser& HP, unsigned uLabel)
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);		
 		}
 
-		const char *h;
-		
-		h = HP.GetStringWithDelims();
-		if (h == 0) {
+		const std::string h = HP.GetStringWithDelims();
+		if (h.empty()) {
 			silent_cerr("SocketStreamDrive"
 				"(" << uLabel << ", \"" << name << "\"): "
 				"unable to read host "

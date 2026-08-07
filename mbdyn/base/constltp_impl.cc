@@ -505,9 +505,9 @@ struct SymbolicCLR : public ConstitutiveLawRead<T, Tder> {
 			epsilon.resize(dim);
 
 			for (unsigned row = 0; row < dim; row++) {
-				const char *tmp = HP.GetStringWithDelims();
+				const std::string tmp = HP.GetStringWithDelims();
 
-				if (tmp == 0) {
+				if (tmp.empty()) {
 					silent_cerr("unable to get \"epsilon\" "
 						"symbol #" << row << " "
 						"at line " << HP.GetLineData() << std::endl);
@@ -527,9 +527,9 @@ struct SymbolicCLR : public ConstitutiveLawRead<T, Tder> {
 			epsilonPrime.resize(dim);
 
 			for (unsigned row = 0; row < dim; row++) {
-				const char *tmp = HP.GetStringWithDelims();
+				const std::string tmp = HP.GetStringWithDelims();
 
-				if (tmp == 0) {
+				if (tmp.empty()) {
 					silent_cerr("unable to get \"epsilonPrime\" "
 						"symbol #" << row << " "
 						"at line " << HP.GetLineData() << std::endl);
@@ -546,8 +546,8 @@ struct SymbolicCLR : public ConstitutiveLawRead<T, Tder> {
 
 		std::vector<std::string> expression(dim);
 		for (unsigned row = 0; row < dim; row++) {
-			const char *tmp = HP.GetStringWithDelims();
-			if (tmp == 0) {
+			const std::string tmp = HP.GetStringWithDelims();
+			if (tmp.empty()) {
 				silent_cerr("unable to get \"expression\" "
 					"#" << row << " "
 					"at line " << HP.GetLineData()

@@ -429,8 +429,8 @@ ReadSparseMappingMatrix(MBDynParser& HP, integer& nRows, integer& nCols)
 		bTranspose = true;
 	}
 	
-	const char *sFileName = HP.GetFileName();
-	if (sFileName == 0) {
+	const std::string sFileName = HP.GetFileName();
+	if (sFileName.empty()) {
 		silent_cerr("unable to read mapping file name "
 			"at line " << HP.GetLineData() << std::endl);
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
@@ -763,4 +763,3 @@ ReadModalMappingExtForce(DataManager* pDM,
 
 	return pEl;
 }
-

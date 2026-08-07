@@ -51,7 +51,7 @@ protected:
 
 public:
 	VariableStepFileDrive(unsigned int uL, const DriveHandler* pDH,
-			const char* const sFileName, integer id,
+			const std::string& sFileName, integer id,
 			bool bl, bool pz, Drive::Bailout bo);
 	virtual ~VariableStepFileDrive(void);
 
@@ -73,4 +73,3 @@ public:
 };
 
 #endif // VARSTEP_H
-

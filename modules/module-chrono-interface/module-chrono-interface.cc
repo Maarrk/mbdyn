@@ -447,8 +447,8 @@ bMBDyn_CE_CEModel_DoStepDynamics(true)
 	//----- output information about coupling forces;
 	if (HP.IsKeyWord("coupling" "forces" "filename"))
 	{
-		const char *MBDyn_CE_Output_Filename = HP.GetFileName();
-		if (MBDyn_CE_Output_Filename==NULL)
+		const std::string MBDyn_CE_Output_Filename = HP.GetFileName();
+		if (MBDyn_CE_Output_Filename.empty())
 		{
 			silent_cerr("ChronoInterface(" << uLabel << "): unable to get file name for coupling forces " <<
 			" at line " << HP.GetLineData() << std::endl);

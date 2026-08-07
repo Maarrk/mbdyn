@@ -59,17 +59,17 @@ pDM(pDM)
 	        }
         }
 
-        strcpy(FMUlocation, HP.GetStringWithDelims());
+	FMUlocation = HP.GetStringWithDelims();
 	
 	std::string UClocation;
 	UClocation = UncompressLocation(FMUlocation);
 
 	if(HP.IsKeyWord("type")){
-		simType = HP.GetString();
-		if (!strcmp(simType, "cosimulation")){
+		const std::string simType = HP.GetString();
+		if (simType == "cosimulation"){
 			SIMTYPE = fmu::COSIM;
 		} 
-		else if (!strcmp(simType, "import")){
+		else if (simType == "import"){
 			SIMTYPE = fmu::IMPORT;
 		}
 		else {
@@ -92,7 +92,7 @@ pDM(pDM)
 	}
 
 	while(HP.IsStringWithDelims()){
-		const char* temp = HP.GetStringWithDelims(); 
+		const std::string temp = HP.GetStringWithDelims();
 		drivesContainer[temp] = HP.GetDriveCaller();
 	}
 
@@ -108,7 +108,7 @@ pDM(pDM)
 	setup_callbacks(&callbacks);
 
 /// Unzip the fmu
-        status = fmi_zip_unzip(FMUlocation, UClocation.c_str(), &callbacks);
+	status = fmi_zip_unzip(FMUlocation.c_str(), UClocation.c_str(), &callbacks);
 	
 	if(status==jm_status_error){
 		silent_cerr("Failed to uncompress FMU. Exiting\n");	
@@ -119,7 +119,7 @@ pDM(pDM)
 
 /// Get the version and context
         context = fmi_import_allocate_context(&callbacks);
-        version = fmi_import_get_fmi_version(context, FMUlocation, UClocation.c_str());
+	version = fmi_import_get_fmi_version(context, FMUlocation.c_str(), UClocation.c_str());
 
 	if(version == 1){
 		model = new fmu1(context, SIMTYPE);
@@ -513,4 +513,3 @@ module_init(const char *module_name, void *pdm, void *php)
 
 	return 0;
 }
-

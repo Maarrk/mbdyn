@@ -385,15 +385,15 @@ bFirst(true)
 	}
 
 	if (HP.IsKeyWord("output" "file" "name")) {
-		const char *ofname = HP.GetFileName();
-		if (ofname == 0) {
+		const std::string outputFileName = HP.GetFileName();
+		if (outputFileName.empty()) {
 			silent_cerr("AeroDynModule(" << GetLabel() << "): "
 				"unable to get file name "
 				"at line " << HP.GetLineData()
 				<< std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
-		ofname = ofname;
+		ofname = outputFileName;
 		out.open(ofname);
 		if (!out) {
 			silent_cerr("AeroDynModule(" << GetLabel() << "): "
@@ -417,8 +417,8 @@ bFirst(true)
 	std::string elem_file_name;
 
 	if (HP.IsKeyWord("input" "file" "name")) {
-		const char *fname = HP.GetStringWithDelims();
-		if (fname == 0) {
+		const std::string fname = HP.GetStringWithDelims();
+		if (fname.empty()) {
 			silent_cerr("unable to get input file name "
 				"at line " << HP.GetLineData() << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
@@ -427,8 +427,8 @@ bFirst(true)
 	}
 
 	if (HP.IsKeyWord("element" "file" "name")) {
-		const char *fname = HP.GetStringWithDelims();
-		if (fname == 0) {
+		const std::string fname = HP.GetStringWithDelims();
+		if (fname.empty()) {
 			silent_cerr("unable to get element file name "
 				"at line " << HP.GetLineData() << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
@@ -1230,4 +1230,3 @@ module_init(const char *module_name, void *pdm, void *php)
 
 	return 0;
 }
-

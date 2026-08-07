@@ -3040,8 +3040,8 @@ ReadModal(DataManager* pDM,
         VecN aP;
 
         // FEM database file name
-        const char *s = HP.GetFileName();
-        if (s == 0) {
+        std::string s = HP.GetFileName();
+        if (s.empty()) {
                 silent_cerr("Modal(" << uLabel << "): unable to get "
                         "modal data file name at line " << HP.GetLineData()
                         << std::endl);
@@ -3123,7 +3123,7 @@ ReadModal(DataManager* pDM,
         int iEchoPrecision(13);
         if (HP.IsKeyWord("echo")) {
                 s = HP.GetFileName();
-                if (s == 0) {
+                if (s.empty()) {
                         silent_cerr("Modal(" << uLabel << "): "
                                 "unable to parse echo file name at line " << HP.GetLineData()
                                 << std::endl);
@@ -5919,7 +5919,7 @@ ReadModal(DataManager* pDM,
         }
 
         if (HP.IsStringWithDelims()) {
-                const char *sTmp = HP.GetFileName();
+                const std::string sTmp = HP.GetFileName();
                 silent_cout("Modal(" << uLabel << "): warning, the syntax changed "
                         "since 1.2.7; the output now occurs to a common \".mod\" file, "
                         "the per-element file \"" << sTmp << "\" is no longer required, "

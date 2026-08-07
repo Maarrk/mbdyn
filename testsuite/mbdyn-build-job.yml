@@ -105,7 +105,7 @@ mbdyn-build-job:       # This job runs in the build stage, which runs first.
      junit: $MBD_TEST_PROGS_OUTPUT_DIR/**/*.xml
   cache:
    key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
-   when: always
+   when: on_success
    paths:
     - $MBD_BUILD_DIR
     - Makefile.in
@@ -232,7 +232,7 @@ mbdyn-build-job-gcov:       # This job runs in the build stage, which runs first
      junit: $MBD_TEST_PROGS_OUTPUT_DIR_GCOV/**/*.xml
   cache:
    key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
-   when: always
+   when: on_success
    paths:
     - $MBD_BUILD_DIR_GCOV
     - Makefile.in
@@ -340,7 +340,7 @@ mbdyn-build-job-manuals:       # This job runs in the build stage, which runs fi
     - manual/install/mbdyn-install-*.pdf
   cache:
    key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
-   when: always
+   when: on_success
    paths:
     - Makefile.in
     - aclocal.m4
@@ -448,7 +448,7 @@ mbdyn-build-job-debug:       # This job runs in the build stage, which runs firs
      junit: $MBD_TEST_PROGS_OUTPUT_DIR_DEBUG/**/*.xml
   cache:
    key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
-   when: always
+   when: on_success
    paths:
     - $MBD_BUILD_DIR
     - Makefile.in
@@ -508,7 +508,7 @@ mbdyn-build-job-nodeps:       # This job runs in the build stage, which runs fir
   needs:
     - job: mbdyn-checkout-job
   variables:
-     MBD_CONFIG_FLAGS_NODEPS: "--disable-crypt --disable-eig --disable-schur --disable-multithread --disable-multithread-naive --disable-netcdf --disable-python --disable-octave --disable-octave-utils --disable-install_test_progs --disable-manuals --disable-openmp --disable-debug-mpi --disable-dependency-tracking --disable-dependency-tracking --without-g2c --without-mpi --without-metis --without-chaco --without-threads --without-rt --without-rtai --without-boost --without-ann --without-bullet --without-goto --without-openblas --without-ginac --without-y12 --without-umfpack --without-klu --without-harwell --without-superlu --without-wsmp --without-pardiso --without-pastix --without-qrupdate --without-suitesparseqr --without-strumpack --without-trilinos --without-siconos --without-mfront --without-arpack --without-jdqz --without-pam --without-sasl2 --without-gtest --without-charm"
+     MBD_CONFIG_FLAGS_NODEPS: "--disable-crypt --disable-eig --disable-schur --disable-multithread --disable-multithread-naive --disable-netcdf --disable-python --disable-octave --disable-octave-utils --disable-install_test_progs --disable-manuals --disable-openmp --disable-debug-mpi --without-g2c --without-mpi --without-metis --without-chaco --without-threads --without-rt --without-rtai --without-boost --without-ann --without-bullet --without-goto --without-openblas --without-ginac --without-y12 --without-umfpack --without-klu --without-harwell --without-superlu --without-wsmp --without-pardiso --without-pastix --without-qrupdate --without-suitesparseqr --without-strumpack --without-trilinos --without-siconos --without-mfront --without-arpack --without-jdqz --without-pam --without-sasl2 --without-gtest --without-charm"
   script:
     - |
       if ! test -x configure; then
@@ -537,7 +537,7 @@ mbdyn-build-job-nodeps:       # This job runs in the build stage, which runs fir
    when: always
   cache:
    key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
-   when: always
+   when: on_success
    paths:
     - $MBD_BUILD_DIR_NODEPS
     - Makefile.in
@@ -594,6 +594,10 @@ mbdyn-build-job-nodeps:       # This job runs in the build stage, which runs fir
 
 mbdyn-build-job-clang:       # This job runs in the build stage, which runs first.
   stage: build
+  variables:
+    MBD_FORCE_CONFIGURE: "yes"
+    CC: clang
+    CXX: clang++
   needs:
     - job: siconos-build-job
       artifacts: true
@@ -629,7 +633,8 @@ mbdyn-build-job-clang:       # This job runs in the build stage, which runs firs
     - export MKL_INSTALL_PREFIX=${HOME}/${MKL_INSTALL_PREFIX}
     - export MBD_BUILD_DIR=${CI_PROJECT_DIR}/${MBD_BUILD_DIR_CLANG}
     - export OCT_PKG_INSTALL_PREFIX=${CI_PROJECT_DIR}/${OCT_PKG_INSTALL_PREFIX_CLANG}
-    - export MBD_COMPILER_FLAGS=${MBD_COMPILER_FLAGS}
+    ## The Clang link defaults to PIE; this also reaches Fortran via FFLAGS/FCFLAGS.
+    - export MBD_COMPILER_FLAGS="${MBD_COMPILER_FLAGS} -fPIE -O3 -ffast-math"
     - export MBD_TEST_PROGS_OUTPUT_DIR=${CI_PROJECT_DIR}/${MBD_TEST_PROGS_OUTPUT_DIR_CLANG}
     - export TFEL_INSTALL_PREFIX=${CI_PROJECT_DIR}/${TFEL_INSTALL_PREFIX}
     - export MGIS_INSTALL_PREFIX=${CI_PROJECT_DIR}/${MGIS_INSTALL_PREFIX}
@@ -638,7 +643,9 @@ mbdyn-build-job-clang:       # This job runs in the build stage, which runs firs
     - export MBD_WITH_MODULE
     - export MBD_FORCE_CONFIGURE
     - export MBD_SKIP_BUILD
-    - scan-build -sarif -o "${MBD_BUILD_DIR}/sarif" testsuite/mbdyn_build_job.sh --configure-flags-add
+    - export CC
+    - export CXX
+    - scan-build --use-cc=clang --use-c++=clang++ -sarif -o "${MBD_BUILD_DIR}/sarif" testsuite/mbdyn_build_job.sh --configure-flags-add --disable-Werror --configure-flags-add --disable-openmp
     - cd "${MBD_BUILD_DIR}/sarif"
     - find "." -name '*.sarif' -print0 | xargs -0 "${CI_PROJECT_DIR}/testsuite/sarif_relative_path.py" --root "file://${CI_PROJECT_DIR}"
     - python3 -m venv "${CI_PROJECT_DIR}/testsuite/var/cache/share/sarif"
@@ -663,7 +670,7 @@ mbdyn-build-job-clang:       # This job runs in the build stage, which runs firs
      codequality: $MBD_BUILD_DIR_CLANG/mbdyn-build-clang.json
   cache:
    key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
-   when: always
+   when: on_success
    paths:
     - $MBD_BUILD_DIR_CLANG
     - Makefile.in

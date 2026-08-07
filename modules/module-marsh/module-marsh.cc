@@ -126,7 +126,7 @@ m_dLastManagerSeenTime(-1.)
 
 	for (;;) {
 		if (HP.IsKeyWord("send")) {
-			const char *name = HP.GetStringWithDelims();
+			const std::string name = HP.GetStringWithDelims();
 			MavlinkProducer *p = ReadMarshProducer(name, pDM, HP);
 			if (!p) {
 				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
@@ -134,7 +134,7 @@ m_dLastManagerSeenTime(-1.)
 			m_producers.push_back(p);
 
 		} else if (HP.IsKeyWord("subscribe")) {
-			const char *name = HP.GetStringWithDelims();
+			const std::string name = HP.GetStringWithDelims();
 			MavlinkConsumer *c = ReadMarshConsumer(name, pDM, HP);
 			if (!c) {
 				throw ErrGeneric(MBDYN_EXCEPT_ARGS);

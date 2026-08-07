@@ -47,14 +47,14 @@ static const std::vector<doublereal> v0;
 
 VariableStepFileDrive::VariableStepFileDrive(unsigned int uL,
 		const DriveHandler* pDH,
-		const char* const sFileName_a,
+		const std::string& sFileName_a,
 		integer ind, bool bl, bool pz, Drive::Bailout bo)
 : FileDrive(uL, pDH, sFileName_a, ind, v0),
 iNumSteps(-1), iCurrStep(-1),
 bLinear(bl), bPadZeroes(pz), boWhen(bo), pd(0), pvd(0)
 {
 	ASSERT(iNumDrives > 0);
-	ASSERT(sFileName_a != NULL);
+	ASSERT(!sFileName_a.empty());
 
 	std::ifstream in(sFileName);
 	if (!in) {
@@ -331,7 +331,7 @@ VariableStepDR::Read(unsigned uLabel, const DataManager *pDM, MBDynParser& HP)
 		}
 	}
 
-	const char* filename = HP.GetFileName();
+	const std::string filename = HP.GetFileName();
 
 	Drive* pDr = NULL;
 	SAFENEWWITHCONSTRUCTOR(pDr,
@@ -341,4 +341,3 @@ VariableStepDR::Read(unsigned uLabel, const DataManager *pDM, MBDynParser& HP)
 
 	return pDr;
 }
-

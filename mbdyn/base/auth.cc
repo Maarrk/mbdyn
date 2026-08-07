@@ -64,17 +64,17 @@ NoAuth::Auth(int /* sock */ ) const
 
 #ifdef HAVE_CRYPT
 
-PasswordAuth::PasswordAuth(const char *u, const char *c, const char *salt_format)
+PasswordAuth::PasswordAuth(const std::string& u, const std::string& c,
+	const std::string& salt_format)
 {
-	ASSERT(u != NULL);
-	ASSERT(c != NULL);
+	ASSERT(!u.empty());
 
-	strncpy(User, u, sizeof(User));
+	strncpy(User, u.c_str(), sizeof(User));
 	User[STRLENOF(User)] = '\0';
 
 	const char *tmp = 0;
-	if (strncmp(c, "{CRYPT}", STRLENOF("{CRYPT}")) == 0) {
-		tmp = &c[STRLENOF("{CRYPT}")];
+	if (c.compare(0, STRLENOF("{CRYPT}"), "{CRYPT}") == 0) {
+		tmp = c.c_str() + STRLENOF("{CRYPT}");
 
 		if (strlen(tmp) >= sizeof(Cred)) {
 			silent_cerr("unable to handle credentials (too long)"
@@ -84,7 +84,8 @@ PasswordAuth::PasswordAuth(const char *u, const char *c, const char *salt_format
 
 	} else {
 		char salt[33];
-		tmp = crypt(c, mbdyn_make_salt(salt, sizeof(salt), salt_format));
+		tmp = crypt(c.c_str(), mbdyn_make_salt(salt, sizeof(salt),
+			salt_format.empty() ? NULL : salt_format.c_str()));
 		if (tmp == NULL) {
 			silent_cerr("crypt() failed" << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
@@ -289,10 +290,10 @@ failed_conversation:;
 	return PAM_CONV_ERR;
 }
 
-PAM_Auth::PAM_Auth(const char *u)
-: User(NULL)
+PAM_Auth::PAM_Auth(const std::string& u)
+: User(u)
 {
-	if (u == NULL) {
+	if (User.empty()) {
 		struct passwd* pw = getpwuid(getuid());
 
 		if (pw == NULL) {
@@ -300,17 +301,15 @@ PAM_Auth::PAM_Auth(const char *u)
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
 
-		u = pw->pw_name;
+		User = pw->pw_name;
 	}
-
-	SAFESTRDUP(User, u);
 
 	struct pam_conv conv;
 	conv.conv = mbdyn_conv;
 	conv.appdata_ptr = NULL;
 	
 	pam_handle_t *pamh = NULL;
-	int retval = pam_start("mbdyn", User, &conv, &pamh);
+	int retval = pam_start("mbdyn", User.c_str(), &conv, &pamh);
 
 	if (retval != PAM_SUCCESS) {
 		silent_cerr("PAM_Auth: user \"" << User 
@@ -340,7 +339,7 @@ PAM_Auth::Auth(const char *user, const char *cred) const
 		return AuthMethod::AUTH_ERR;
 	}
 
-	if (strcmp(User, user) != 0) {
+	if (User != user) {
 		silent_cerr("PAM_Auth::Auth: user \"" << user 
 				<< "\" cannot be authenticated " << std::endl);
 		return AuthMethod::AUTH_ERR;
@@ -349,7 +348,7 @@ PAM_Auth::Auth(const char *user, const char *cred) const
 	struct pam_conv conv;
 	conv.conv = mbdyn_conv;
 	conv.appdata_ptr = (void*)cred;
-	retval = pam_start("mbdyn", User, &conv, &pamh);
+	retval = pam_start("mbdyn", User.c_str(), &conv, &pamh);
 	if (retval == PAM_SUCCESS) {
 		retval = pam_authenticate(pamh, 0);
 		if (retval == PAM_SUCCESS) {
@@ -494,14 +493,12 @@ ReadAuthMethod(const DataManager* /* pDM */ , MBDynParser& HP)
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
 
-		const char* tmp = HP.GetStringWithDelims();
-		if (strlen(tmp) == 0) {
+		const std::string user = HP.GetStringWithDelims();
+		if (user.empty()) {
 			silent_cerr("ReadAuthMethod: Need a legal user id at line "
 					<< HP.GetLineData() << std::endl);
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
-
-		std::string user(tmp);
 
 		if (!HP.IsKeyWord("credentials")) {
 			silent_cerr("ReadAuthMethod: credentials expected at line "
@@ -509,30 +506,28 @@ ReadAuthMethod(const DataManager* /* pDM */ , MBDynParser& HP)
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
 
+		std::string cred;
 		if (HP.IsKeyWord("prompt")) {
-			tmp = getpass("password: ");
+			char *password = getpass("password: ");
+			cred = password;
+			memset(password, '\0', strlen(password));
 		} else {
-			tmp = HP.GetStringWithDelims();
+			cred = HP.GetStringWithDelims();
 		}
 
-		if (tmp[0] == '\0') {
+		if (cred.empty()) {
 			silent_cout("ReadAuthMethod: null credentials at line "
 					<< HP.GetLineData() << std::endl);
 		}
 
-		std::string cred(tmp);
-		memset((char *)tmp, '\0', strlen(tmp));
-
 		std::string salt_format;
 		if (HP.IsKeyWord("salt" "format")) {
-			tmp = HP.GetStringWithDelims();
-			salt_format = tmp;
+			salt_format = HP.GetStringWithDelims();
 		}
 
 		SAFENEWWITHCONSTRUCTOR(pAuth,
 				PasswordAuth,
-				PasswordAuth(user.c_str(), cred.c_str(), salt_format.c_str()));
-		//memset(cred.c_str(), '\0', cred.size());
+				PasswordAuth(user, cred, salt_format));
 		std::fill_n(cred.begin(), cred.size(), '\0');
 
 		break;
@@ -545,16 +540,15 @@ ReadAuthMethod(const DataManager* /* pDM */ , MBDynParser& HP)
 
 	case PAM: {
 #ifdef USE_PAM
-		char* user = NULL;
+		std::string user;
 		if (HP.IsKeyWord("user")) {
-			const char *tmp = HP.GetStringWithDelims();
-			if (strlen(tmp) == 0) {
+			user = HP.GetStringWithDelims();
+			if (user.empty()) {
 				silent_cerr("ReadAuthMethod: Need a legal user id at line "
 						<< HP.GetLineData() << std::endl);
 				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 			}
 
-			SAFESTRDUP(user, tmp);
 		}
 
 		SAFENEWWITHCONSTRUCTOR(pAuth, PAM_Auth, PAM_Auth(user));
@@ -572,9 +566,9 @@ ReadAuthMethod(const DataManager* /* pDM */ , MBDynParser& HP)
 		mbdyn_sasl.use_sasl = MBDYN_SASL_SERVER;
 
 		if (HP.IsKeyWord("mechanism") || HP.IsKeyWord("mech")) {
-			const char *s = HP.GetStringWithDelims();
-			if (s != NULL) {
-				SAFESTRDUP(mbdyn_sasl.sasl_mech, s);
+			const std::string s = HP.GetStringWithDelims();
+			if (!s.empty()) {
+				SAFESTRDUP(mbdyn_sasl.sasl_mech, s.c_str());
 			} else {
 				silent_cerr("ReadAuthMethod: unable to get SASL mech at line "
 						<< HP.GetLineData() << std::endl);
@@ -599,4 +593,3 @@ ReadAuthMethod(const DataManager* /* pDM */ , MBDynParser& HP)
 
 	return pAuth;
 }
-

@@ -49,7 +49,7 @@ protected:
 	MathParser::MathFunc_t f;
 
 public:
-	UDUnitsNameSpace(const char *path);
+	UDUnitsNameSpace(const std::string& path);
 	~UDUnitsNameSpace(void);
 
 	bool IsFunc(const std::string& fname) const;
@@ -136,14 +136,12 @@ unit_convert(const MathParser::MathArgs& args)
 	return 0;
 }
 
-UDUnitsNameSpace::UDUnitsNameSpace(const char *path)
+UDUnitsNameSpace::UDUnitsNameSpace(const std::string& path)
 : MathParser::NameSpace("units")
 {
-	int rc = utInit(path);
-
-	if (path == 0) {
-		path = "<unspecified>";
-	}
+	const char *pszPath = path.empty() ? 0 : path.c_str();
+	int rc = utInit(pszPath);
+	const std::string displayPath = path.empty() ? "<unspecified>" : path;
 
 	switch (rc) {
 	case 0:
@@ -151,28 +149,28 @@ UDUnitsNameSpace::UDUnitsNameSpace(const char *path)
 		break;
 
 	case UT_ENOFILE:
-		silent_cerr("utUnit could not find file \"" << path << "\""
+		silent_cerr("utUnit could not find file \"" << displayPath << "\""
 			<< std::endl);
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 
 	case UT_ESYNTAX:
 		silent_cerr("utUnit found a syntax error "
-			"in file \"" << path << "\"" << std::endl);
+			"in file \"" << displayPath << "\"" << std::endl);
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 
 	case UT_EUNKNOWN:
 		silent_cerr("utUnit found an unknown specification "
-			"in file \"" << path << "\"" << std::endl);
+			"in file \"" << displayPath << "\"" << std::endl);
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 
 	case UT_EIO:
 		silent_cerr("utUnit hit an I/O error while reading "
-			"file \"" << path << "\"" << std::endl);
+			"file \"" << displayPath << "\"" << std::endl);
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 
 	case UT_EALLOC:
 		silent_cerr("utUnit ran out of memory while reading "
-			"file \"" << path << "\"" << std::endl);
+			"file \"" << displayPath << "\"" << std::endl);
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 	}
 
@@ -227,7 +225,7 @@ module_init(const char *module_name, void *pdm, void *php)
 {
 	MBDynParser	*pHP = (MBDynParser *)php;
 
-	const char *path = 0;
+	std::string path;
 	if (pHP->IsArg()) {
 		path = pHP->GetFileName();
 	}
@@ -240,4 +238,3 @@ module_init(const char *module_name, void *pdm, void *php)
 	}
 	return rc;
 }
-

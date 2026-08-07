@@ -164,8 +164,8 @@ module_init(const char *module_name, void *pdm, void *php)
 				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 			}
 
-			const char *sTmp = pHP->GetFileName();
-			if (sTmp == 0) {
+			const std::string sTmp = pHP->GetFileName();
+			if (sTmp.empty()) {
 				silent_cerr("BoostRandom::module_init(): unable to parse \"seed input file name\" at line " << pHP->GetLineData() << std::endl);
 				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 			}
@@ -173,8 +173,8 @@ module_init(const char *module_name, void *pdm, void *php)
 			bGotSeedInputFileName = true;
 
 		} else if (pHP->IsKeyWord("seed" "output" "file" "name")) {
-			const char *sTmp = pHP->GetFileName();
-			if (sTmp == 0) {
+			const std::string sTmp = pHP->GetFileName();
+			if (sTmp.empty()) {
 				silent_cerr("BoostRandom::module_init(): unable to parse \"seed output file name\" at line " << pHP->GetLineData() << std::endl);
 				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 			}
@@ -210,4 +210,3 @@ module_init(const char *module_name, void *pdm, void *php)
 
 	return 0;
 }
-

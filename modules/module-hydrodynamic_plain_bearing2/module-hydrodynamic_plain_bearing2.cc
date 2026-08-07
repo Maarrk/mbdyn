@@ -2898,12 +2898,12 @@ namespace {
 
           template <typename T>
           T AverageClearanceTpl(const T& h) const {
-               return h / 2. * (1 + erf(h / (sigmac * sqrt(2)))) + sigmac / sqrt(2 * M_PI) * exp(-h * h / (2. * sigmac * sigmac));
+               return h / 2. * (1 + erf(h / (sigmac * constexpr_math::sqrt(2.)))) + sigmac / constexpr_math::sqrt(2 * M_PI) * exp(-h * h / (2. * sigmac * sigmac));
           }
 
           template <typename T>
           T AverageClearanceDerivTpl(const T& h, const T& dh_dt) const {
-               return 0.5 * dh_dt * (1. + erf(h / (sigmac * sqrt(2.))));
+               return 0.5 * dh_dt * (1. + erf(h / (sigmac * constexpr_math::sqrt(2.))));
           }
 
           const std::array<doublereal, SURFACE_COUNT> sigma;
@@ -23883,15 +23883,15 @@ namespace {
 
      std::string HydroMesh::ParseFileName(MBDynParser& HP)
      {
-          const char* pszFileName = HP.GetFileName();
+	     const std::string strFileName = HP.GetFileName();
 
-          if (!pszFileName || strlen(pszFileName) == 0) {
+	     if (strFileName.empty()) {
                silent_cerr("hydrodynamic plain bearing2(" << pGetParent()->GetLabel()
                            << "): file name expected at line " << HP.GetLineData() << std::endl);
                throw ErrGeneric(MBDYN_EXCEPT_ARGS);
           }
 
-          return pszFileName;
+	     return strFileName;
      }
 
      void HydroMesh::ParseComplianceModel(DataManager* pDM, MBDynParser& HP)
@@ -26118,7 +26118,7 @@ MBDYN_TESTSUITE_TEST(module_hydrodynamic_plain_bearing2, PatirCheng)
 
      for (size_t i = 0; i < N; ++i)
      {
-          constexpr std::array<doublereal, 2> sigma{1 / sqrt(2.), 1. / sqrt(2.)};
+          constexpr std::array<doublereal, 2> sigma{1 / constexpr_math::sqrt(2.), 1. / constexpr_math::sqrt(2.)};
           const std::array<doublereal, 2> lambdax{gamma[i], gamma[i]}, lambdaz{1., 1.};
           const PatirCheng oPatirCheng(sigma, lambdax, lambdaz);
 
@@ -26181,7 +26181,7 @@ MBDYN_TESTSUITE_TEST(module_hydrodynamic_plain_bearing2, PatirCheng)
 
      for (size_t i = 0; i < N; ++i)
      {
-          constexpr std::array<doublereal, 2> sigma{1. / sqrt(2.), 1. / sqrt(2.)};
+          constexpr std::array<doublereal, 2> sigma{1. / constexpr_math::sqrt(2.), 1. / constexpr_math::sqrt(2.)};
           const std::array<doublereal, 2> lambdax{1., 1.}, lambdaz{gamma[i], gamma[i]};
           const PatirCheng oPatirCheng(sigma, lambdax, lambdaz);
 

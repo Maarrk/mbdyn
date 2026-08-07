@@ -98,7 +98,7 @@ NameSpaceDR::Read(HighParser& HP)
 		throw HighParser::ErrColonExpected(MBDYN_EXCEPT_ARGS);
 	}
 
-	const char *sName = HP.GetString();
+	const std::string sName = HP.GetString();
 	if (!HP.GetMathParser().bNameValidate(sName)) {
 		silent_cerr("Parser error in NameSpaceDR::Read(), "
 			" invalid namespace \"" << sName << "\" at line "
@@ -128,7 +128,7 @@ module_init(const char *module_name, void *pdm, void *php)
 
 	int rc = 0;
 	while (HP.IsArg()) {
-		const char *sName = HP.GetString();
+		const std::string sName = HP.GetString();
 
 		if (!HP.GetMathParser().bNameValidate(sName)) {
 			silent_cerr("Parser error in module-namespace::module_init(), "
@@ -147,4 +147,3 @@ module_init(const char *module_name, void *pdm, void *php)
 
 	return rc;
 }
-

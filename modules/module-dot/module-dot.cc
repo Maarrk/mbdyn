@@ -114,8 +114,7 @@ m_bStructOnly(false)
 
 	// do something useful
 	if (HP.IsKeyWord("file" "name")) {
-		const char *s = HP.GetFileName();
-		m_fname = s;
+		m_fname = HP.GetFileName();
 	}
 
 	if (HP.IsKeyWord("structure" "only")) {
@@ -367,4 +366,3 @@ module_init(const char *module_name, void *pdm, void *php)
 
 	return 0;
 }
-
