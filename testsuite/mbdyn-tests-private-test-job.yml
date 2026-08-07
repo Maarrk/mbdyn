@@ -50,7 +50,7 @@ variables:
   MBD_TESTS_PRIVATE_ABORT_AFTER_STEP: "25"
   MBD_TESTS_PRIVATE_TIMEOUT: "unlimited"
   MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS: "yes"
-  MBD_TESTS_PRIVATE_NUM_TASKS: 12
+  MBD_TESTS_PRIVATE_NUM_TASKS: 32
   MBD_TESTS_PRIVATE_LOG_FILE: "mbdyn-tests-private-test-job.log"
   ## Patched test settings:
   ## Warning: Do not add too many options here because the total number of tests to be executed may increase dramatically just by adding a few options!

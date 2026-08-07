@@ -51,7 +51,7 @@ variables:
   ## Timeout per model (by default in minutes, "s" for seconds, "m" for minutes "h" for hours)
   ## Timeout value should not be "unlimited" if we are testing models which are using sockets, because this might block our pipeline forever!
   MBD_TESTS_PUBLIC_TIMEOUT: "unlimited"
-  MBD_TESTS_PUBLIC_NUM_TASKS: 12
+  MBD_TESTS_PUBLIC_NUM_TASKS: 32
 
 mbdyn-tests-public-test-job:   # This job runs in the test stage.
   variables:
