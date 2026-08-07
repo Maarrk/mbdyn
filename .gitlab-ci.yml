@@ -151,7 +151,7 @@ variables:
   MBD_TESTS_PRIVATE_INPUT_DIR: $TESTSUITE_PREFIX_CACHE/mbdyn-tests-private
 
   # Number of processes to build MBDyn (e.g. make -j$MBD_NUM_BUILD_JOBS)
-  MBD_NUM_BUILD_JOBS: "12"
+  MBD_NUM_BUILD_JOBS: "32"
 
   ## Remove and reinstall all the software which was installed by previous pipeline executions.
   MBD_CLEAN_ALL:

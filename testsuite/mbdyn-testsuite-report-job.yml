@@ -40,7 +40,7 @@ variables:
 
 mbdyn-testsuite-report-job-coverage:
   variables:
-    MBD_TESTSUITE_REPORT_JOB_NUM_TASKS: 12
+    MBD_TESTSUITE_REPORT_JOB_NUM_TASKS: 32
     ## Needed for autoconf
     MBD_GCOVR_EXCLUDE: '--gcov-exclude .*conftest\.gcda --gcov-exclude .*conftest\.gcno'
     ## See also https://stackoverflow.com/questions/68345811/no-colours-in-gcovr-5-0-html-details-report
