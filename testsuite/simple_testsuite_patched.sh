@@ -63,6 +63,7 @@ mbdyn_abort_after="input assembly derivatives regularstep,2"
 mbdyn_skip_initial_joint_assembly="not-skip skip"
 mbdyn_initial_assembly_of_deformable_and_force_elements="exclude include"
 declare -i mbd_exit_status_mask=0
+mbdyn_configuration_jobs="${MBDYN_PATCHED_CONFIGURATION_JOBS:-1}"
 other_arguments=""
 
 while ! test -z "$1"; do
@@ -123,6 +124,10 @@ while ! test -z "$1"; do
             mbdyn_keep_output="$2"
             shift
             ;;
+        --configuration-jobs|--tasks)
+            mbdyn_configuration_jobs="$2"
+            shift
+            ;;
         --exit-status-mask)
             ((mbd_exit_status_mask=$2))
             shift
@@ -142,7 +147,8 @@ while ! test -z "$1"; do
             printf "  --exclude-inverse-dynamics {0|1}\n"
             printf "  --exclude-initial-value {0|1}\n"
             printf "  --threads <number_of_threads_per_task>\n"
-            printf "  --tasks <number_of_tasks>\n"
+            printf "  --tasks <number_of_concurrent_configurations>\n"
+            printf "  --configuration-jobs <number_of_concurrent_configurations>\n"
             printf "  --verbose {yes|no}\n"
             printf "  --keep-output {all|failed|unexpected}\n"
             printf "  --mbdyn-args-add \"<arg1> <arg2> ... <argN>\"\n"
@@ -164,6 +170,11 @@ done
 
 ((mbd_exit_status_mask|=0x1))
 
+if ! [[ "${mbdyn_configuration_jobs}" =~ ^[1-9][0-9]*$ ]]; then
+    printf '%s: invalid configuration concurrency "%s"\n' "${program_name}" "${mbdyn_configuration_jobs}" >&2
+    exit 1
+fi
+
 if ! test -d "${mbdyn_testsuite_prefix_output}"; then
     if ! mkdir -p "${mbdyn_testsuite_prefix_output}"; then
         exit 1
@@ -171,8 +182,13 @@ if ! test -d "${mbdyn_testsuite_prefix_output}"; then
 fi
 
 simple_testsuite_log_file="${mbdyn_testsuite_prefix_output}/mbdyn-testsuite-patched.log"
+mbdyn_input_files_cache="${mbdyn_testsuite_prefix_output}/.mbdyn-input-files.cache"
+export MBD_INPUT_FILES_CACHE="${mbdyn_input_files_cache}"
+# Never reuse a cache from a previous invocation: command-line filters and
+# input directories may have changed.  It is then populated once below.
+rm -f "${mbdyn_input_files_cache}"
 
-simple_testsuite.sh --prefix-output "${mbdyn_testsuite_prefix_output}" ${other_arguments} --exec-solver no --exit-status-mask $((mbd_exit_status_mask)) >& "${simple_testsuite_log_file}"
+MBD_NUM_TASKS=1 simple_testsuite.sh --prefix-output "${mbdyn_testsuite_prefix_output}" ${other_arguments} --exec-solver no --exit-status-mask $((mbd_exit_status_mask)) >"${simple_testsuite_log_file}" 2>&1
 
 rc=$?
 
@@ -181,6 +197,8 @@ if test "${mbdyn_keep_output}" = "no"; then
 fi
 
 failed_tests=""
+active_configuration_jobs=0
+configuration_failure=0
 
 for mbd_linear_solver in ${mbdyn_linear_solvers}; do
     for mbd_mh_type in ${mbdyn_matrix_handlers}; do
@@ -588,6 +606,7 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
 
                                             mbd_output_dir="${mbdyn_testsuite_prefix_output}/${mbd_linear_solver}/${mbd_mh_type}/${mbd_mat_scale}/${mbd_mat_scale_when}/${mbd_use_autodiff}/${mbd_nonlin_solver}/${mbd_method}/${mbd_output}/${mbd_abort_after}/${mbd_skip_initial_joint_assembly}/${mbd_initial_assembly_of_deformable_and_force_elements}"
 
+                                            (
                                             mkdir -p "${mbd_output_dir}"
 
                                             export MBD_TESTSUITE_INITIAL_VALUE_BEGIN="${mbd_output_dir}/mbd_init_val_begin.set"
@@ -667,14 +686,15 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
 
                                             simple_testsuite_log_file="${mbd_output_dir}/mbdyn-testsuite-patched.log"
 
-                                            echo "${mbd_output_dir}" > "${simple_testsuite_log_file}"
+                                            {
+                                                printf '%s\n' "${mbd_output_dir}"
+                                                cat "${MBD_TESTSUITE_INITIAL_VALUE_BEGIN}" \
+                                                    "${MBD_TESTSUITE_INITIAL_VALUE_END}" \
+                                                    "${MBD_TESTSUITE_CONTROL_DATA_BEGIN}" \
+                                                    "${MBD_TESTSUITE_CONTROL_DATA_END}"
+                                            } > "${simple_testsuite_log_file}"
 
-                                            cat "${MBD_TESTSUITE_INITIAL_VALUE_BEGIN}" >> "${simple_testsuite_log_file}"
-                                            cat "${MBD_TESTSUITE_INITIAL_VALUE_END}" >> "${simple_testsuite_log_file}"
-                                            cat "${MBD_TESTSUITE_CONTROL_DATA_BEGIN}" >> "${simple_testsuite_log_file}"
-                                            cat "${MBD_TESTSUITE_CONTROL_DATA_END}" >> "${simple_testsuite_log_file}"
-
-                                            simple_testsuite.sh --exec-gen "no" --patch-input "yes" --prefix-output "${mbd_output_dir}" --exit-status-mask $((mbd_exit_status_mask)) ${other_arguments} 2>&1 >> "${simple_testsuite_log_file}"
+                                            MBD_NUM_TASKS=1 simple_testsuite.sh --exec-gen "no" --patch-input "yes" --prefix-output "${mbd_output_dir}" --exit-status-mask $((mbd_exit_status_mask)) ${other_arguments} >> "${simple_testsuite_log_file}" 2>&1
 
                                             rc=$?
 
@@ -719,7 +739,20 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
                                                 rm -f "${simple_testsuite_log_file}" "${MBD_TESTSUITE_INITIAL_VALUE_BEGIN}" "${MBD_TESTSUITE_INITIAL_VALUE_END}" "${MBD_TESTSUITE_CONTROL_DATA_BEGIN}" "${MBD_TESTSUITE_CONTROL_DATA_END}"
                                             fi
 
+                                            if test "${test_status}" != "PASSED"; then
+                                                : > "${mbd_output_dir}/.failed"
+                                            fi
                                             printf 'TEST \"%s\" %s\n' "${mbd_output_dir}" "${test_status}"
+                                            test "${test_status}" = "PASSED"
+                                            ) &
+
+                                            ((active_configuration_jobs+=1))
+                                            if test "${active_configuration_jobs}" -ge "${mbdyn_configuration_jobs}"; then
+                                                if ! wait -n; then
+                                                    configuration_failure=1
+                                                fi
+                                                ((active_configuration_jobs-=1))
+                                            fi
                                         done
                                     done
                                 done
@@ -732,13 +765,32 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
     done
 done
 
-if test -z "${failed_tests}"; then
+while test "${active_configuration_jobs}" -gt 0; do
+    if ! wait -n; then
+        configuration_failure=1
+    fi
+    ((active_configuration_jobs-=1))
+done
+
+failed_tests=$(find "${mbdyn_testsuite_prefix_output}" -type f -name .failed -print)
+
+if test "${mbdyn_keep_output}" = "no"; then
+    rm -f "${mbdyn_input_files_cache}"
+fi
+
+if test "${configuration_failure}" -eq 0 && test -z "${failed_tests}"; then
     echo "All tests passed"
     exit 0
 else
-    printf '%d tests failed\n' "$(echo ${failed_tests} | wc -w)"
-    for failed_test in ${failed_tests}; do
+    failed_test_count=0
+    while IFS= read -r failed_test; do
+        test -n "${failed_test}" || continue
+        ((failed_test_count+=1))
         printf "Test %s failed\n" "${failed_test}"
-    done
+    done <<< "${failed_tests}"
+    printf '%d tests failed\n' "${failed_test_count}"
+    if test "${mbdyn_keep_output}" = "no"; then
+        find "${mbdyn_testsuite_prefix_output}" -type f -name .failed -delete
+    fi
     exit 1
 fi

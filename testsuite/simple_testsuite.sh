@@ -103,6 +103,7 @@ export PYTHONPATH="${PYTHONPATH}:${program_dir}/libraries/libmbc"
 
 MBD_NUM_TASKS=${MBD_NUM_TASKS:-$(( $(lscpu | awk '/^Socket\(s\)/{ print $2 }') * $(lscpu | awk '/^Core\(s\) per socket/{ print $4 }') ))}
 MBD_NUM_THREADS=${MBD_NUM_THREADS:-1}
+MBD_INPUT_FILES_CACHE="${MBD_INPUT_FILES_CACHE:-}"
 
 while ! test -z "$1"; do
     case "$1" in
@@ -322,7 +323,14 @@ fi
 
 declare -i idx_test=0
 
-MBD_INPUT_FILES_FOUND=`find ${mbdyn_testsuite_prefix_input} '(' -type f ${mbdyn_input_filter} -and -not -name '*_patched_*.mbd' ')' -print0 | xargs -0 awk -v exclude_initial_value=$((mbdyn_exclude_initial_value)) -v exclude_inverse_dynamics=$((mbdyn_exclude_inverse_dynamics)) -f mbdyn_input_file_format.awk`
+if test -n "${MBD_INPUT_FILES_CACHE}" && test -s "${MBD_INPUT_FILES_CACHE}"; then
+    MBD_INPUT_FILES_FOUND=$(<"${MBD_INPUT_FILES_CACHE}")
+else
+    MBD_INPUT_FILES_FOUND=`find ${mbdyn_testsuite_prefix_input} '(' -type f ${mbdyn_input_filter} -and -not -name '*_patched_*.mbd' ')' -print0 | xargs -0 awk -v exclude_initial_value=$((mbdyn_exclude_initial_value)) -v exclude_inverse_dynamics=$((mbdyn_exclude_inverse_dynamics)) -f mbdyn_input_file_format.awk`
+    if test -n "${MBD_INPUT_FILES_CACHE}"; then
+        printf '%s\n' "${MBD_INPUT_FILES_FOUND}" > "${MBD_INPUT_FILES_CACHE}"
+    fi
+fi
 
 function simple_testsuite_run_test()
 {
@@ -402,8 +410,9 @@ function simple_testsuite_run_test()
         echo "File \"${mbd_filename}\" not found"
         status=$(printf 'file[%]' "${mbd_filename}")
     else
-        mbd_basename=`basename -s ".mbdyn" "${mbd_filename}"`
-        mbd_basename=`basename -s ".mbd" "${mbd_basename}"`
+        mbd_basename="${mbd_filename##*/}"
+        mbd_basename="${mbd_basename%.mbdyn}"
+        mbd_basename="${mbd_basename%.mbd}"
 
         mbd_time_file="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_output_time_$((idx_test)).log"
         mbd_output_file="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_output_$((idx_test))"
@@ -437,10 +446,13 @@ function simple_testsuite_run_test()
 
         mbd_log_file="${mbd_output_file}.stdout"
 
-        mbd_script_name=`basename ${mbd_filename}`
-        mbd_script_name=`basename -s .mbd ${mbd_script_name}`
-        mbd_script_name=`basename -s .mbdyn ${mbd_script_name}`
-        mbd_dir_name=`dirname "${mbd_filename}"`
+        mbd_script_name="${mbd_filename##*/}"
+        mbd_script_name="${mbd_script_name%.mbd}"
+        mbd_script_name="${mbd_script_name%.mbdyn}"
+        mbd_dir_name="${mbd_filename%/*}"
+        if test "${mbd_dir_name}" = "${mbd_filename}"; then
+            mbd_dir_name="."
+        fi
         mbd_script_name_run_sh="${mbd_dir_name}/${mbd_script_name}_run.sh"
         mbd_script_name_gen_sh="${mbd_dir_name}/${mbd_script_name}_gen.sh"
         mbd_script_name_run_m="${mbd_dir_name}/${mbd_script_name}_run.m"
@@ -899,6 +911,7 @@ else
     export MBDYN_EXEC
     export MBDYN_ARGS_ADD
     export MBD_NUM_THREADS
+    export MBD_INPUT_FILES_CACHE
     export JUNIT_XML_KEEP_ALL_OUTPUT
     export -f simple_testsuite_run_test
     export mbdyn_patch_input_sed_expression
@@ -933,7 +946,7 @@ for mbd_filename in ${MBD_INPUT_FILES_FOUND}; do
     status="unexpected"
 
     if test -f "${mbd_status_file}"; then
-        status=`cat ${mbd_status_file}`
+        status=$(<"${mbd_status_file}")
     fi
 
     rm -f "${mbd_status_file}"
