@@ -45,7 +45,7 @@ begin: initial value;
 
         time step: (5.66893e-05);
 
-        max iterations: 100;
+        max iterations: 200;
         tolerance: 1e-6, test, sepnorm, epsilon1, 1e-1, epsilon2, 1e-5, scale, 1e-6, test, norm;
         method: hybrid, ms, 0.6;
 
@@ -63,34 +63,35 @@ begin: initial value;
         ## linear solver: siconos dense;
         ## nonlinear solver: siconos mcp newton min fb, lambda min, 1e-16;
 
-        set: bool enable_mcp = FALSE;
-        linear solver: umfpack, grad, scale, row max column max, always, max iterations, 10;
-        nonlinear solver: line search, modified, 0, default solver options, heavy nonlinear, print convergence info, no, lambda min, 0., tolerance x, 1e-7;
+        ## set: bool enable_mcp = FALSE;
+        ## linear solver: umfpack, grad, scale, row max column max, always, max iterations, 10;
+        ## nonlinear solver: line search, modified, 0, default solver options, heavy nonlinear, print convergence info, no, lambda min, 0., tolerance x, 1e-7;
 
         ## set: bool enable_mcp = TRUE;
         ## linear solver: siconos dense;
         ## nonlinear solver: siconos mcp newton min fb, lambda min, 1e-16;
 
-        ## set: bool enable_mcp = FALSE;
-        ## linear solver: umfpack, grad;
+        set: bool enable_mcp = FALSE;
+        linear solver: umfpack, grad;
 
-        ## nonlinear solver: nox,
-        ## modified, 100,
-        ## keep jacobian matrix,
-        ## inner iterations before assembly, 10,
-        ## jacobian operator, newton krylov,
-        ## solver, line search based,
-        ## linesearch method, backtrack,
-        ## direction, newton,
-        ## forcing term, type 2,
-        ## print convergence info, no,
-        ## verbose, yes,
-        ## minimum step, 1e-12,
-        ## recovery step, 1e-6,
-        ## linear solver tolerance, 1e-12,
-        ## linear solver max iterations, 30,
-        ## krylov subspace size, 30,
-        ## verbose, yes;
+        nonlinear solver: nox,
+        modified, 100,
+        keep jacobian matrix,
+        inner iterations before assembly, 10,
+        jacobian operator, newton krylov,
+        solver, line search based,
+        linesearch method, backtrack,
+        direction, newton,
+        forcing term, type 2,
+        print convergence info, no,
+        verbose, yes,
+        minimum step, 1e-12,
+        recovery step, 1e-6,
+        forcing term min tolerance, 1e-12,
+        forcing term max tolerance, 1e-6,
+        linear solver max iterations, 30,
+        krylov subspace size, 30,
+        verbose, yes;
 
         threads: assembly, 1;
         threads: solver, 1;
@@ -700,16 +701,16 @@ begin: elements;
                 null,
                 orientation, reference, (5004), eye;
 
-    ## hydraulic fluid: (6001), incompressible,
-    ##     density, (950),
-    ##     viscosity, (0.0015/4.),
-    ##     pressure, (10000);
-
-    hydraulic fluid: (6001), linear compressible,
+    hydraulic fluid: (6001), incompressible,
         density, (950),
-        1.,
-        0.,
-        viscosity, (0.0015);
+        viscosity, (0.0015/4.),
+        pressure, (10000);
+
+    ## hydraulic fluid: (6001), linear compressible,
+    ##     density, (950),
+    ##     1.,
+    ##     0.,
+    ##     viscosity, (0.0015);
 
     user defined: (7001),
         hydrodynamic plain bearing2,
@@ -717,7 +718,7 @@ begin: elements;
             alpha, 18e-9,
             Arho1, 0.6e-9,
             Arho2, 1.7e-9,
-            viscosity vapor, (1.5e-06),
+            ## viscosity vapor, (1.5e-06),
             ##mesh, quadratic finite element,
             mesh, linear finite difference,
             enable mcp, enable_mcp,
@@ -725,7 +726,7 @@ begin: elements;
             pressure step integrator, implicit euler,
             density step integrator, implicit euler,
             geometry, cylindrical,
-                mesh position, at shaft,
+                mesh position, at bearing,
                 bearing width, (0.0062),
                 shaft diameter, (0.01),
                 bearing diameter, (0.0100155),
@@ -740,11 +741,11 @@ begin: elements;
             number of nodes z, 10,
             number of nodes Phi, 50,
             boundary conditions, (10000), (10000),
-            lubrication grooves, 1,
-                at shaft,
-                    pressure, (10000),
-                    position, (0.01) * pi * 71. / 360., 0.,
-                    rectangle, width, 1.38e-3, height, 0.8 * (0.0062),
+            ## lubrication grooves, 1,
+            ##     at shaft,
+            ##         pressure, (10000),
+            ##         position, (0.01) * pi * 71. / 360., 0.,
+            ##         rectangle, width, 1.38e-3, height, 0.8 * (0.0062),
             contact model,
                         greenwood tripp,
                                 E1, 175000e6,
@@ -786,67 +787,99 @@ begin: elements;
         element, (7001), loadable, string, "maxp", direct,
         output trace, yes;
 
-    drive caller: (8016), name, "maxplocx",
-        element, (7001), loadable, string, "maxplocx", direct,
+    drive caller: (8008), name, "maxplocx1",
+        element, (7001), loadable, string, "maxplocx1", direct,
         output trace, yes;
 
-    drive caller: (8017), name, "maxplocz",
-        element, (7001), loadable, string, "maxplocz", direct,
+    drive caller: (8009), name, "maxplocz1",
+        element, (7001), loadable, string, "maxplocz1", direct,
         output trace, yes;
 
-    drive caller: (8008), name, "maxpc",
+    drive caller: (8010), name, "maxplocx2",
+        element, (7001), loadable, string, "maxplocx2", direct,
+        output trace, yes;
+
+    drive caller: (8011), name, "maxplocz2",
+        element, (7001), loadable, string, "maxplocz2", direct,
+        output trace, yes;
+
+    drive caller: (8012), name, "maxpc",
         element, (7001), loadable, string, "maxpc", direct,
         output trace, yes;
 
-    drive caller: (8018), name, "maxpclocx",
-        element, (7001), loadable, string, "maxpclocx", direct,
+    drive caller: (8013), name, "maxpclocx1",
+        element, (7001), loadable, string, "maxpclocx1", direct,
         output trace, yes;
 
-    drive caller: (8019), name, "maxpclocz",
-        element, (7001), loadable, string, "maxpclocz", direct,
+    drive caller: (8014), name, "maxpclocz1",
+        element, (7001), loadable, string, "maxpclocz1", direct,
         output trace, yes;
 
-    drive caller: (8015), name, "maxptot",
+    drive caller: (8015), name, "maxpclocx2",
+        element, (7001), loadable, string, "maxpclocx2", direct,
+        output trace, yes;
+
+    drive caller: (8016), name, "maxpclocz2",
+        element, (7001), loadable, string, "maxpclocz2", direct,
+        output trace, yes;
+
+    drive caller: (8017), name, "maxptot",
         element, (7001), loadable, string, "maxptot", direct,
         output trace, yes;
 
-    drive caller: (8020), name, "maxptotlocx",
-        element, (7001), loadable, string, "maxptotlocx", direct,
+    drive caller: (8018), name, "maxptotlocx1",
+        element, (7001), loadable, string, "maxptotlocx1", direct,
         output trace, yes;
 
-    drive caller: (8021), name, "maxptotlocz",
-        element, (7001), loadable, string, "maxptotlocz", direct,
+    drive caller: (8019), name, "maxptotlocz1",
+        element, (7001), loadable, string, "maxptotlocz1", direct,
         output trace, yes;
 
-    drive caller: (8009), name, "minh",
+    drive caller: (8020), name, "maxptotlocx2",
+        element, (7001), loadable, string, "maxptotlocx2", direct,
+        output trace, yes;
+
+    drive caller: (8021), name, "maxptotlocz2",
+        element, (7001), loadable, string, "maxptotlocz2", direct,
+        output trace, yes;
+
+    drive caller: (8022), name, "minh",
         element, (7001), loadable, string, "minh", direct,
         output trace, yes;
 
-    drive caller: (8022), name, "minhlocx",
-        element, (7001), loadable, string, "minhlocx", direct,
+    drive caller: (8023), name, "minhlocx1",
+        element, (7001), loadable, string, "minhlocx1", direct,
         output trace, yes;
 
-    drive caller: (8023), name, "minhlocz",
-        element, (7001), loadable, string, "minhlocz", direct,
+    drive caller: (8024), name, "minhlocz1",
+        element, (7001), loadable, string, "minhlocz1", direct,
         output trace, yes;
 
-    drive caller: (8010), name, "minrho",
+    drive caller: (8025), name, "minhlocx2",
+        element, (7001), loadable, string, "minhlocx2", direct,
+        output trace, yes;
+
+    drive caller: (8026), name, "minhlocz2",
+        element, (7001), loadable, string, "minhlocz2", direct,
+        output trace, yes;
+
+    drive caller: (8027), name, "minrho",
         element, (7001), loadable, string, "minrho", direct,
         output trace, yes;
 
-    drive caller: (8011), name, "maxrho",
+    drive caller: (8028), name, "maxrho",
         element, (7001), loadable, string, "maxrho", direct,
         output trace, yes;
 
-    drive caller: (8012), name, "minT",
+    drive caller: (8029), name, "minT",
         element, (7001), loadable, string, "minT", direct,
         output trace, yes;
 
-    drive caller: (8013), name, "maxT",
+    drive caller: (8030), name, "maxT",
         element, (7001), loadable, string, "maxT", direct,
         output trace, yes;
 
-    drive caller: (8014), name, "meanT",
+    drive caller: (8031), name, "meanT",
         element, (7001), loadable, string, "meanT", direct,
         output trace, yes;
 end: elements;
