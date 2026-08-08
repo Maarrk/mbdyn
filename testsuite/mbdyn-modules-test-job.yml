@@ -130,7 +130,7 @@ mbdyn-modules-test-job-gcov:   # This job runs in the test stage.
   variables:
       OCT_PKG_TEST_JOB_LOG: "octave-pkg-test-job.log"
       OCT_PKG_TEST_JOB_STATUS: "octave-pkg-test-job.status"
-      OCT_PKG_TEST_JOB_NUM_TASKS: 6
+      OCT_PKG_TEST_JOB_NUM_TASKS: 32
       OCT_PKG_FUNCTION_FILTER: ""
   stage: test    # It only starts when the job in the build stage completes successfully.
   needs:
