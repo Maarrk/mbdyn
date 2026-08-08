@@ -296,7 +296,7 @@ namespace {
      private:
           template <typename T>
           inline bool bPointIsInsideTpl(const SpColVector<T, 2>& p1) const;
-	  const doublereal w, h, Phi;
+          const doublereal w, h, Phi;
      };
 
      class CompleteSurface2D: public Geometry2D {
@@ -3214,6 +3214,8 @@ namespace {
           virtual std::ostream& PrintLogFile(std::ostream& os) const override;
 
           virtual doublereal dGetMeshRadius() const=0; // radius at the mesh side
+
+          void GetNodePosition2D(const Node2D* pNode, SpColVector<doublereal, 2>& x, Type location);
 
           virtual doublereal dGetMinClearance() const override;
           virtual doublereal dGetReferenceClearance() const override;
@@ -6207,7 +6209,7 @@ namespace {
           static const Node2D::NodeType rgNodeOutLoc[iNumNodeOutLoc];
           static const int iNumFrictionLoss = 2;
           static const int iNumReactionForce = 12;
-          static const int iNumPrivData = 21 + iNumFrictionLoss + iNumReactionForce;
+          static const int iNumPrivData = 28 + iNumFrictionLoss + iNumReactionForce;
 
           union PrivDataU {
                PrivDataVal a[iNumPrivData];
@@ -6215,13 +6217,17 @@ namespace {
                     PrivDataVal MaxTimeStep;
                     PrivDataVal rgPf[iNumFrictionLoss];
                     PrivDataVal Maxp;
-                    PrivDataVal Maxploc[2];
+                    PrivDataVal Maxploc1[2];
+                    PrivDataVal Maxploc2[2];
                     PrivDataVal Maxpc;
-                    PrivDataVal Maxpcloc[2];
+                    PrivDataVal Maxpcloc1[2];
+                    PrivDataVal Maxpcloc2[2];
                     PrivDataVal Maxptot;
-                    PrivDataVal Maxptotloc[2];
+                    PrivDataVal Maxptotloc1[2];
+                    PrivDataVal Maxptotloc2[2];
                     PrivDataVal Minh;
-                    PrivDataVal Minhloc[2];
+                    PrivDataVal Minhloc1[2];
+                    PrivDataVal Minhloc2[2];
                     PrivDataVal Minwtot;
                     PrivDataVal Maxwtot;
                     PrivDataVal Minrho;
@@ -6236,7 +6242,7 @@ namespace {
           mutable bool bUpdatePrivData;
 
           static const struct PrivateData {
-               char szName[12];
+               char szName[13];
                doublereal dDefault;
           } rgPrivData[iNumPrivData];
 
@@ -6272,17 +6278,25 @@ namespace {
           {"Pff",           0.},
           {"Pfc",           0.},
           {"max" "p",   -std::numeric_limits<doublereal>::max()},
-          {"max" "p" "loc" "x", -std::numeric_limits<doublereal>::max()},
-          {"max" "p" "loc" "z", -std::numeric_limits<doublereal>::max()},
+          {"max" "p" "loc" "x1", -std::numeric_limits<doublereal>::max()},
+          {"max" "p" "loc" "z1", -std::numeric_limits<doublereal>::max()},
+          {"max" "p" "loc" "x2", -std::numeric_limits<doublereal>::max()},
+          {"max" "p" "loc" "z2", -std::numeric_limits<doublereal>::max()},
           {"max" "pc",  -std::numeric_limits<doublereal>::max()},
-          {"max" "pc" "loc" "x", -std::numeric_limits<doublereal>::max()},
-          {"max" "pc" "loc" "z", -std::numeric_limits<doublereal>::max()},
+          {"max" "pc" "loc" "x1", -std::numeric_limits<doublereal>::max()},
+          {"max" "pc" "loc" "z1", -std::numeric_limits<doublereal>::max()},
+          {"max" "pc" "loc" "x2", -std::numeric_limits<doublereal>::max()},
+          {"max" "pc" "loc" "z2", -std::numeric_limits<doublereal>::max()},
           {"max" "ptot", -std::numeric_limits<doublereal>::max()},
-          {"max" "ptot" "loc" "x", -std::numeric_limits<doublereal>::max()},
-          {"max" "ptot" "loc" "z", -std::numeric_limits<doublereal>::max()},
+          {"max" "ptot" "loc" "x1", -std::numeric_limits<doublereal>::max()},
+          {"max" "ptot" "loc" "z1", -std::numeric_limits<doublereal>::max()},
+          {"max" "ptot" "loc" "x2", -std::numeric_limits<doublereal>::max()},
+          {"max" "ptot" "loc" "z2", -std::numeric_limits<doublereal>::max()},
           {"min" "h",    std::numeric_limits<doublereal>::max()},
-          {"min" "h" "loc" "x",    -std::numeric_limits<doublereal>::max()},
-          {"min" "h" "loc" "z",    -std::numeric_limits<doublereal>::max()},
+          {"min" "h" "loc" "x1",    -std::numeric_limits<doublereal>::max()},
+          {"min" "h" "loc" "z1",    -std::numeric_limits<doublereal>::max()},
+          {"min" "h" "loc" "x2",    -std::numeric_limits<doublereal>::max()},
+          {"min" "h" "loc" "z2",    -std::numeric_limits<doublereal>::max()},
           {"min" "wtot", std::numeric_limits<doublereal>::max()},
           {"max" "wtot", -std::numeric_limits<doublereal>::max()},
           {"min" "rho",  std::numeric_limits<doublereal>::max()},
@@ -7079,8 +7093,14 @@ namespace {
                     if ((*i)->bGetPrivateData(PD_CLEARANCE, h) && h < PrivData.s.Minh.dCurr) {
                          PrivData.s.Minh.dCurr = h;
 
+                         SpColVectorA<doublereal, 2> x1, x2;
+
+                         pGetMesh()->pGetGeometry()->GetNodePosition2D(i->get(), x1, BearingGeometry::CYLINDRICAL_MESH_AT_SHAFT);
+                         pGetMesh()->pGetGeometry()->GetNodePosition2D(i->get(), x2, BearingGeometry::CYLINDRICAL_MESH_AT_BEARING);
+
                          for (index_type j = 0; j < 2; ++j) {
-                              PrivData.s.Minhloc[j].dCurr = (*i)->GetPosition2D()(j + 1);
+                              PrivData.s.Minhloc1[j].dCurr = x1(j + 1);
+                              PrivData.s.Minhloc2[j].dCurr = x2(j + 1);
                          }
                     }
 
@@ -7089,8 +7109,14 @@ namespace {
                     if ((*i)->bGetPrivateData(PD_PRESSURE, p) && p > PrivData.s.Maxp.dCurr) {
                          PrivData.s.Maxp.dCurr = p;
 
+                         SpColVectorA<doublereal, 2> x1, x2;
+
+                         pGetMesh()->pGetGeometry()->GetNodePosition2D(i->get(), x1, BearingGeometry::CYLINDRICAL_MESH_AT_SHAFT);
+                         pGetMesh()->pGetGeometry()->GetNodePosition2D(i->get(), x2, BearingGeometry::CYLINDRICAL_MESH_AT_BEARING);
+
                          for (index_type j = 0; j < 2; ++j) {
-                              PrivData.s.Maxploc[j].dCurr = (*i)->GetPosition2D()(j + 1);
+                              PrivData.s.Maxploc1[j].dCurr = x1(j + 1);
+                              PrivData.s.Maxploc2[j].dCurr = x2(j + 1);
                          }
                     }
 
@@ -7099,8 +7125,14 @@ namespace {
                     if ((*i)->bGetPrivateData(PD_CONT_PRESSURE, pc) &&  pc > PrivData.s.Maxpc.dCurr) {
                          PrivData.s.Maxpc.dCurr = pc;
 
+                         SpColVectorA<doublereal, 2> x1, x2;
+
+                         pGetMesh()->pGetGeometry()->GetNodePosition2D(i->get(), x1, BearingGeometry::CYLINDRICAL_MESH_AT_SHAFT);
+                         pGetMesh()->pGetGeometry()->GetNodePosition2D(i->get(), x2, BearingGeometry::CYLINDRICAL_MESH_AT_BEARING);
+
                          for (index_type j = 0; j < 2; ++j) {
-                              PrivData.s.Maxpcloc[j].dCurr = (*i)->GetPosition2D()(j + 1);
+                              PrivData.s.Maxpcloc1[j].dCurr = x1(j + 1);
+                              PrivData.s.Maxpcloc2[j].dCurr = x2(j + 1);
                          }
                     }
 
@@ -7109,8 +7141,14 @@ namespace {
                     if ((*i)->bGetPrivateData(PD_TOT_PRESSURE, ptot) &&  ptot > PrivData.s.Maxptot.dCurr) {
                          PrivData.s.Maxptot.dCurr = ptot;
 
+                         SpColVectorA<doublereal, 2> x1, x2;
+
+                         pGetMesh()->pGetGeometry()->GetNodePosition2D(i->get(), x1, BearingGeometry::CYLINDRICAL_MESH_AT_SHAFT);
+                         pGetMesh()->pGetGeometry()->GetNodePosition2D(i->get(), x2, BearingGeometry::CYLINDRICAL_MESH_AT_BEARING);
+
                          for (index_type j = 0; j < 2; ++j) {
-                              PrivData.s.Maxptotloc[j].dCurr = (*i)->GetPosition2D()(j + 1);
+                              PrivData.s.Maxptotloc1[j].dCurr = x1(j + 1);
+                              PrivData.s.Maxptotloc2[j].dCurr = x2(j + 1);
                          }
                     }
 
@@ -7770,7 +7808,7 @@ namespace {
 
                const doublereal h = HP.GetReal();
 
-	       const doublereal Phi = HP.IsKeyWord("angle") ? HP.GetReal() : 0.;
+               const doublereal Phi = HP.IsKeyWord("angle") ? HP.GetReal() : 0.;
 
                return std::unique_ptr<Geometry2D>{new Rectangle2D{xc, w, h, Phi}};
           } else if (HP.IsKeyWord("complete" "surface")) {
@@ -7969,9 +8007,9 @@ namespace {
      template <typename T>
      bool Rectangle2D::bPointIsInsideTpl(const SpColVector<T, 2>& p1) const
      {
-	  const SpMatrix<doublereal, 2, 2> R{cos(Phi), sin(Phi), -sin(Phi), cos(Phi)};
-	  const SpColVector<T, 2> dx = Transpose(R) * (p1 - x);
-	  
+          const SpMatrix<doublereal, 2, 2> R{cos(Phi), sin(Phi), -sin(Phi), cos(Phi)};
+          const SpColVector<T, 2> dx = Transpose(R) * (p1 - x);
+
           const bool bInside = fabs(dx(1)) <= 0.5 * w
                             && fabs(dx(2)) <= 0.5 * h;
 
@@ -17069,6 +17107,28 @@ namespace {
           }
      }
 
+     void CylindricalBearing::GetNodePosition2D(const Node2D* pNode, SpColVector<doublereal, 2>& x, Type location)
+     {
+          HYDRO_ASSERT(GetType() == CYLINDRICAL_MESH_AT_BEARING || GetType() == CYLINDRICAL_MESH_AT_SHAFT);
+          HYDRO_ASSERT(location == CYLINDRICAL_MESH_AT_BEARING || location == CYLINDRICAL_MESH_AT_SHAFT);
+
+          x = pNode->GetPosition2D();
+
+          if (location != GetType()) {
+               const doublereal c = 2. * M_PI * dGetMeshRadius();
+               SpColVectorA<doublereal, 2> dx;
+
+               GetMovingMeshOffset(dx);
+               x -= dx;
+
+               if (x(1) < 0.) {
+                    x(1) += c;
+               } else if (x(1) > c) {
+                    x(1) -= c;
+               }
+          }
+     }
+
      CylindricalMeshAtShaft::CylindricalMeshAtShaft(HydroRootElement* pParent_a)
           :CylindricalBearing(pParent_a),
            oBound(*this),
@@ -23883,15 +23943,15 @@ namespace {
 
      std::string HydroMesh::ParseFileName(MBDynParser& HP)
      {
-	     const std::string strFileName = HP.GetFileName();
+             const std::string strFileName = HP.GetFileName();
 
-	     if (strFileName.empty()) {
+             if (strFileName.empty()) {
                silent_cerr("hydrodynamic plain bearing2(" << pGetParent()->GetLabel()
                            << "): file name expected at line " << HP.GetLineData() << std::endl);
                throw ErrGeneric(MBDYN_EXCEPT_ARGS);
           }
 
-	     return strFileName;
+             return strFileName;
      }
 
      void HydroMesh::ParseComplianceModel(DataManager* pDM, MBDynParser& HP)
