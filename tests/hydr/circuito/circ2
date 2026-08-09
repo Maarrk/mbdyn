@@ -68,7 +68,7 @@ begin: nodes;
 end: nodes;
 
 begin: drivers;
-    file: 1, socket, 1, port, 5555, noauth;
+    file: 1, socket, 1, port, 5566, noauth;
 end: drivers;
 
 hydraulic fluid: 1000,
