@@ -35,6 +35,7 @@
 # in the GNU Public License version 2.1
 
 variables:
+  MBD_TESTSUITE_TIMING: "yes"
   ## Error codes which should not cause the pipeline to fail (see simple_testsuite.sh):
   ## - no tests were executed     (0x001)
   ## - timeout                    (0x002)
@@ -121,6 +122,7 @@ mbdyn-tests-public-test-job:   # This job runs in the test stage.
     expire_in: 24h
     paths:
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR/$MBD_TESTS_PUBLIC_LOG_FILE
+      - $MBD_TESTS_PUBLIC_OUTPUT_DIR/mbdyn-testsuite-timing.tsv
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR/**/*.stdout
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR/**/junit_xml_report_*.xml
     when: always
@@ -178,6 +180,7 @@ mbdyn-tests-public-test-job-gcov:   # This job runs in the test stage.
     expire_in: 24h
     paths:
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/$MBD_TESTS_PUBLIC_LOG_FILE
+      - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/mbdyn-testsuite-timing.tsv
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/**/*.stdout
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/**/junit_xml_report_*.xml
       - $MBD_BUILD_DIR_GCOV
@@ -238,6 +241,7 @@ mbdyn-tests-public-test-job-debug:   # This job runs in the test stage.
     expire_in: 24h
     paths:
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_DEBUG/$MBD_TESTS_PUBLIC_LOG_FILE
+      - $MBD_TESTS_PUBLIC_OUTPUT_DIR_DEBUG/mbdyn-testsuite-timing.tsv
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_DEBUG/**/*.stdout
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_DEBUG/**/junit_xml_report_*.xml
     when: always
@@ -344,6 +348,7 @@ mbdyn-tests-public-test-job-clang:   # This job runs in the test stage.
     expire_in: 24h
     paths:
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_CLANG/$MBD_TESTS_PUBLIC_LOG_FILE
+      - $MBD_TESTS_PUBLIC_OUTPUT_DIR_CLANG/mbdyn-testsuite-timing.tsv
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_CLANG/**/*.stdout
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_CLANG/**/junit_xml_report_*.xml
     when: always

@@ -64,7 +64,20 @@ mbdyn_skip_initial_joint_assembly="not-skip skip"
 mbdyn_initial_assembly_of_deformable_and_force_elements="exclude include"
 declare -i mbd_exit_status_mask=0
 mbdyn_configuration_jobs="${MBDYN_PATCHED_CONFIGURATION_JOBS:-1}"
+mbdyn_timing="${MBD_TESTSUITE_TIMING:-no}"
+MBD_TESTSUITE_TIMING_FILE="${MBD_TESTSUITE_TIMING_FILE:-}"
 other_arguments=""
+
+function mbdyn_timing_now_ms()
+{
+    if test -n "${EPOCHREALTIME:-}"; then
+        mbdyn_timing_seconds="${EPOCHREALTIME%.*}"
+        mbdyn_timing_microseconds="${EPOCHREALTIME#*.}000000"
+        MBDYN_TIMING_NOW_MS=$((10#${mbdyn_timing_seconds} * 1000 + 10#${mbdyn_timing_microseconds:0:3}))
+    else
+        MBDYN_TIMING_NOW_MS=$((SECONDS * 1000))
+    fi
+}
 
 while ! test -z "$1"; do
     case "$1" in
@@ -124,6 +137,11 @@ while ! test -z "$1"; do
             mbdyn_keep_output="$2"
             shift
             ;;
+        --timing)
+            mbdyn_timing="$2"
+            other_arguments="${other_arguments} $1 $2"
+            shift
+            ;;
         --configuration-jobs|--tasks)
             mbdyn_configuration_jobs="$2"
             shift
@@ -156,6 +174,7 @@ while ! test -z "$1"; do
             printf "  --exec-solver {yes|no}\n"
             printf "  --exec-status-mask <mask_errors_to_be_ignored>\n"
             printf "  --print-resources {no|all|time}\n"
+            printf "  --timing {yes|no}\n"
             printf "  --suppressed-errors {syntax|element|feature|module|loadable|socked|interrupted|solver}\n"
             printf "  --help\n"
             exit 1;
@@ -175,6 +194,15 @@ if ! [[ "${mbdyn_configuration_jobs}" =~ ^[1-9][0-9]*$ ]]; then
     exit 1
 fi
 
+case "${mbdyn_timing}" in
+    yes|no)
+        ;;
+    *)
+        printf '%s: invalid timing setting "%s"\n' "${program_name}" "${mbdyn_timing}" >&2
+        exit 1
+        ;;
+esac
+
 if ! test -d "${mbdyn_testsuite_prefix_output}"; then
     if ! mkdir -p "${mbdyn_testsuite_prefix_output}"; then
         exit 1
@@ -185,13 +213,35 @@ simple_testsuite_log_file="${mbdyn_testsuite_prefix_output}/mbdyn-testsuite-patc
 mbdyn_input_files_cache="${mbdyn_testsuite_prefix_output}/.mbdyn-input-files.cache"
 export MBD_INPUT_FILES_CACHE="${mbdyn_input_files_cache}"
 export MBD_TESTSUITE_RESOURCE_LOCK_DIR="${mbdyn_testsuite_prefix_output}/.resource-locks"
+if test "${mbdyn_timing}" = "yes"; then
+    if test -z "${MBD_TESTSUITE_TIMING_FILE}"; then
+        MBD_TESTSUITE_TIMING_FILE="${mbdyn_testsuite_prefix_output}/mbdyn-testsuite-timing.tsv"
+    fi
+    if ! test -e "${MBD_TESTSUITE_TIMING_FILE}"; then
+        printf 'scope\tmode\ttarget\tindex\tstatus\tpatch_ms\tresource_wait_ms\trun_ms\ttotal_ms\n' > "${MBD_TESTSUITE_TIMING_FILE}"
+    fi
+    export MBD_TESTSUITE_TIMING_FILE
+fi
+export MBD_TESTSUITE_TIMING="${mbdyn_timing}"
 # Never reuse a cache from a previous invocation: command-line filters and
 # input directories may have changed.  It is then populated once below.
 rm -f "${mbdyn_input_files_cache}"
 
-MBD_NUM_TASKS=1 simple_testsuite.sh --prefix-output "${mbdyn_testsuite_prefix_output}" ${other_arguments} --exec-solver no --exit-status-mask $((mbd_exit_status_mask)) >"${simple_testsuite_log_file}" 2>&1
+mbdyn_timing_now_ms
+mbdyn_patched_suite_start_ms=${MBDYN_TIMING_NOW_MS}
+mbdyn_preparation_start_ms=${MBDYN_TIMING_NOW_MS}
+
+MBD_TESTSUITE_TIMING=no MBD_NUM_TASKS=1 simple_testsuite.sh --prefix-output "${mbdyn_testsuite_prefix_output}" ${other_arguments} --exec-solver no --exit-status-mask $((mbd_exit_status_mask)) >"${simple_testsuite_log_file}" 2>&1
 
 rc=$?
+
+if test "${mbdyn_timing}" = "yes"; then
+    mbdyn_timing_now_ms
+    mbdyn_preparation_ms=$((MBDYN_TIMING_NOW_MS - mbdyn_preparation_start_ms))
+    printf 'phase\tpatched\t%s\t\tpreparation\t0\t0\t0\t%d\n' \
+        "${mbdyn_testsuite_prefix_output}" "${mbdyn_preparation_ms}" >> "${MBD_TESTSUITE_TIMING_FILE}"
+    printf 'TESTSUITE_TIMING patched-preparation elapsed_ms=%d\n' "${mbdyn_preparation_ms}"
+fi
 
 if test "${mbdyn_keep_output}" = "no"; then
     rm -f "${simple_testsuite_log_file}"
@@ -200,6 +250,8 @@ fi
 failed_tests=""
 active_configuration_jobs=0
 configuration_failure=0
+mbdyn_timing_now_ms
+mbdyn_configuration_phase_start_ms=${MBDYN_TIMING_NOW_MS}
 
 for mbd_linear_solver in ${mbdyn_linear_solvers}; do
     for mbd_mh_type in ${mbdyn_matrix_handlers}; do
@@ -608,6 +660,8 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
                                             mbd_output_dir="${mbdyn_testsuite_prefix_output}/${mbd_linear_solver}/${mbd_mh_type}/${mbd_mat_scale}/${mbd_mat_scale_when}/${mbd_use_autodiff}/${mbd_nonlin_solver}/${mbd_method}/${mbd_output}/${mbd_abort_after}/${mbd_skip_initial_joint_assembly}/${mbd_initial_assembly_of_deformable_and_force_elements}"
 
                                             (
+                                            mbdyn_timing_now_ms
+                                            mbdyn_configuration_start_ms=${MBDYN_TIMING_NOW_MS}
                                             mkdir -p "${mbd_output_dir}"
 
                                             export MBD_TESTSUITE_INITIAL_VALUE_BEGIN="${mbd_output_dir}/mbd_init_val_begin.set"
@@ -743,6 +797,14 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
                                             if test "${test_status}" != "PASSED"; then
                                                 : > "${mbd_output_dir}/.failed"
                                             fi
+                                            if test "${mbdyn_timing}" = "yes"; then
+                                                mbdyn_timing_now_ms
+                                                mbdyn_configuration_total_ms=$((MBDYN_TIMING_NOW_MS - mbdyn_configuration_start_ms))
+                                                printf 'configuration\tpatched\t%s\t\t%s\t0\t0\t%d\t%d\n' \
+                                                    "${mbd_output_dir}" "${test_status}" "${mbdyn_configuration_total_ms}" "${mbdyn_configuration_total_ms}" >> "${MBD_TESTSUITE_TIMING_FILE}"
+                                                printf 'TESTSUITE_TIMING patched-configuration status=%s elapsed_ms=%d output_dir=%s\n' \
+                                                    "${test_status}" "${mbdyn_configuration_total_ms}" "${mbd_output_dir}"
+                                            fi
                                             printf 'TEST \"%s\" %s\n' "${mbd_output_dir}" "${test_status}"
                                             test "${test_status}" = "PASSED"
                                             ) &
@@ -772,6 +834,19 @@ while test "${active_configuration_jobs}" -gt 0; do
     fi
     ((active_configuration_jobs-=1))
 done
+
+if test "${mbdyn_timing}" = "yes"; then
+    mbdyn_timing_now_ms
+    mbdyn_configuration_phase_ms=$((MBDYN_TIMING_NOW_MS - mbdyn_configuration_phase_start_ms))
+    mbdyn_patched_suite_total_ms=$((MBDYN_TIMING_NOW_MS - mbdyn_patched_suite_start_ms))
+    printf 'phase\tpatched\t%s\t\tconfigurations\t0\t0\t0\t%d\n' \
+        "${mbdyn_testsuite_prefix_output}" "${mbdyn_configuration_phase_ms}" >> "${MBD_TESTSUITE_TIMING_FILE}"
+    printf 'suite\tpatched\t%s\t\t\t0\t0\t0\t%d\n' \
+        "${mbdyn_testsuite_prefix_output}" "${mbdyn_patched_suite_total_ms}" >> "${MBD_TESTSUITE_TIMING_FILE}"
+    printf 'TESTSUITE_TIMING patched-configurations elapsed_ms=%d\n' "${mbdyn_configuration_phase_ms}"
+    printf 'TESTSUITE_TIMING patched-suite elapsed_ms=%d timing_file=%s\n' \
+        "${mbdyn_patched_suite_total_ms}" "${MBD_TESTSUITE_TIMING_FILE}"
+fi
 
 failed_tests=$(find "${mbdyn_testsuite_prefix_output}" -type f -name .failed -print)
 
