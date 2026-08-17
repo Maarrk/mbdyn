@@ -184,6 +184,7 @@ fi
 simple_testsuite_log_file="${mbdyn_testsuite_prefix_output}/mbdyn-testsuite-patched.log"
 mbdyn_input_files_cache="${mbdyn_testsuite_prefix_output}/.mbdyn-input-files.cache"
 export MBD_INPUT_FILES_CACHE="${mbdyn_input_files_cache}"
+export MBD_TESTSUITE_RESOURCE_LOCK_DIR="${mbdyn_testsuite_prefix_output}/.resource-locks"
 # Never reuse a cache from a previous invocation: command-line filters and
 # input directories may have changed.  It is then populated once below.
 rm -f "${mbdyn_input_files_cache}"

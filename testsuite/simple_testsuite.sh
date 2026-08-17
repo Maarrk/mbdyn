@@ -104,6 +104,7 @@ export PYTHONPATH="${PYTHONPATH}:${program_dir}/libraries/libmbc"
 MBD_NUM_TASKS=${MBD_NUM_TASKS:-$(( $(lscpu | awk '/^Socket\(s\)/{ print $2 }') * $(lscpu | awk '/^Core\(s\) per socket/{ print $4 }') ))}
 MBD_NUM_THREADS=${MBD_NUM_THREADS:-1}
 MBD_INPUT_FILES_CACHE="${MBD_INPUT_FILES_CACHE:-}"
+MBD_TESTSUITE_RESOURCE_LOCK_DIR="${MBD_TESTSUITE_RESOURCE_LOCK_DIR:-}"
 
 while ! test -z "$1"; do
     case "$1" in
@@ -282,6 +283,15 @@ if ! test -d "${mbdyn_testsuite_prefix_output}"; then
         echo "Failed to create directory \"${mbdyn_testsuite_prefix_output}\""
         exit 1
     fi
+fi
+
+if test -z "${MBD_TESTSUITE_RESOURCE_LOCK_DIR}"; then
+    MBD_TESTSUITE_RESOURCE_LOCK_DIR="${mbdyn_testsuite_prefix_output}/.resource-locks"
+fi
+
+if ! mkdir -p "${MBD_TESTSUITE_RESOURCE_LOCK_DIR}"; then
+    echo "Failed to create resource lock directory \"${MBD_TESTSUITE_RESOURCE_LOCK_DIR}\""
+    exit 1
 fi
 
 if test -z "${mbdyn_testsuite_prefix_input}"; then
@@ -589,9 +599,41 @@ function simple_testsuite_run_test()
                 mbd_command="${mbd_command} >& ${mbd_log_file}"
             fi
 
+            ## Socket listeners cannot share a TCP port.  A patched suite can
+            ## run the same input under different configurations at once, so
+            ## serialize only tests declaring the same literal socket port.
+            mbd_socket_ports=$(awk '
+                {
+                    line = $0;
+                    sub(/#.*/, "", line);
+                    if (line ~ /socket/ && line ~ /port[[:space:]]*,/) {
+                        sub(/.*port[[:space:]]*,[[:space:]]*/, "", line);
+                        sub(/[^0-9].*/, "", line);
+                        if (line ~ /^[0-9]+$/) {
+                            print line;
+                        }
+                    }
+                }
+            ' "${mbd_filename}" | sort -nu)
+            declare -a mbd_resource_lock_fds=()
+
+            while IFS= read -r mbd_socket_port; do
+                test -n "${mbd_socket_port}" || continue
+                mbd_resource_lock_file="${MBD_TESTSUITE_RESOURCE_LOCK_DIR}/tcp-port-${mbd_socket_port}.lock"
+                exec {mbd_resource_lock_fd}>"${mbd_resource_lock_file}"
+                printf 'Waiting for TCP port %s lock\n' "${mbd_socket_port}"
+                flock "${mbd_resource_lock_fd}"
+                mbd_resource_lock_fds+=("${mbd_resource_lock_fd}")
+            done <<< "${mbd_socket_ports}"
+
             eval ${mbd_command}
 
             ((rc=$?))
+
+            for mbd_resource_lock_fd in "${mbd_resource_lock_fds[@]}"; do
+                flock -u "${mbd_resource_lock_fd}"
+                eval "exec ${mbd_resource_lock_fd}>&-"
+            done
 
             if ! cd "${curr_dir}"; then
                 echo "Invalid directory"
@@ -912,6 +954,7 @@ else
     export MBDYN_ARGS_ADD
     export MBD_NUM_THREADS
     export MBD_INPUT_FILES_CACHE
+    export MBD_TESTSUITE_RESOURCE_LOCK_DIR
     export JUNIT_XML_KEEP_ALL_OUTPUT
     export -f simple_testsuite_run_test
     export mbdyn_patch_input_sed_expression
