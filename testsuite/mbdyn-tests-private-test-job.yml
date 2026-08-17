@@ -36,6 +36,8 @@
 
 variables:
   MBD_TESTSUITE_TIMING: "yes"
+  MBD_TESTSUITE_TMPFS_ROOT: "/dev/shm"
+  MBD_TESTSUITE_TMPFS_STALE_AGE_MINUTES: "1440"
   ## Error codes which should not cause the pipeline to fail (see simple_testsuite.sh):
   ## - no tests were executed     (0x001)
   ## - timeout                    (0x002)
@@ -49,6 +51,12 @@ variables:
   ## - skipped tests              (0x200)
   MBD_TESTS_PRIVATE_EXIT_STATUS_MASK: "0x380"
   MBD_TESTS_PRIVATE_ABORT_AFTER_STEP: "25"
+
+.mbdyn-testsuite-tmpfs-cleanup:
+  before_script:
+    - bash testsuite/mbdyn_testsuite_tmpfs_cleanup.sh --stale
+  after_script:
+    - bash testsuite/mbdyn_testsuite_tmpfs_cleanup.sh --current
   MBD_TESTS_PRIVATE_TIMEOUT: "unlimited"
   MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS: "yes"
   MBD_TESTS_PRIVATE_NUM_TASKS: 32
@@ -63,6 +71,7 @@ variables:
   MBD_TESTS_PRIVATE_METHODS: "impliciteuler" ## FIXME: ms2,0. is not passing yet
   MBD_TESTS_PRIVATE_INITIAL_ASSEMBLY_DEFORMABLE: "exclude"
 mbdyn-tests-private-test-job:   # This job runs in the test stage.
+  extends: .mbdyn-testsuite-tmpfs-cleanup
   stage: test    # It only starts when the job in the build stage completes successfully.
   needs:
      - job: siconos-build-job
@@ -128,6 +137,7 @@ mbdyn-tests-private-test-job:   # This job runs in the test stage.
       junit: $MBD_TESTS_PRIVATE_OUTPUT_DIR/**/junit_xml_report_*.xml
 
 mbdyn-tests-private-test-job-gcov:   # This job runs in the test stage.
+  extends: .mbdyn-testsuite-tmpfs-cleanup
   stage: test    # It only starts when the job in the build stage completes successfully.
   needs:
      - job: mkl-build-job
@@ -191,6 +201,7 @@ mbdyn-tests-private-test-job-gcov:   # This job runs in the test stage.
       junit: $MBD_TESTS_PRIVATE_OUTPUT_DIR_GCOV/**/junit_xml_report_*.xml
 
 mbdyn-tests-private-test-job-debug:   # This job runs in the test stage.
+  extends: .mbdyn-testsuite-tmpfs-cleanup
   stage: test    # It only starts when the job in the build stage completes successfully.
   needs:
      - job: siconos-build-job
