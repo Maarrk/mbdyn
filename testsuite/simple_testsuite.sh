@@ -469,22 +469,8 @@ function simple_testsuite_run_test()
         mbd_script_name_gen_m="${mbd_dir_name}/${mbd_script_name}_gen.m"
         mbd_command=""
 
-        if test "${mbdyn_patch_input}" != "no"; then
-            ## FIXME: actually ${mbd_filename_patched} should be created inside the output directory.
-            ## FIXME: However, MBDyn is not able to located additional input files, if ${mbd_filename_patched}
-            ## FIXME: would be created inside a different directory than the original input file.
-            mbd_filename_patched=$(mktemp -p "${mbd_dir_name}" "${mbd_basename}_XXXXXXXXXX_patched_$((idx_test)).mbd")
-            mbd_filename_patched_copy="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_input_file_patched_$((idx_test)).mbd"
-
-            if ! sed ${mbdyn_patch_input_sed_args} "${mbdyn_patch_input_sed_expression}" "${mbd_filename}" | tee "${mbd_filename_patched}" > "${mbd_filename_patched_copy}"; then
-                rm -f "${mbd_filename_patched}"
-                rm -f "${mbd_filename_patched_copy}"
-                echo "Failed to patch input file \"${mbd_filename}\""
-                return 1
-            fi
-        else
-            mbd_filename_patched="${mbd_filename}"
-        fi
+        mbd_filename_patched="${mbd_filename}"
+        mbd_input_was_patched="no"
 
         mbd_allow_patch="yes"
 
@@ -548,6 +534,22 @@ function simple_testsuite_run_test()
         elif test "${mbdyn_patch_input}" != "no" && test "${mbd_allow_patch}" != "yes"; then
             echo "Cannot execute test \"${mbd_filename}\""
             mbd_exec_solver="no"
+        fi
+
+        if test "${mbdyn_patch_input}" != "no" && test "${mbd_exec_solver}" != "no"; then
+            ## FIXME: actually ${mbd_filename_patched} should be created inside the output directory.
+            ## FIXME: However, MBDyn is not able to located additional input files, if ${mbd_filename_patched}
+            ## FIXME: would be created inside a different directory than the original input file.
+            mbd_filename_patched=$(mktemp -p "${mbd_dir_name}" "${mbd_basename}_XXXXXXXXXX_patched_$((idx_test)).mbd")
+            mbd_filename_patched_copy="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_input_file_patched_$((idx_test)).mbd"
+
+            if ! sed ${mbdyn_patch_input_sed_args} "${mbdyn_patch_input_sed_expression}" "${mbd_filename}" | tee "${mbd_filename_patched}" > "${mbd_filename_patched_copy}"; then
+                rm -f "${mbd_filename_patched}"
+                rm -f "${mbd_filename_patched_copy}"
+                echo "Failed to patch input file \"${mbd_filename}\""
+                return 1
+            fi
+            mbd_input_was_patched="yes"
         fi
 
         if test -z "${mbd_command}"; then
@@ -644,7 +646,7 @@ function simple_testsuite_run_test()
             ((rc=-1))
         fi
 
-        if test "${mbdyn_patch_input}" != "no"; then
+        if test "${mbd_input_was_patched}" = "yes"; then
             ## Must be deleted in any case because it is located inside the input directory!
             ## In case of failure, we will just keep "${mbd_filename_patched_copy}"
             rm -f "${mbd_filename_patched}"
@@ -791,12 +793,12 @@ function simple_testsuite_run_test()
                 fi
             fi
 
-            if test "${mbdyn_patch_input}" != "no"; then
+            if test "${mbd_input_was_patched}" = "yes"; then
                 if ! test -f "${mbd_filename_patched_copy}"; then
                     echo "File not found: \"${mbd_filename_patched_copy}\""
                 fi
                 rm -f "${mbd_filename_patched_copy}"
-            else
+            elif test "${mbdyn_patch_input}" = "no"; then
                 echo "File \"${mbd_filename}\" was not patched"
             fi
         else
