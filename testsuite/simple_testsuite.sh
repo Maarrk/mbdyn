@@ -104,6 +104,7 @@ export PYTHONPATH="${PYTHONPATH}:${program_dir}/libraries/libmbc"
 MBD_NUM_TASKS=${MBD_NUM_TASKS:-$(( $(lscpu | awk '/^Socket\(s\)/{ print $2 }') * $(lscpu | awk '/^Core\(s\) per socket/{ print $4 }') ))}
 MBD_NUM_THREADS=${MBD_NUM_THREADS:-1}
 MBD_INPUT_FILES_CACHE="${MBD_INPUT_FILES_CACHE:-}"
+MBD_TESTSUITE_MANIFEST_CACHE="${MBD_TESTSUITE_MANIFEST_CACHE:-}"
 MBD_TESTSUITE_RESOURCE_LOCK_DIR="${MBD_TESTSUITE_RESOURCE_LOCK_DIR:-}"
 mbdyn_timing="${MBD_TESTSUITE_TIMING:-no}"
 MBD_TESTSUITE_TIMING_FILE="${MBD_TESTSUITE_TIMING_FILE:-}"
@@ -389,6 +390,29 @@ else
     fi
 fi
 
+## Cache metadata which is invariant across patched configurations.  In
+## particular, a patched suite used to run these three source-file scans once
+## for every (configuration, input) pair.
+if test -n "${MBD_TESTSUITE_MANIFEST_CACHE}" && ! test -s "${MBD_TESTSUITE_MANIFEST_CACHE}"; then
+    : > "${MBD_TESTSUITE_MANIFEST_CACHE}"
+    for mbd_manifest_filename in ${MBD_INPUT_FILES_FOUND}; do
+        mbd_manifest_expected_status=$(awk -F '=' 'BEGIN{ status = -1; } /^[[:space:]]*##[[:space:]]*@MBDYN_SIMPLE_TESTSUITE_EXIT_STATUS@[[:space:]]*=[[:space:]]*[0-9]*[[:space:]]*$/ { status = ($2 != 0); } END{ printf("%d", status); }' "${mbd_manifest_filename}")
+        mbd_manifest_excluded=$(awk -f mbdyn_testsuite_exclude_test.awk "${mbd_manifest_filename}" | awk '/^excluded/{print "yes"; exit}')
+        mbd_manifest_ports=$(awk '
+            {
+                line = $0;
+                sub(/#.*/, "", line);
+                if (line ~ /socket/ && line ~ /port[[:space:]]*,/) {
+                    sub(/.*port[[:space:]]*,[[:space:]]*/, "", line);
+                    sub(/[^0-9].*/, "", line);
+                    if (line ~ /^[0-9]+$/) print line;
+                }
+            }
+        ' "${mbd_manifest_filename}" | sort -nu | paste -sd, -)
+        printf '%s\t%s\t%s\t%s\n' "${mbd_manifest_filename}" "${mbd_manifest_expected_status}" "${mbd_manifest_excluded:-no}" "${mbd_manifest_ports}" >> "${MBD_TESTSUITE_MANIFEST_CACHE}"
+    done
+fi
+
 function simple_testsuite_run_test()
 {
     mbdyn_timing_now_ms
@@ -401,6 +425,10 @@ function simple_testsuite_run_test()
     mbd_exec_gen_script="yes"
     mbd_exec_run_script="yes"
     mbd_exec_solver="yes"
+    mbd_manifest_expected_status=""
+    mbd_manifest_excluded=""
+    mbd_manifest_ports=""
+    mbd_manifest_metadata="no"
     declare -i idx_test=-1
 
     case "${mbdyn_patch_input}" in
@@ -417,6 +445,19 @@ function simple_testsuite_run_test()
                 ;;
             --input)
                 mbd_filename="$2"
+                shift
+                ;;
+            --expected-status)
+                mbd_manifest_expected_status="$2"
+                mbd_manifest_metadata="yes"
+                shift
+                ;;
+            --excluded)
+                mbd_manifest_excluded="$2"
+                shift
+                ;;
+            --socket-ports)
+                mbd_manifest_ports="$2"
                 shift
                 ;;
             --index)
@@ -464,7 +505,11 @@ function simple_testsuite_run_test()
 
     rm -f "${mbd_status_file}"
 
-    expected_test_status=`awk -F '=' 'BEGIN{ status = -1; } /^[[:space:]]*##[[:space:]]*@MBDYN_SIMPLE_TESTSUITE_EXIT_STATUS@[[:space:]]*=[[:space:]]*[0-9]*[[:space:]]*$/ { status = ($2 != 0); } END{ printf("%d\n", status); }' "${mbd_filename}"`
+    if test "${mbd_manifest_metadata}" = "yes"; then
+        expected_test_status="${mbd_manifest_expected_status}"
+    else
+        expected_test_status=`awk -F '=' 'BEGIN{ status = -1; } /^[[:space:]]*##[[:space:]]*@MBDYN_SIMPLE_TESTSUITE_EXIT_STATUS@[[:space:]]*=[[:space:]]*[0-9]*[[:space:]]*$/ { status = ($2 != 0); } END{ printf("%d\n", status); }' "${mbd_filename}"`
+    fi
 
     printf "%s: expected_test_status=%d\n" "${mbd_filename}" ${expected_test_status}
 
@@ -572,10 +617,14 @@ function simple_testsuite_run_test()
             fi
         done
 
-        mbd_exclude_test=`awk -f mbdyn_testsuite_exclude_test.awk "${mbd_filename}"`
+        if test "${mbd_manifest_metadata}" = "yes"; then
+            mbd_exclude_test="${mbd_manifest_excluded}"
+        else
+            mbd_exclude_test=`awk -f mbdyn_testsuite_exclude_test.awk "${mbd_filename}"`
+        fi
 
         case "${mbd_exclude_test}" in
-             excluded*)
+             yes|excluded*)
                 mbd_exec_solver="no"
                 ;;
         esac
@@ -660,7 +709,10 @@ function simple_testsuite_run_test()
             ## Socket listeners cannot share a TCP port.  A patched suite can
             ## run the same input under different configurations at once, so
             ## serialize only tests declaring the same literal socket port.
-            mbd_socket_ports=$(awk '
+            if test "${mbd_manifest_metadata}" = "yes"; then
+                mbd_socket_ports=$(tr ',' '\n' <<< "${mbd_manifest_ports}")
+            else
+                mbd_socket_ports=$(awk '
                 {
                     line = $0;
                     sub(/#.*/, "", line);
@@ -672,7 +724,8 @@ function simple_testsuite_run_test()
                         }
                     }
                 }
-            ' "${mbd_filename}" | sort -nu)
+                ' "${mbd_filename}" | sort -nu)
+            fi
             declare -a mbd_resource_lock_fds=()
 
             mbdyn_timing_now_ms
@@ -1030,6 +1083,7 @@ else
     export MBDYN_ARGS_ADD
     export MBD_NUM_THREADS
     export MBD_INPUT_FILES_CACHE
+    export MBD_TESTSUITE_MANIFEST_CACHE
     export MBD_TESTSUITE_RESOURCE_LOCK_DIR
     export MBD_TESTSUITE_TIMING_FILE
     export JUNIT_XML_KEEP_ALL_OUTPUT
@@ -1051,8 +1105,13 @@ else
     if test "${mbdyn_exec_solver}" != "no"; then
         ## Parallel execution of the solver
         mbd_status_file=`printf "${mbd_status_file_format}" '{#}'`
-        mbd_parallel_args="-j${MBD_NUM_TASKS} -n1 simple_testsuite_run_test --status ${mbd_status_file} --input '{}' --index '{#}' --exec-gen no"
-        printf '%s\n' ${MBD_INPUT_FILES_FOUND} | parallel ${mbd_parallel_args}
+        if test -n "${MBD_TESTSUITE_MANIFEST_CACHE}" && test -s "${MBD_TESTSUITE_MANIFEST_CACHE}"; then
+            mbd_parallel_args="-j${MBD_NUM_TASKS} -n1 simple_testsuite_run_test --status ${mbd_status_file} --input '{1}' --expected-status '{2}' --excluded '{3}' --socket-ports '{4}' --index '{#}' --exec-gen no"
+            parallel --colsep '\t' ${mbd_parallel_args} :::: "${MBD_TESTSUITE_MANIFEST_CACHE}"
+        else
+            mbd_parallel_args="-j${MBD_NUM_TASKS} -n1 simple_testsuite_run_test --status ${mbd_status_file} --input '{}' --index '{#}' --exec-gen no"
+            printf '%s\n' ${MBD_INPUT_FILES_FOUND} | parallel ${mbd_parallel_args}
+        fi
     fi
 fi
 
