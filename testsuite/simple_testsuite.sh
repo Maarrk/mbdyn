@@ -105,7 +105,6 @@ MBD_NUM_TASKS=${MBD_NUM_TASKS:-$(( $(lscpu | awk '/^Socket\(s\)/{ print $2 }') *
 MBD_NUM_THREADS=${MBD_NUM_THREADS:-1}
 MBD_INPUT_FILES_CACHE="${MBD_INPUT_FILES_CACHE:-}"
 MBD_TESTSUITE_RESOURCE_LOCK_DIR="${MBD_TESTSUITE_RESOURCE_LOCK_DIR:-}"
-MBD_TESTSUITE_TMPFS_ROOT="${MBD_TESTSUITE_TMPFS_ROOT:-}"
 mbdyn_timing="${MBD_TESTSUITE_TIMING:-no}"
 MBD_TESTSUITE_TIMING_FILE="${MBD_TESTSUITE_TIMING_FILE:-}"
 
@@ -119,8 +118,6 @@ function mbdyn_timing_now_ms()
         MBDYN_TIMING_NOW_MS=$((SECONDS * 1000))
     fi
 }
-
-source "${program_dir}/mbdyn_testsuite_tmpfs.sh"
 
 while ! test -z "$1"; do
     case "$1" in
@@ -305,11 +302,6 @@ if ! test -d "${mbdyn_testsuite_prefix_output}"; then
         exit 1
     fi
 fi
-
-if ! mbdyn_testsuite_use_tmpfs "${mbdyn_testsuite_prefix_output}"; then
-    exit 1
-fi
-mbdyn_testsuite_prefix_output="${MBD_TESTSUITE_TMPFS_OUTPUT}"
 
 if test -z "${MBD_TESTSUITE_RESOURCE_LOCK_DIR}"; then
     MBD_TESTSUITE_RESOURCE_LOCK_DIR="${mbdyn_testsuite_prefix_output}/.resource-locks"

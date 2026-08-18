@@ -58,11 +58,6 @@ BEGINFILE {
     output = 0;
 }
 
-/^TESTSUITE_TMPFS / {
-    print
-    next
-}
-
 output != 0 {
     print
 }

@@ -64,7 +64,6 @@ mbdyn_skip_initial_joint_assembly="not-skip skip"
 mbdyn_initial_assembly_of_deformable_and_force_elements="exclude include"
 declare -i mbd_exit_status_mask=0
 mbdyn_configuration_jobs="${MBDYN_PATCHED_CONFIGURATION_JOBS:-1}"
-MBD_TESTSUITE_TMPFS_ROOT="${MBD_TESTSUITE_TMPFS_ROOT:-}"
 mbdyn_timing="${MBD_TESTSUITE_TIMING:-no}"
 MBD_TESTSUITE_TIMING_FILE="${MBD_TESTSUITE_TIMING_FILE:-}"
 other_arguments=""
@@ -79,8 +78,6 @@ function mbdyn_timing_now_ms()
         MBDYN_TIMING_NOW_MS=$((SECONDS * 1000))
     fi
 }
-
-source "${program_dir}/mbdyn_testsuite_tmpfs.sh"
 
 while ! test -z "$1"; do
     case "$1" in
@@ -211,11 +208,6 @@ if ! test -d "${mbdyn_testsuite_prefix_output}"; then
         exit 1
     fi
 fi
-
-if ! mbdyn_testsuite_use_tmpfs "${mbdyn_testsuite_prefix_output}"; then
-    exit 1
-fi
-mbdyn_testsuite_prefix_output="${MBD_TESTSUITE_TMPFS_OUTPUT}"
 
 simple_testsuite_log_file="${mbdyn_testsuite_prefix_output}/mbdyn-testsuite-patched.log"
 mbdyn_input_files_cache="${mbdyn_testsuite_prefix_output}/.mbdyn-input-files.cache"
