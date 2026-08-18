@@ -21,18 +21,18 @@ function mbdyn_testsuite_tmpfs_cleanup()
             cleanup_rc=1
             cleanup_error="mkdir-persistent-output"
         else
-            shopt -s dotglob nullglob
-            for source_file in "${MBD_TESTSUITE_TMPFS_OUTPUT}"/*; do
+            # Do not rely on pathname expansion: CI runner shells can enable
+            # noglob, in which case "${directory}"/* remains literal.
+            while IFS= read -r -d '' source_file; do
                 test "${source_file##*/}" = "mbdyn-testsuite-timing.tsv" && continue
-                if ! cp -a "${source_file}" "${MBD_TESTSUITE_PERSISTENT_OUTPUT}/"; then
+                if ! cp -a -- "${source_file}" "${MBD_TESTSUITE_PERSISTENT_OUTPUT}/"; then
                     printf '%s: failed to preserve "%s"\n' "${program_name}" "${source_file}" >&2
                     cleanup_rc=1
                     test -n "${cleanup_error}" || cleanup_error="copy:${source_file##*/}"
                 else
                     ((copied_entries+=1))
                 fi
-            done
-            shopt -u dotglob nullglob
+            done < <(find "${MBD_TESTSUITE_TMPFS_OUTPUT}" -mindepth 1 -maxdepth 1 -print0)
 
             # A CI job can invoke the suite more than once.  Retain one TSV
             # header and append the records from every temporary invocation.
