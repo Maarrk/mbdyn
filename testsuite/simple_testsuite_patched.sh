@@ -63,12 +63,7 @@ mbdyn_abort_after="input assembly derivatives regularstep,2"
 mbdyn_skip_initial_joint_assembly="not-skip skip"
 mbdyn_initial_assembly_of_deformable_and_force_elements="exclude include"
 declare -i mbd_exit_status_mask=0
-## --tasks is the global MBDyn-process budget.  Each active configuration is
-## given a small persistent GNU Parallel pool; the number of configurations is
-## derived so their product never exceeds that budget.
-mbdyn_global_tasks="${MBDYN_PATCHED_TASKS:-${MBD_NUM_TASKS:-${MBDYN_PATCHED_CONFIGURATION_JOBS:-1}}}"
-mbdyn_configuration_jobs="${MBDYN_PATCHED_CONFIGURATION_JOBS:-0}"
-mbdyn_tasks_per_configuration="${MBDYN_PATCHED_TASKS_PER_CONFIGURATION:-2}"
+mbdyn_configuration_jobs="${MBDYN_PATCHED_CONFIGURATION_JOBS:-1}"
 mbdyn_timing="${MBD_TESTSUITE_TIMING:-no}"
 MBD_TESTSUITE_TIMING_FILE="${MBD_TESTSUITE_TIMING_FILE:-}"
 other_arguments=""
@@ -147,11 +142,7 @@ while ! test -z "$1"; do
             other_arguments="${other_arguments} $1 $2"
             shift
             ;;
-        --tasks)
-            mbdyn_global_tasks="$2"
-            shift
-            ;;
-        --configuration-jobs)
+        --configuration-jobs|--tasks)
             mbdyn_configuration_jobs="$2"
             shift
             ;;
@@ -174,8 +165,8 @@ while ! test -z "$1"; do
             printf "  --exclude-inverse-dynamics {0|1}\n"
             printf "  --exclude-initial-value {0|1}\n"
             printf "  --threads <number_of_threads_per_task>\n"
-            printf "  --tasks <maximum_number_of_concurrent_mbdyn_processes>\n"
-            printf "  --configuration-jobs <maximum_number_of_concurrent_configurations>\n"
+            printf "  --tasks <number_of_concurrent_configurations>\n"
+            printf "  --configuration-jobs <number_of_concurrent_configurations>\n"
             printf "  --verbose {yes|no}\n"
             printf "  --keep-output {all|failed|unexpected}\n"
             printf "  --mbdyn-args-add \"<arg1> <arg2> ... <argN>\"\n"
@@ -198,36 +189,10 @@ done
 
 ((mbd_exit_status_mask|=0x1))
 
-if ! [[ "${mbdyn_global_tasks}" =~ ^[1-9][0-9]*$ ]]; then
-    printf '%s: invalid global task count "%s"\n' "${program_name}" "${mbdyn_global_tasks}" >&2
-    exit 1
-fi
-
-if ! [[ "${mbdyn_tasks_per_configuration}" =~ ^[1-9][0-9]*$ ]]; then
-    printf '%s: invalid tasks per configuration "%s"\n' "${program_name}" "${mbdyn_tasks_per_configuration}" >&2
-    exit 1
-fi
-
-if test "${mbdyn_tasks_per_configuration}" -gt "${mbdyn_global_tasks}"; then
-    mbdyn_tasks_per_configuration="${mbdyn_global_tasks}"
-fi
-
-if test "${mbdyn_configuration_jobs}" = 0; then
-    mbdyn_configuration_jobs=$(((mbdyn_global_tasks + mbdyn_tasks_per_configuration - 1) / mbdyn_tasks_per_configuration))
-fi
-
 if ! [[ "${mbdyn_configuration_jobs}" =~ ^[1-9][0-9]*$ ]]; then
     printf '%s: invalid configuration concurrency "%s"\n' "${program_name}" "${mbdyn_configuration_jobs}" >&2
     exit 1
 fi
-
-mbdyn_max_configuration_jobs=$((mbdyn_global_tasks / mbdyn_tasks_per_configuration))
-if test "${mbdyn_configuration_jobs}" -gt "${mbdyn_max_configuration_jobs}"; then
-    mbdyn_configuration_jobs="${mbdyn_max_configuration_jobs}"
-fi
-
-printf 'Patched scheduler: global tasks=%d, tasks/configuration=%d, configuration jobs=%d\n' \
-    "${mbdyn_global_tasks}" "${mbdyn_tasks_per_configuration}" "${mbdyn_configuration_jobs}"
 
 case "${mbdyn_timing}" in
     yes|no)
@@ -246,9 +211,7 @@ fi
 
 simple_testsuite_log_file="${mbdyn_testsuite_prefix_output}/mbdyn-testsuite-patched.log"
 mbdyn_input_files_cache="${mbdyn_testsuite_prefix_output}/.mbdyn-input-files.cache"
-mbdyn_testsuite_manifest_cache="${mbdyn_testsuite_prefix_output}/.mbdyn-input-manifest.tsv"
 export MBD_INPUT_FILES_CACHE="${mbdyn_input_files_cache}"
-export MBD_TESTSUITE_MANIFEST_CACHE="${mbdyn_testsuite_manifest_cache}"
 export MBD_TESTSUITE_RESOURCE_LOCK_DIR="${mbdyn_testsuite_prefix_output}/.resource-locks"
 if test "${mbdyn_timing}" = "yes"; then
     if test -z "${MBD_TESTSUITE_TIMING_FILE}"; then
@@ -263,7 +226,6 @@ export MBD_TESTSUITE_TIMING="${mbdyn_timing}"
 # Never reuse a cache from a previous invocation: command-line filters and
 # input directories may have changed.  It is then populated once below.
 rm -f "${mbdyn_input_files_cache}"
-rm -f "${mbdyn_testsuite_manifest_cache}"
 
 mbdyn_timing_now_ms
 mbdyn_patched_suite_start_ms=${MBDYN_TIMING_NOW_MS}
@@ -787,7 +749,7 @@ for mbd_linear_solver in ${mbdyn_linear_solvers}; do
                                                     "${MBD_TESTSUITE_CONTROL_DATA_END}"
                                             } > "${simple_testsuite_log_file}"
 
-                                            MBD_NUM_TASKS="${mbdyn_tasks_per_configuration}" simple_testsuite.sh --exec-gen "no" --patch-input "yes" --prefix-output "${mbd_output_dir}" --exit-status-mask $((mbd_exit_status_mask)) ${other_arguments} >> "${simple_testsuite_log_file}" 2>&1
+                                            MBD_NUM_TASKS=1 simple_testsuite.sh --exec-gen "no" --patch-input "yes" --prefix-output "${mbd_output_dir}" --exit-status-mask $((mbd_exit_status_mask)) ${other_arguments} >> "${simple_testsuite_log_file}" 2>&1
 
                                             rc=$?
 
@@ -889,7 +851,7 @@ fi
 failed_tests=$(find "${mbdyn_testsuite_prefix_output}" -type f -name .failed -print)
 
 if test "${mbdyn_keep_output}" = "no"; then
-    rm -f "${mbdyn_input_files_cache}" "${mbdyn_testsuite_manifest_cache}"
+    rm -f "${mbdyn_input_files_cache}"
 fi
 
 if test "${configuration_failure}" -eq 0 && test -z "${failed_tests}"; then
