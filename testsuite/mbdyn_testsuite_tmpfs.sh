@@ -8,20 +8,28 @@
 function mbdyn_testsuite_tmpfs_cleanup()
 {
     local rc=$?
+    local original_rc=${rc}
+    local cleanup_rc=0
     local source_file
+    local copied_entries=0
+    local cleanup_error=""
 
     trap - EXIT HUP INT QUIT TERM
     if test -d "${MBD_TESTSUITE_TMPFS_OUTPUT}"; then
         if ! mkdir -p "${MBD_TESTSUITE_PERSISTENT_OUTPUT}"; then
             printf '%s: cannot create persistent output directory "%s"\n' "${program_name}" "${MBD_TESTSUITE_PERSISTENT_OUTPUT}" >&2
-            test "${rc}" -ne 0 || rc=1
+            cleanup_rc=1
+            cleanup_error="mkdir-persistent-output"
         else
             shopt -s dotglob nullglob
             for source_file in "${MBD_TESTSUITE_TMPFS_OUTPUT}"/*; do
                 test "${source_file##*/}" = "mbdyn-testsuite-timing.tsv" && continue
                 if ! cp -a "${source_file}" "${MBD_TESTSUITE_PERSISTENT_OUTPUT}/"; then
                     printf '%s: failed to preserve "%s"\n' "${program_name}" "${source_file}" >&2
-                    test "${rc}" -ne 0 || rc=1
+                    cleanup_rc=1
+                    test -n "${cleanup_error}" || cleanup_error="copy:${source_file##*/}"
+                else
+                    ((copied_entries+=1))
                 fi
             done
             shopt -u dotglob nullglob
@@ -32,24 +40,42 @@ function mbdyn_testsuite_tmpfs_cleanup()
             # directories that were removed by this trap.
             if test -f "${MBD_TESTSUITE_TMPFS_OUTPUT}/mbdyn-testsuite-timing.tsv"; then
                 if test -e "${MBD_TESTSUITE_PERSISTENT_OUTPUT}/mbdyn-testsuite-timing.tsv"; then
-                    sed '1d' "${MBD_TESTSUITE_TMPFS_OUTPUT}/mbdyn-testsuite-timing.tsv" | sed "s|${MBD_TESTSUITE_TMPFS_OUTPUT}|${MBD_TESTSUITE_PERSISTENT_OUTPUT}|g" >> "${MBD_TESTSUITE_PERSISTENT_OUTPUT}/mbdyn-testsuite-timing.tsv" || rc=1
+                    if ! sed '1d' "${MBD_TESTSUITE_TMPFS_OUTPUT}/mbdyn-testsuite-timing.tsv" | sed "s|${MBD_TESTSUITE_TMPFS_OUTPUT}|${MBD_TESTSUITE_PERSISTENT_OUTPUT}|g" >> "${MBD_TESTSUITE_PERSISTENT_OUTPUT}/mbdyn-testsuite-timing.tsv"; then
+                        cleanup_rc=1
+                        test -n "${cleanup_error}" || cleanup_error="append-timing"
+                    fi
                 elif ! sed "s|${MBD_TESTSUITE_TMPFS_OUTPUT}|${MBD_TESTSUITE_PERSISTENT_OUTPUT}|g" "${MBD_TESTSUITE_TMPFS_OUTPUT}/mbdyn-testsuite-timing.tsv" > "${MBD_TESTSUITE_PERSISTENT_OUTPUT}/mbdyn-testsuite-timing.tsv"; then
                     printf '%s: failed to preserve timing data\n' "${program_name}" >&2
-                    test "${rc}" -ne 0 || rc=1
+                    cleanup_rc=1
+                    test -n "${cleanup_error}" || cleanup_error="create-timing"
                 fi
             fi
         fi
+    else
+        cleanup_rc=1
+        cleanup_error="missing-temporary-output"
     fi
 
     case "${MBD_TESTSUITE_TMPFS_OUTPUT}" in
         "${MBD_TESTSUITE_TMPFS_ROOT}"/mbdyn-testsuite-*)
-            rm -rf -- "${MBD_TESTSUITE_TMPFS_OUTPUT}"
+            if ! rm -rf -- "${MBD_TESTSUITE_TMPFS_OUTPUT}"; then
+                cleanup_rc=1
+                test -n "${cleanup_error}" || cleanup_error="remove-temporary-output"
+            fi
             ;;
         *)
             printf '%s: refusing to remove unexpected temporary directory "%s"\n' "${program_name}" "${MBD_TESTSUITE_TMPFS_OUTPUT}" >&2
-            test "${rc}" -ne 0 || rc=1
+            cleanup_rc=1
+            test -n "${cleanup_error}" || cleanup_error="unexpected-temporary-output"
             ;;
     esac
+
+    if test "${cleanup_rc}" -ne 0 && test "${rc}" -eq 0; then
+        rc=${cleanup_rc}
+    fi
+    printf 'TESTSUITE_TMPFS cleanup original_exit=%d cleanup_exit=%d copied_entries=%d source=%s destination=%s error=%s\n' \
+        "${original_rc}" "${cleanup_rc}" "${copied_entries}" \
+        "${MBD_TESTSUITE_TMPFS_OUTPUT}" "${MBD_TESTSUITE_PERSISTENT_OUTPUT}" "${cleanup_error:-none}"
     exit "${rc}"
 }
 
