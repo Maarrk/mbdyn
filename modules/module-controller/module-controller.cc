@@ -166,6 +166,7 @@ void
 ModuleController::Output(OutputHandler& OH) const
 {
 	if (bToBeOutput()) {
+             if (OH.UseText(OutputHandler::LOADABLE)) {
 		std::ostream& out = OH.Loadable();
 
 		out << std::setw(8) << GetLabel();
@@ -181,6 +182,7 @@ ModuleController::Output(OutputHandler& OH) const
 		}
 
 		out << std::endl;
+             }
 	}
 }
 

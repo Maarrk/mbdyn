@@ -884,7 +884,6 @@ pHP(pHP_a)
                 silent_cerr("module-octave: creating embedded Octave interpreter failed!" << std::endl);
                 throw ErrGeneric(MBDYN_EXCEPT_ARGS);
         }
-        interpreter.source_file("~/.octaverc");
 
 #else
         const int nmax_args = 4;
@@ -1356,23 +1355,6 @@ OctaveInterface::EvalFunction(const std::string& func, const octave_value_list& 
         }
 
         if (bFirstCall) {
-            octave_value_list args_pkg;
-            args_pkg.append(octave_value("load"));
-            args_pkg.append(octave_value("mbdyn_util_oct"));
-
-#if OCTAVE_MAJOR_VERSION >= 5
-            octave::feval("pkg", args_pkg, 0);
-#else
-            feval("pkg", args_pkg, 0);
-#endif
-
-#if OCTAVE_MAJOR_VERSION < 6
-            if ((error_state != 0)) {
-                silent_cerr("warning: octave package mbdyn_util_oct has not been installed" << std::endl);
-
-                error_state = 0;
-            }
-#endif
             // octave .m files by default are installed here
             if (!AddOctaveSearchPath(OCTAVEPATH)) {
                     silent_cerr("OctaveInterface error: addpath(\"" << OCTAVEPATH << "\") failed" << std::endl);

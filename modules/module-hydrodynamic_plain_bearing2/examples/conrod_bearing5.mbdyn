@@ -151,7 +151,7 @@ begin: initial value;
 	max iterations: 100;
 	tolerance: 1e-4, test, norm, 1e-3, test, norm;
         enforce constraint equations: constraint violations;
-        method: hybrid, ms, 0.;
+        method: ms, 0.;
         
 	derivatives tolerance: 5e-2, 1e-3;
 	derivatives max iterations: 10;
@@ -419,6 +419,8 @@ begin: elements;
                 Alambda, Alambda,
                 viscosity vapor, etav,
             mesh, linear finite difference, enable mcp, enable_mcp,
+            pressure step integrator, implicit euler,
+            density step integrator, implicit euler,            
             geometry, cylindrical,
                 mesh position, at shaft,
                 bearing width, conrod_bearing_width,

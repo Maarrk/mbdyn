@@ -46,10 +46,15 @@ test_data.pkg_name = {};
 test_data.octave_pkg_test_dir = "";
 test_data.mbdyn_exec = "mbdyn";
 test_data.mbdyn_args_add ="-CGF";
-test_data.octave_pkg_prefix = [];
+test_data.octave_pkg_prefix = getenv("OCT_PKG_INSTALL_PREFIX");
 thread_data.number_of_threads = 1;
 
 try
+  if (~isempty(test_data.octave_pkg_prefix))
+    fprintf(stderr, "\npkg(\"local_list\", \"%s\");\n\n", test_data.octave_pkg_prefix);
+    pkg("local_list", fullfile(test_data.octave_pkg_prefix, "octave_packages"));
+  endif
+
   pkg load mboct-octave-pkg;
 
   [prog_dir, prog_name, prog_ext] = fileparts(__FILE__);
@@ -98,8 +103,6 @@ try
         test_data.mbdyn_exec = args{++idx};
       case "--mbdyn-args-add"
         test_data.mbdyn_args_add = args{++idx};
-      case "--octave-pkg-prefix"
-        test_data.octave_pkg_prefix = args{++idx};
       case {"--tasks", "-t"}
         [opts.number_of_processors, cnt, msg] = sscanf(args{++idx}, "%d", "C");
 
@@ -127,12 +130,6 @@ try
 
   if (isempty(test_data.octave_pkg_test_dir))
     error("missing argument --octave-pkg-test-dir <DIR_NAME>");
-  endif
-
-  if (~isempty(test_data.octave_pkg_prefix))
-    pkg_list_type = "local_list";
-    fprintf(stderr, "\npkg(\"%s\", \"%s\");\n\n", pkg_list_type, test_data.octave_pkg_prefix);
-    pkg(pkg_list_type, test_data.octave_pkg_prefix);
   endif
 
   sigterm_dumps_octave_core(false);

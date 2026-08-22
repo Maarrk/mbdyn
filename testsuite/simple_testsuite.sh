@@ -73,9 +73,6 @@ else
     OCTAVE_LOCAL_LIST=""
 fi
 OCTAVE_EXEC="${OCTAVE_EXEC:-octave}"
-temp_octaverc=$(mktemp "${TMPDIR:-/tmp/}$(basename $0).XXXXXXXXXXXX")
-OCTAVE_LOCAL_LIST=$OCTAVE_LOCAL_LIST awk 'BEGIN {DONE=0} {if ($4=="%CI_LOCAL_LIST") {print "pkg local_list ",ENVIRON["OCTAVE_LOCAL_LIST"]," %CI_LOCAL_LIST"; DONE=1} else {print $0}} END {if (DONE==0) {print "pkg local_list ",ENVIRON["OCTAVE_LOCAL_LIST"]," %CI_LOCAL_LIST";}}' $HOME/.octaverc > $temp_octaverc
-mv $temp_octaverc $HOME/.octaverc
 PYTHON_EXEC="${PYTHON_EXEC:-python3}"
 TESTSUITE_TIME_CMD="${TESTSUITE_TIME_CMD:-/usr/bin/time --verbose}"
 JUNIT_XML_KEEP_ALL_OUTPUT="${JUNIT_XML_KEEP_ALL_OUTPUT:-none}"

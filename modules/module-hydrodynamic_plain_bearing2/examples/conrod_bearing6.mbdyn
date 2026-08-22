@@ -157,7 +157,7 @@ begin: initial value;
 	max iterations: 100;
 	tolerance: 1e-4, test, norm, 1e-3, test, norm;
         enforce constraint equations: constraint violations;
-        method: hybrid, ms, 0.;
+        method: ms, 0.;
         
 	derivatives tolerance: 1e2;
 	derivatives max iterations: 2000;

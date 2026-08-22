@@ -61,9 +61,9 @@ PlaneHingeJoint::PlaneHingeJoint(unsigned int uL, const DofOwner* pDO,
         ReactionComponentsForFriction rc)
 : Joint(uL, pDO, fOut), 
 pNode1(pN1), pNode2(pN2),
-d1(dTmp1), R1h(R1hTmp), d2(dTmp2), R2h(R2hTmp), F(Zero3), M(Zero3),
+d1(dTmp1), R1h(R1hTmp), d2(dTmp2), R2h(R2hTmp), F(Zero3), M(Zero3), Ffrict(Zero3),
 calcInitdTheta(_calcInitdTheta), NTheta(0), dTheta(initDTheta), dThetaWrapped(initDTheta),
-Sh_c(sh), fc(f), preF(pref), r(rr), ReactComp(rc),
+Sh_c(sh), fc(f), preF(pref), r(rr), M3(0.), ReactComp(rc), FReactForFrict(Zero3),
 od(od_a)
 {
 	NO_OP;
@@ -2689,9 +2689,9 @@ AxialRotationJoint::AxialRotationJoint(unsigned int uL, const DofOwner* pDO,
 : Joint(uL, pDO, fOut), 
 DriveOwner(pDC), 
 pNode1(pN1), pNode2(pN2), 
-d1(dTmp1), R1h(R1hTmp), d2(dTmp2), R2h(R2hTmp), F(Zero3), M(Zero3),
+  d1(dTmp1), R1h(R1hTmp), d2(dTmp2), R2h(R2hTmp), F(Zero3), M(Zero3), Ffrict(Zero3),
 NTheta(0), dTheta(0.), dThetaWrapped(0.),
-Sh_c(sh), fc(f), preF(pref), r(rr),
+Sh_c(sh), fc(f), preF(pref), r(rr), M3(0.),
 od(od_a)
 {
 	NO_OP;
@@ -3587,7 +3587,7 @@ void AxialRotationJoint::Output(OutputHandler& OH) const
 
 		default:
 			/* impossible */
-			break;
+                     throw ErrNotImplementedYet(MBDYN_EXCEPT_ARGS);
 		}
       Vec3 OmegaTmp(R2Tmp.MulTV(pNode2->GetWCurr()-pNode1->GetWCurr()));
       

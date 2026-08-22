@@ -370,7 +370,6 @@ begin: elements;
     user defined: elem_id_conrod_bearing_big_eye, 
         hydrodynamic plain bearing2,
             hydraulic fluid, reference, fluid_id_bearing,
-            viscosity vapor, dynamic_oil_viscosity_vapor,
             mesh, quadratic finite element,
             geometry, cylindrical,
                 mesh position, at shaft,
