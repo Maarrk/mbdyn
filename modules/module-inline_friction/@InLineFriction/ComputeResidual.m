@@ -70,35 +70,6 @@ function f = ComputeResidual(elem, dCoef, XCurr, XPrimeCurr)
 
     W1 = G1 * g1P + RDelta1 * w1_0;
     W2 = G2 * g2P + RDelta2 * w2_0;
-%{
-    switch( typeinfo(R1) )
-        case "matrix"
-            assert(R1, elem.pNode1.GetRCurr(), sqrt(eps));
-            assert(R2, elem.pNode2.GetRCurr(), sqrt(eps));
-        case "gradient"
-        otherwise
-            error("unexpected type: %s", typeinfo(R1));
-    endswitch
-%}
-%{
-    elem.pNode2.GetgCurr()
-    elem.pNode2.GetWRef()
-    elem.pNode2.GetWCurr()
-%}
-
-    switch( typeinfo(W1) )
-        case "matrix"
-            try
-                assert(W1, elem.pNode1.GetWCurr(), sqrt(eps));
-                assert(W2, elem.pNode2.GetWCurr(), sqrt(eps));
-            catch
-                fprintf(stderr, "%g: %s\n", elem.pDM.dGetTime(), lasterror.message);
-            end_try_catch
-        case "gradient"
-        otherwise
-            error("unexpected type: %s", typeinfo(W1));
-    endswitch
-%{%}
 
     DeltaXP = ComputeDeltaXP(elem, X1, R1, X1P, W1, X2, R2, X2P, W2);
 
@@ -129,19 +100,6 @@ function f = ComputeResidual(elem, dCoef, XCurr, XPrimeCurr)
 
     c = [ elem.e2.'; 
           elem.e3.' ] * ( R1.' * ( X2 + R2 * elem.o2 - X1 ) - elem.o1 );
-
-%{
-    switch ( typeinfo(c) )
-        case "matrix"
-            disp("AssRes:");
-            disp("X2 + R2 * elem.o2 - X1="); disp(X2 + R2 * elem.o2 - X1);
-            X1
-            X2
-            R1
-            R2
-            c
-    endswitch
-%}
 
     f = [ F1;
           M1;

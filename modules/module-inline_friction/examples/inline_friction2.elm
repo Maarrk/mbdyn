@@ -1,5 +1,3 @@
-#{
-
 /* 
  * MBDyn (C) is a multibody analysis code. 
  * http://www.mbdyn.org
@@ -41,9 +39,6 @@
 */
 
     user defined: joint_id_slider1, 
-# enable the next line to use the octave version of the element
-        # octave, "InLineFriction", embed octave, yes, octave search path, "..",
-# enable the next line to use the C++ version of the element
         inline friction,
         node1,
             node_id_ground,
@@ -63,9 +58,6 @@
         stiction state equation scale, s;
 
     user defined: joint_id_slider2, 
-# enable the next line to use the octave version of the element
-        #octave, "InLineFriction", embed octave, yes, octave search path, "..",
-# enable the next line to use the C++ version of the element
         inline friction,
         node1,
             node_id_ground,
@@ -96,8 +88,4 @@
     bind: joint_id_slider2, user defined, prm_node_id_zP_2,      string, "zP";
     bind: joint_id_slider2, user defined, prm_node_id_tau_2,     string, "tau";
 
-#}
-# /*
-# fprintf(stderr,"inline_friction2.elm: embed octave is enabled ...\n");
-# warning("error","Octave:divide-by-zero");
-# */
+

@@ -920,6 +920,7 @@ void
 Diode::Output(OutputHandler& OH) const
 {
 	if (bToBeOutput()) {
+             if (OH.UseText(OutputHandler::LOADABLE)) {
 		// TODO: NetCDF
 		std::ostream& out = OH.Loadable();
 		// FIXME: voltage on nodes should not be necessary, it is already available from the nodes' output
@@ -928,6 +929,7 @@ Diode::Output(OutputHandler& OH) const
 			<< " " << Voltage1      // voltage on node 1
 			<< " " << Voltage2      // voltage on node 2
 			<< std::endl;
+             }
 	}
 }
 
@@ -1169,6 +1171,7 @@ void
 Switch::Output(OutputHandler& OH) const
 {
 	if (bToBeOutput()) {
+             if (OH.UseText(OutputHandler::LOADABLE)) {
 		// TODO: NetCDF
 		std::ostream& out = OH.Loadable();
 		out << std::setw(8) << GetLabel()
@@ -1177,6 +1180,7 @@ Switch::Output(OutputHandler& OH) const
 			<< " " << Voltage2      // voltage on node 2
 			<< " " << dS1           // switch state
 			<< std::endl;
+             }
 	}
 }
 
@@ -1480,6 +1484,7 @@ void
 ElectricalSource::Output(OutputHandler& OH) const
 {
 	if (bToBeOutput()) {
+             if (OH.UseText(OutputHandler::LOADABLE)) {
 		std::ostream& out = OH.Loadable();
 		if (source_type != CURRENTSOURCE && source_type != VOLTAGESOURCE) {
 			out << std::setw(8) << GetLabel()
@@ -1499,6 +1504,7 @@ ElectricalSource::Output(OutputHandler& OH) const
 				<< " " << dVi1             // current or voltage
 				<< std::endl;
 		}
+             }
 	}
 }
 
@@ -1922,6 +1928,7 @@ void
 IdealTransformer::Output(OutputHandler& OH) const
 {
 	if (bToBeOutput()) {
+             if (OH.UseText(OutputHandler::LOADABLE)) {
 		std::ostream& out = OH.Loadable();
 		out << std::setw(8) << GetLabel()
 			<< " " << i_currIn         // input current
@@ -1932,6 +1939,7 @@ IdealTransformer::Output(OutputHandler& OH) const
 			<< " " << VoltageOut2      // voltage on node 2 (output)
 			<< " " << dG1             // IdealTransformer gain
 			<< std::endl;
+             }
 	}
 }
 
@@ -2237,6 +2245,7 @@ void
 OperationalAmplifier::Output(OutputHandler& OH) const
 {
 	if (bToBeOutput()) {
+             if (OH.UseText(OutputHandler::LOADABLE)) {
 		std::ostream& out = OH.Loadable();
 		out << std::setw(8) << GetLabel()
 			<< " " << i_curr           // output current
@@ -2245,6 +2254,7 @@ OperationalAmplifier::Output(OutputHandler& OH) const
 			<< " " << VoltageOut       // voltage on node 2 (output +)
 			<< " " << VoltageRef       // voltage on node 2 (reference)
 			<< std::endl;
+             }
 	}
 }
 
@@ -2545,6 +2555,7 @@ void
 BipolarTransistor::Output(OutputHandler& OH) const
 {
 	if (bToBeOutput()) {
+             if (OH.UseText(OutputHandler::LOADABLE)) {
 		std::ostream& out = OH.Loadable();
 		out << std::setw(8) << GetLabel()
 			<< " " << icurrC           // collector current
@@ -2554,6 +2565,7 @@ BipolarTransistor::Output(OutputHandler& OH) const
 			<< " " << VoltageB         // voltage on base node
 			<< " " << VoltageE         // voltage on emitter node
 			<< std::endl;
+             }
 	}
 }
 
@@ -2874,12 +2886,14 @@ void
 ProximitySensor::Output(OutputHandler& OH) const
 {
 	if (bToBeOutput()) {
+             if (OH.UseText(OutputHandler::LOADABLE)) {
 		std::ostream& out = OH.Loadable();
 		out << std::setw(8) << GetLabel()
 			<< " " << i_curr        // current on ProximitySensor
 			<< " " << Voltage1      // voltage on node 1
 			<< " " << Voltage2      // voltage on node 2
 			<< std::endl;
+             }
 	}
 }
 

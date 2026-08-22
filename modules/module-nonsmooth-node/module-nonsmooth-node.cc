@@ -879,6 +879,7 @@ void
 ModuleNonsmoothNode::Output(OutputHandler& OH) const
 {
 	if (bToBeOutput()) {
+             if (OH.UseText(OutputHandler::LOADABLE)) {
 		std::ostream& out = OH.Loadable();
 		out << std::setw(8) << GetLabel()
 			<< " " << NS_data.Poutput
@@ -897,6 +898,7 @@ ModuleNonsmoothNode::Output(OutputHandler& OH) const
 		}
 
 		out << std::endl;
+             }
 	}
 
 	// TODO: use NetCDF?

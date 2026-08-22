@@ -1,33 +1,33 @@
 # $Header$
 #
-# MBDyn (C) is a multibody analysis code. 
+# MBDyn (C) is a multibody analysis code.
 # http://www.mbdyn.org
-# 
+#
 # Copyright (C) 1996-2023
-# 
+#
 # Pierangelo Masarati	<pierangelo.masarati@polimi.it>
 # Paolo Mantegazza	<paolo.mantegazza@polimi.it>
-# 
+#
 # Dipartimento di Ingegneria Aerospaziale - Politecnico di Milano
 # via La Masa, 34 - 20156 Milano, Italy
 # http://www.aero.polimi.it
-# 
+#
 # Changing this copyright notice is forbidden.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation (version 2 of the License).
-# 
-# 
+#
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-# 
+#
 #################################################################
 ##
 ## AUTHOR: Reinhard Resch <mbdyn-user@a1.net>
@@ -56,13 +56,13 @@ set: real c = 320000;
 set: real X = 3.7;
 
 begin: data;
-	problem: initial value; # the default
+        problem: initial value; # the default
 end: data;
 
 begin: initial value;
-	initial time: 0;
-	final time: 1;
-	time step: 0.01;
+        initial time: 0;
+        final time: 1;
+        time step: 0.01;
     max iterations: 10;
 #    derivatives coefficient: 1e-3;
 #    derivatives tolerance: 1e1;
@@ -86,7 +86,7 @@ begin: nodes;
     position, null,
     orientation, euler123, 45*pi/180*0, 30*pi/180*0, -15*pi/180*0,
     velocity, null,
-    angular velocity, null, 
+    angular velocity, null,
     accelerations, yes;
 
     abstract: 1, algebraic;
@@ -124,7 +124,7 @@ begin: elements;
 
     genel: 11, clamp, 11, abstract, scalar function, "my_func";
     genel: 12, clamp, 12, abstract, octave, "my_func6", update mbdyn variables, yes,
-                                                        pass data manager, yes, 
+                                                        pass data manager, yes,
                                                         embed octave, yes;
     genel: 13, clamp, 13, abstract, string, "X";
     genel: 14, clamp, 14, abstract, octave, "my_func7", pass data manager, yes,
@@ -137,7 +137,7 @@ begin: elements;
 
     genel: 16, clamp, 16, abstract, derivative, drive, octave, "my_func8", pass data manager, yes,
                                                                            embed octave, yes,
-                                                                           arguments, 3, a, b, c, 
+                                                                           arguments, 3, a, b, c,
                                                        mult, 2 * pi * f, time;
 
     template drive caller: 1, "1", octave, "my_tpl_drive1D", pass data manager, yes, arguments, 3, a, b, c;
@@ -154,11 +154,19 @@ begin: elements;
     force: 1, absolute, 1, position, reference, node, null, octave, "my_func5";
 end: elements;
 
-#} 
+#}
 # END OF MBDYN SECTION
 
 # BEGIN OF OCTAVE SECTION /*
 printf("mboct: embed octave is enabled!\n");
+
+pkg_prefix = getenv("OCT_PKG_INSTALL_PREFIX");
+
+if (~isempty(pkg_prefix))
+   pkg("local_list", fullfile(pkg_prefix, "octave_packages"));
+endif
+
+pkg load mbdyn_util_oct;
 
 function y = my_func6(x, pDM)
     global X;
