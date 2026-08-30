@@ -64,7 +64,7 @@ begin: initial value;
 
         linear solver: umfpack, scale, iterative, always, max iterations, 10;
         nonlinear solver: linesearch, default solver options, heavy nonlinear, divergence check, no, lambda min, 0., tolerance x, 1e-8;
-        output: iterations, solver condition number, stat, yes;
+        # output: iterations, solver condition number, stat, yes;
     	fictitious steps number: 0;
         threads: disable;
 threads: disable;
@@ -116,7 +116,7 @@ begin: nodes;
 end: nodes;
 
 begin: drivers;
-    file: 1, socket, 1, port, 5555, noauth;
+    file: 1, socket, 1, port, 5556, noauth;
 end: drivers;
    
    set: real d    = .04;                #  m
