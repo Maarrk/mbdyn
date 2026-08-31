@@ -60,7 +60,7 @@ pNode1(pN1), pNode2(pN2),
 d1(dTmp1), R1h(RTmp1h),
 d2(dTmp2), R2h(RTmp2h), 
 F(Zero3),
-Sh_c(sh), fc(f), preF(pref), r(rr),
+Sh_c(sh), fc(f), preF(pref), r(rr), Ffrict1(Zero3), Ffrict2(Zero3), M1(Zero3), M2(Zero3),
 Q(Eye3), Qold(Eye3), Fold(Zero3), reset_Q(true), compute_Q(false),
 od(od_a)
 {

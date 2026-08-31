@@ -234,6 +234,7 @@ try
     for i=1:numel(mesh_data)
       mesh_data(i).dof_map.totdof = 3 * rows(mesh_data(i).mesh.nodes);
       mesh_data(i).dof_map.ndof = [reshape(1:mesh_data(i).dof_map.totdof, rows(mesh_data(i).mesh.nodes), 3), zeros(rows(mesh_data(i).mesh.nodes), 3)];
+      mesh_data(i).dof_map.domain = FEM_DO_STRUCTURAL;
       mesh_data(i).mesh.material_data = struct("C",[],"rho",[])([]);
     endfor
 

@@ -34,7 +34,7 @@
 %        for use in the software MBDyn as described
 %        in the GNU Public License version 2.1
 
-function [Jac, ridx, cidx, bSparse] = AssJac(elem, dCoef, XCurr, XPrimeCurr)
+function [Jac, ridx, cidx, bSparse, elem] = AssJac(elem, dCoef, XCurr, XPrimeCurr)
     iFirstIndex = elem.pMbElem.iGetFirstIndex();
 
     bSparse = false;
@@ -49,8 +49,8 @@ function [Jac, ridx, cidx, bSparse] = AssJac(elem, dCoef, XCurr, XPrimeCurr)
 
     [X, XP] = GetStateVector(elem, XCurr, XPrimeCurr);
 
-    [f, df_dX] = D(@(X) ComputeResidual(elem, dCoef, X, XP), X);
-    [f, df_dXP] = D(@(XP) ComputeResidual(elem, dCoef, X, XP), XP);
+    [f, df_dX] = mbdyn_derivative(@(X) ComputeResidual(elem, dCoef, X, XP), X);
+    [f, df_dXP] = mbdyn_derivative(@(XP) ComputeResidual(elem, dCoef, X, XP), XP);
 
     Jac = -df_dXP - df_dX * diag([repmat(dCoef, 1, 12), ones(1, 2), dCoef]);
 endfunction

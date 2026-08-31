@@ -232,15 +232,17 @@ void
 HydrodynamicBearing01::Output(OutputHandler& OH) const
 {
 
-   if (bToBeOutput()) {
-   std::ostream& out = OH.Loadable();
-   out << std::setw(8) << GetLabel()
-      << " " << XRel
-      << " " << XPRel
-      << " " << HForce
-      << " " << HMoment
-      << std::endl;
-   }
+        if (bToBeOutput()) {
+           if (OH.UseText(OutputHandler::LOADABLE)) {
+              std::ostream& out = OH.Loadable();
+              out << std::setw(8) << GetLabel()
+                  << " " << XRel
+                  << " " << XPRel
+                  << " " << HForce
+                  << " " << HMoment
+                  << std::endl;
+           }
+        }
 }
 
 void

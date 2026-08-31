@@ -235,6 +235,14 @@ end: elements;
 #/*
 fprintf(stderr,"inplane_friction.mbdyn: embed octave is enabled ...\n");
 warning("error","Octave:divide-by-zero");
+
+pkg_prefix = getenv("OCT_PKG_INSTALL_PREFIX");
+
+if (~isempty(pkg_prefix))
+   pkg("local_list", fullfile(pkg_prefix, "octave_packages"));
+endif
+
+pkg load mbdyn_util_oct;
 #*/
 
 ##############################################################################################################

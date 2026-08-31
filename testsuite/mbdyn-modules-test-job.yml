@@ -187,7 +187,7 @@ mbdyn-modules-test-job-gcov:   # This job runs in the test stage.
       - export OMP_NUM_THREADS=1
       - export MKL_NUM_THREADS=1
       - export OPENBLAS_NUM_THREADS=1
-      - ${TESTSUITE_TIME_CMD} ${GTEST_OCTAVE_EXEC} -q ${OCT_PKG_TESTSUITE_SCRIPT} --octave-pkg-prefix "${OCT_PKG_INSTALL_PREFIX}" --octave-pkg-list "${OCT_PKG_LIST}" --octave-pkg-test-dir "${OCT_PKG_TEST_OUTPUT_DIR}" --octave-exec "${GTEST_OCTAVE_EXEC}" --tasks "${OCT_PKG_TEST_JOB_NUM_TASKS}" 2>&1 | tee -a "${log_file}"
+      - ${TESTSUITE_TIME_CMD} ${GTEST_OCTAVE_EXEC} -q ${OCT_PKG_TESTSUITE_SCRIPT} --octave-pkg-list "${OCT_PKG_LIST}" --octave-pkg-test-dir "${OCT_PKG_TEST_OUTPUT_DIR}" --octave-exec "${GTEST_OCTAVE_EXEC}" --tasks "${OCT_PKG_TEST_JOB_NUM_TASKS}" 2>&1 | tee -a "${log_file}"
       - cd "${MBD_MODULE_TESTS_OUTPUT_DIR}"
       - find . -name 'junit_xml_report_*.xml' -print0 | xargs -0 "${CI_PROJECT_DIR}/testsuite/junit_xml_relative_path.py" -p "${CI_PROJECT_DIR}"
   artifacts:

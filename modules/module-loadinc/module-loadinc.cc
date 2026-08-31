@@ -79,40 +79,40 @@ public:
 		DataManager* pDM, MBDynParser& HP);
 	virtual ~LoadIncNorm(void);
 
-	virtual void Output(OutputHandler& OH) const;
-	virtual void WorkSpaceDim(integer* piNumRows, integer* piNumCols) const;
+	virtual void Output(OutputHandler& OH) const override;
+	virtual void WorkSpaceDim(integer* piNumRows, integer* piNumCols) const override;
 	VariableSubMatrixHandler& 
 	AssJac(VariableSubMatrixHandler& WorkMat,
 		doublereal dCoef, 
 		const VectorHandler& XCurr,
-		const VectorHandler& XPrimeCurr);
+		const VectorHandler& XPrimeCurr) override;
 	SubVectorHandler& 
 	AssRes(SubVectorHandler& WorkVec,
 		doublereal dCoef,
 		const VectorHandler& XCurr, 
-		const VectorHandler& XPrimeCurr);
-	unsigned int iGetNumPrivData(void) const;
-	unsigned int iGetPrivDataIdx(const char *s) const;
-	doublereal dGetPrivData(unsigned int i) const;
+		const VectorHandler& XPrimeCurr) override;
+	unsigned int iGetNumPrivData(void) const override;
+	unsigned int iGetPrivDataIdx(const char *s) const override;
+	doublereal dGetPrivData(unsigned int i) const override;
 	int iGetNumConnectedNodes(void) const;
-	void GetConnectedNodes(std::vector<const Node *>& connectedNodes) const;
+	void GetConnectedNodes(std::vector<const Node *>& connectedNodes) const override;
 	void SetValue(DataManager *pDM, VectorHandler& X, VectorHandler& XP,
-		SimulationEntity::Hints *ph);
-	virtual unsigned int iGetNumDof(void) const;
-	virtual DofOrder::Order GetDofType(unsigned int i) const;
-	virtual DofOrder::Order GetEqType(unsigned int i) const;
-	std::ostream& Restart(std::ostream& out) const;
-	virtual unsigned int iGetInitialNumDof(void) const;
+		SimulationEntity::Hints *ph) override;
+	virtual unsigned int iGetNumDof(void) const override;
+	virtual DofOrder::Order GetDofType(unsigned int i) const override;
+	virtual DofOrder::Order GetEqType(unsigned int i) const override;
+	std::ostream& Restart(std::ostream& out) const override;
+	virtual unsigned int iGetInitialNumDof(void) const override;
 	virtual void 
-	InitialWorkSpaceDim(integer* piNumRows, integer* piNumCols) const;
+	InitialWorkSpaceDim(integer* piNumRows, integer* piNumCols) const override;
    	VariableSubMatrixHandler&
 	InitialAssJac(VariableSubMatrixHandler& WorkMat, 
-		      const VectorHandler& XCurr);
+		      const VectorHandler& XCurr) override;
    	SubVectorHandler& 
-	InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr);
-	virtual void AfterPredict(VectorHandler& X, VectorHandler& XP);
+	InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr) override;
+	virtual void AfterPredict(VectorHandler& X, VectorHandler& XP) override;
 	virtual void AfterConvergence(const VectorHandler& X, 
-		const VectorHandler& XP);
+		const VectorHandler& XP) override;
 
 	// get private variable
 	doublereal dGetP(void) const;
@@ -123,6 +123,7 @@ LoadIncNorm::LoadIncNorm(
 	DataManager* pDM, MBDynParser& HP)
 : UserDefinedElem(uLabel_a, pDO),
 m_FirstSteps(2),
+m_dP(0.),
 m_dS(0.),
 m_dPMax(1.),
 m_dCompliance(1.),
