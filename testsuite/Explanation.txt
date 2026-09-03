@@ -1,0 +1,160 @@
+Public and private CI test suites
+=================================
+
+There are two separate decisions:
+
+1. Which .mbd / .mbdyn input files are tests?
+2. Which alternative solver/control-data configuration is injected into
+   each selected test?
+
+They are deliberately separate.  The public/private distinction is
+primarily made by the CI job's --prefix-input; the patching mechanism is
+shared.
+
+
+1. Test-set selection
+---------------------
+
+There is no "public" or "private" tag inside simple_testsuite.sh.  The
+test set is all valid MBDyn input files below the directory passed through
+--prefix-input.
+
+The common discovery code is in simple_testsuite.sh, lines 374--387:
+
+    find ${mbdyn_testsuite_prefix_input} ... -not -name '*_patched_*.mbd' \
+      -print0 | xargs -0 awk ... -f mbdyn_input_file_format.awk
+
+mbdyn_input_file_format.awk qualifies a file by checking for a complete
+MBDyn initial-value or inverse-dynamics model structure.  The runner can
+also apply --exclude-initial-value, --exclude-inverse-dynamics, and regex
+include/exclude filters; their command-line handling is in
+simple_testsuite.sh, lines 150--170.
+
+Public job
+----------
+
+mbdyn-tests-public-test-job.yml sets:
+
+    MBD_TESTS_PUBLIC_INPUT_DIR=${CI_PROJECT_DIR}/tests/benchmarks
+    MBD_TESTS_RESTART_INPUT_DIR=${CI_PROJECT_DIR}/tests/restart
+
+(lines 96--98).  The normal public job then performs three runs:
+
+  * restarted tests: tests/restart, through simple_testsuite.sh;
+  * original public tests: tests/benchmarks, through simple_testsuite.sh;
+  * patched public tests: tests/benchmarks, through
+    simple_testsuite_patched.sh.
+
+The corresponding invocations are at lines 112--117 of
+mbdyn-tests-public-test-job.yml.  Thus "public" means the benchmark
+suite, plus the separately run restart suite.  Restart inputs are not
+passed to the patched driver in this job.
+
+Private job
+-----------
+
+mbdyn-tests-private-test-job.yml sets:
+
+    MBD_TESTS_PRIVATE_INPUT_DIR=${CI_PROJECT_DIR}/tests
+
+(line 97).  It consequently scans all qualifying inputs beneath tests/,
+including benchmark and restart subtrees when they qualify as valid input
+files.
+
+It performs two runs (lines 112--115):
+
+  * original private tests: simple_testsuite.sh with --abort-after-step 25;
+  * patched private tests: simple_testsuite_patched.sh, with expected
+    failures skipped.
+
+The original private run is deliberately shortened after 25 regular steps.
+The patched run uses the patched driver's own abort-after configuration
+matrix.
+
+
+2. Shared patching mechanism
+----------------------------
+
+The actual source transformation is shared by public and private patched
+tests.
+
+mbdyn_testsuite_patch.sed:
+
+  * inserts four include: directives at the boundaries of initial value and
+    control data (lines 39--49);
+  * removes existing method, tolerance, linear/nonlinear solver, thread and
+    automatic-differentiation settings (lines 51--70).
+
+The replacement settings are not hard-coded in the sed program.
+simple_testsuite_patched.sh creates four .set files for each configuration
+and exports their paths as:
+
+    MBD_TESTSUITE_INITIAL_VALUE_BEGIN
+    MBD_TESTSUITE_INITIAL_VALUE_END
+    MBD_TESTSUITE_CONTROL_DATA_BEGIN
+    MBD_TESTSUITE_CONTROL_DATA_END
+
+See simple_testsuite_patched.sh, lines 667--670.  The driver writes the
+actual injected settings at lines 671--740: linear solver and matrix
+handler, scaling, abort-after, disabled internal threads, nonlinear solver,
+tolerances, integration method, autodiff, initial-assembly choices and
+output format.
+
+simple_testsuite_patched.sh then invokes the normal runner with:
+
+    simple_testsuite.sh --exec-gen no --patch-input yes ...
+
+(line 752).  simple_testsuite.sh applies the sed program and creates the
+temporary patched input at lines 588--605.
+
+--exec-gen no is important for public inputs with *_gen.m or *_gen.sh
+scripts: the preparation pass runs generators once, and each patched
+configuration reuses their generated input.  The custom script handling is
+in simple_testsuite.sh, lines 526--570.
+
+
+3. Public versus private patch matrices
+---------------------------------------
+
+The public patched job does not pass explicit matrix-selection options;
+see mbdyn-tests-public-test-job.yml, line 117.  It therefore uses the broad
+defaults in simple_testsuite_patched.sh, lines 53--64:
+
+  * many linear solvers and compatible matrix handlers;
+  * many scaling methods and scaling timings;
+  * autodiff enabled and disabled;
+  * many nonlinear solvers and integration methods;
+  * netcdf-text output;
+  * abort phases input, assembly, derivatives and regularstep,2;
+  * both initial-joint-assembly choices;
+  * both deformable/force-element initial-assembly choices.
+
+The nested matrix loops start at simple_testsuite_patched.sh, line 256.
+They include compatibility filters, so the actual set is not the simple
+Cartesian product of every default.
+
+The private patched job intentionally limits this matrix.  Its settings are
+defined in mbdyn-tests-private-test-job.yml, lines 56--64:
+
+    linear solvers:       umfpack
+    matrix handlers:      map cc grad
+    scale method:         rowmaxcolumnmax
+    scale timing:         always
+    nonlinear solvers:    newtonraphson linesearch nox
+    integration method:   impliciteuler
+    deformable initial assembly: exclude
+
+They are passed to simple_testsuite_patched.sh at line 115.  The private
+job still inherits the patched driver's defaults for dimensions not
+overridden on that command line, notably autodiff, output format,
+abort-after and skip-initial-joint-assembly choices.
+
+In summary:
+
+  * Public patched tests use a broad compatibility/regression matrix over
+    tests/benchmarks.
+  * Private patched tests use a restricted solver matrix over all tests/,
+    and skip expected failures.
+  * Both use the same sed transformation and per-configuration include files.
+  * The private matrix is deliberately restricted because each added option
+    multiplies the number of executed configuration/test pairs.
