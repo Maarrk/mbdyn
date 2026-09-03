@@ -100,6 +100,21 @@ export PYTHONPATH="${PYTHONPATH}:${program_dir}/libraries/libmbc"
 
 MBD_NUM_TASKS=${MBD_NUM_TASKS:-$(( $(lscpu | awk '/^Socket\(s\)/{ print $2 }') * $(lscpu | awk '/^Core\(s\) per socket/{ print $4 }') ))}
 MBD_NUM_THREADS=${MBD_NUM_THREADS:-1}
+MBD_INPUT_FILES_CACHE="${MBD_INPUT_FILES_CACHE:-}"
+MBD_TESTSUITE_RESOURCE_LOCK_DIR="${MBD_TESTSUITE_RESOURCE_LOCK_DIR:-}"
+mbdyn_timing="${MBD_TESTSUITE_TIMING:-no}"
+MBD_TESTSUITE_TIMING_FILE="${MBD_TESTSUITE_TIMING_FILE:-}"
+
+function mbdyn_timing_now_ms()
+{
+    if test -n "${EPOCHREALTIME:-}"; then
+        mbdyn_timing_seconds="${EPOCHREALTIME%.*}"
+        mbdyn_timing_microseconds="${EPOCHREALTIME#*.}000000"
+        MBDYN_TIMING_NOW_MS=$((10#${mbdyn_timing_seconds} * 1000 + 10#${mbdyn_timing_microseconds:0:3}))
+    else
+        MBDYN_TIMING_NOW_MS=$((SECONDS * 1000))
+    fi
+}
 
 while ! test -z "$1"; do
     case "$1" in
@@ -234,6 +249,7 @@ while ! test -z "$1"; do
             printf "  --exec-solver {yes|no}\n"
             printf "  --exec-status-mask <mask_errors_to_be_ignored>\n"
             printf "  --print-resources {no|all|time}\n"
+            printf "  --timing {yes|no}\n"
             printf "  --suppressed-errors {syntax|element|feature|module|loadable|socked|interrupted|solver}\n"
             printf "  --help\n"
             exit 1;
@@ -244,6 +260,10 @@ while ! test -z "$1"; do
             ;;
         --print-resources)
             mbdyn_print_res="$2"
+            shift
+            ;;
+        --timing)
+            mbdyn_timing="$2"
             shift
             ;;
         --suppressed-errors)
@@ -278,6 +298,44 @@ if ! test -d "${mbdyn_testsuite_prefix_output}"; then
         echo "Failed to create directory \"${mbdyn_testsuite_prefix_output}\""
         exit 1
     fi
+fi
+
+if test -z "${MBD_TESTSUITE_RESOURCE_LOCK_DIR}"; then
+    MBD_TESTSUITE_RESOURCE_LOCK_DIR="${mbdyn_testsuite_prefix_output}/.resource-locks"
+fi
+
+case "${mbdyn_timing}" in
+    yes|no)
+        ;;
+    *)
+        printf '%s: invalid timing setting "%s"\n' "${program_name}" "${mbdyn_timing}" >&2
+        exit 1
+        ;;
+esac
+
+if test "${mbdyn_timing}" = "yes"; then
+    if test -z "${MBD_TESTSUITE_TIMING_FILE}"; then
+        MBD_TESTSUITE_TIMING_FILE="${mbdyn_testsuite_prefix_output}/mbdyn-testsuite-timing.tsv"
+    fi
+    if ! test -e "${MBD_TESTSUITE_TIMING_FILE}"; then
+        printf 'scope\tmode\ttarget\tindex\tstatus\tpatch_ms\tresource_wait_ms\trun_ms\ttotal_ms\n' > "${MBD_TESTSUITE_TIMING_FILE}"
+    fi
+fi
+
+mbdyn_timing_now_ms
+mbdyn_suite_start_ms=${MBDYN_TIMING_NOW_MS}
+case "${mbdyn_patch_input}" in
+    yes)
+        mbdyn_timing_mode="patched"
+        ;;
+    *)
+        mbdyn_timing_mode="unpatched"
+        ;;
+esac
+
+if ! mkdir -p "${MBD_TESTSUITE_RESOURCE_LOCK_DIR}"; then
+    echo "Failed to create resource lock directory \"${MBD_TESTSUITE_RESOURCE_LOCK_DIR}\""
+    exit 1
 fi
 
 if test -z "${mbdyn_testsuite_prefix_input}"; then
@@ -319,10 +377,22 @@ fi
 
 declare -i idx_test=0
 
-MBD_INPUT_FILES_FOUND=`find ${mbdyn_testsuite_prefix_input} '(' -type f ${mbdyn_input_filter} -and -not -name '*_patched_*.mbd' ')' -print0 | xargs -0 awk -v exclude_initial_value=$((mbdyn_exclude_initial_value)) -v exclude_inverse_dynamics=$((mbdyn_exclude_inverse_dynamics)) -f mbdyn_input_file_format.awk`
+if test -n "${MBD_INPUT_FILES_CACHE}" && test -s "${MBD_INPUT_FILES_CACHE}"; then
+    MBD_INPUT_FILES_FOUND=$(<"${MBD_INPUT_FILES_CACHE}")
+else
+    MBD_INPUT_FILES_FOUND=`find ${mbdyn_testsuite_prefix_input} '(' -type f ${mbdyn_input_filter} -and -not -name '*_patched_*.mbd' ')' -print0 | xargs -0 awk -v exclude_initial_value=$((mbdyn_exclude_initial_value)) -v exclude_inverse_dynamics=$((mbdyn_exclude_inverse_dynamics)) -f mbdyn_input_file_format.awk`
+    if test -n "${MBD_INPUT_FILES_CACHE}"; then
+        printf '%s\n' "${MBD_INPUT_FILES_FOUND}" > "${MBD_INPUT_FILES_CACHE}"
+    fi
+fi
 
 function simple_testsuite_run_test()
 {
+    mbdyn_timing_now_ms
+    mbd_test_start_ms=${MBDYN_TIMING_NOW_MS}
+    mbd_patch_ms=0
+    mbd_resource_wait_ms=0
+    mbd_run_ms=0
     mbd_status_file=""
     mbd_filename=""
     mbd_exec_gen_script="yes"
@@ -399,8 +469,9 @@ function simple_testsuite_run_test()
         echo "File \"${mbd_filename}\" not found"
         status=$(printf 'file[%]' "${mbd_filename}")
     else
-        mbd_basename=`basename -s ".mbdyn" "${mbd_filename}"`
-        mbd_basename=`basename -s ".mbd" "${mbd_basename}"`
+        mbd_basename="${mbd_filename##*/}"
+        mbd_basename="${mbd_basename%.mbdyn}"
+        mbd_basename="${mbd_basename%.mbd}"
 
         mbd_time_file="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_output_time_$((idx_test)).log"
         mbd_output_file="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_output_$((idx_test))"
@@ -434,32 +505,21 @@ function simple_testsuite_run_test()
 
         mbd_log_file="${mbd_output_file}.stdout"
 
-        mbd_script_name=`basename ${mbd_filename}`
-        mbd_script_name=`basename -s .mbd ${mbd_script_name}`
-        mbd_script_name=`basename -s .mbdyn ${mbd_script_name}`
-        mbd_dir_name=`dirname "${mbd_filename}"`
+        mbd_script_name="${mbd_filename##*/}"
+        mbd_script_name="${mbd_script_name%.mbd}"
+        mbd_script_name="${mbd_script_name%.mbdyn}"
+        mbd_dir_name="${mbd_filename%/*}"
+        if test "${mbd_dir_name}" = "${mbd_filename}"; then
+            mbd_dir_name="."
+        fi
         mbd_script_name_run_sh="${mbd_dir_name}/${mbd_script_name}_run.sh"
         mbd_script_name_gen_sh="${mbd_dir_name}/${mbd_script_name}_gen.sh"
         mbd_script_name_run_m="${mbd_dir_name}/${mbd_script_name}_run.m"
         mbd_script_name_gen_m="${mbd_dir_name}/${mbd_script_name}_gen.m"
         mbd_command=""
 
-        if test "${mbdyn_patch_input}" != "no"; then
-            ## FIXME: actually ${mbd_filename_patched} should be created inside the output directory.
-            ## FIXME: However, MBDyn is not able to located additional input files, if ${mbd_filename_patched}
-            ## FIXME: would be created inside a different directory than the original input file.
-            mbd_filename_patched=$(mktemp -p "${mbd_dir_name}" "${mbd_basename}_XXXXXXXXXX_patched_$((idx_test)).mbd")
-            mbd_filename_patched_copy="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_input_file_patched_$((idx_test)).mbd"
-
-            if ! sed ${mbdyn_patch_input_sed_args} "${mbdyn_patch_input_sed_expression}" "${mbd_filename}" | tee "${mbd_filename_patched}" > "${mbd_filename_patched_copy}"; then
-                rm -f "${mbd_filename_patched}"
-                rm -f "${mbd_filename_patched_copy}"
-                echo "Failed to patch input file \"${mbd_filename}\""
-                return 1
-            fi
-        else
-            mbd_filename_patched="${mbd_filename}"
-        fi
+        mbd_filename_patched="${mbd_filename}"
+        mbd_input_was_patched="no"
 
         mbd_allow_patch="yes"
 
@@ -525,6 +585,26 @@ function simple_testsuite_run_test()
             mbd_exec_solver="no"
         fi
 
+        if test "${mbdyn_patch_input}" != "no" && test "${mbd_exec_solver}" != "no"; then
+            mbdyn_timing_now_ms
+            mbd_patch_start_ms=${MBDYN_TIMING_NOW_MS}
+            ## FIXME: actually ${mbd_filename_patched} should be created inside the output directory.
+            ## FIXME: However, MBDyn is not able to located additional input files, if ${mbd_filename_patched}
+            ## FIXME: would be created inside a different directory than the original input file.
+            mbd_filename_patched=$(mktemp -p "${mbd_dir_name}" "${mbd_basename}_XXXXXXXXXX_patched_$((idx_test)).mbd")
+            mbd_filename_patched_copy="${mbdyn_testsuite_prefix_output}/${mbd_basename}_mbdyn_input_file_patched_$((idx_test)).mbd"
+
+            if ! sed ${mbdyn_patch_input_sed_args} "${mbdyn_patch_input_sed_expression}" "${mbd_filename}" | tee "${mbd_filename_patched}" > "${mbd_filename_patched_copy}"; then
+                rm -f "${mbd_filename_patched}"
+                rm -f "${mbd_filename_patched_copy}"
+                echo "Failed to patch input file \"${mbd_filename}\""
+                return 1
+            fi
+            mbd_input_was_patched="yes"
+            mbdyn_timing_now_ms
+            mbd_patch_ms=$((MBDYN_TIMING_NOW_MS - mbd_patch_start_ms))
+        fi
+
         if test -z "${mbd_command}"; then
             echo "No custom test script was found for input file ${mbd_filename}; The default command will be used to run the model"
             mbd_command="${MBDYN_EXEC} ${MBDYN_ARGS_ADD} -f ${mbd_filename_patched} -o ${mbd_output_file} ${GTEST_MBDYN_ARGS}"
@@ -574,9 +654,49 @@ function simple_testsuite_run_test()
                 mbd_command="${mbd_command} >& ${mbd_log_file}"
             fi
 
+            ## Socket listeners cannot share a TCP port.  A patched suite can
+            ## run the same input under different configurations at once, so
+            ## serialize only tests declaring the same literal socket port.
+            mbd_socket_ports=$(awk '
+                {
+                    line = $0;
+                    sub(/#.*/, "", line);
+                    if (line ~ /socket/ && line ~ /port[[:space:]]*,/) {
+                        sub(/.*port[[:space:]]*,[[:space:]]*/, "", line);
+                        sub(/[^0-9].*/, "", line);
+                        if (line ~ /^[0-9]+$/) {
+                            print line;
+                        }
+                    }
+                }
+            ' "${mbd_filename}" | sort -nu)
+            declare -a mbd_resource_lock_fds=()
+
+            mbdyn_timing_now_ms
+            mbd_resource_wait_start_ms=${MBDYN_TIMING_NOW_MS}
+            while IFS= read -r mbd_socket_port; do
+                test -n "${mbd_socket_port}" || continue
+                mbd_resource_lock_file="${MBD_TESTSUITE_RESOURCE_LOCK_DIR}/tcp-port-${mbd_socket_port}.lock"
+                exec {mbd_resource_lock_fd}>"${mbd_resource_lock_file}"
+                printf 'Waiting for TCP port %s lock\n' "${mbd_socket_port}"
+                flock "${mbd_resource_lock_fd}"
+                mbd_resource_lock_fds+=("${mbd_resource_lock_fd}")
+            done <<< "${mbd_socket_ports}"
+
+            mbdyn_timing_now_ms
+            mbd_resource_wait_ms=$((MBDYN_TIMING_NOW_MS - mbd_resource_wait_start_ms))
+            mbd_run_start_ms=${MBDYN_TIMING_NOW_MS}
             eval ${mbd_command}
 
             ((rc=$?))
+
+            mbdyn_timing_now_ms
+            mbd_run_ms=$((MBDYN_TIMING_NOW_MS - mbd_run_start_ms))
+
+            for mbd_resource_lock_fd in "${mbd_resource_lock_fds[@]}"; do
+                flock -u "${mbd_resource_lock_fd}"
+                eval "exec ${mbd_resource_lock_fd}>&-"
+            done
 
             if ! cd "${curr_dir}"; then
                 echo "Invalid directory"
@@ -587,7 +707,7 @@ function simple_testsuite_run_test()
             ((rc=-1))
         fi
 
-        if test "${mbdyn_patch_input}" != "no"; then
+        if test "${mbd_input_was_patched}" = "yes"; then
             ## Must be deleted in any case because it is located inside the input directory!
             ## In case of failure, we will just keep "${mbd_filename_patched_copy}"
             rm -f "${mbd_filename_patched}"
@@ -734,12 +854,12 @@ function simple_testsuite_run_test()
                 fi
             fi
 
-            if test "${mbdyn_patch_input}" != "no"; then
+            if test "${mbd_input_was_patched}" = "yes"; then
                 if ! test -f "${mbd_filename_patched_copy}"; then
                     echo "File not found: \"${mbd_filename_patched_copy}\""
                 fi
                 rm -f "${mbd_filename_patched_copy}"
-            else
+            elif test "${mbdyn_patch_input}" = "no"; then
                 echo "File \"${mbd_filename}\" was not patched"
             fi
         else
@@ -832,6 +952,14 @@ function simple_testsuite_run_test()
         fi
     fi
 
+    if test "${mbdyn_timing}" = "yes"; then
+        mbdyn_timing_now_ms
+        mbd_test_total_ms=$((MBDYN_TIMING_NOW_MS - mbd_test_start_ms))
+        printf 'test\t%s\t%s\t%d\t%s\t%d\t%d\t%d\t%d\n' \
+            "${mbdyn_timing_mode}" "${mbd_filename}" "${idx_test}" "${status}" \
+            "${mbd_patch_ms}" "${mbd_resource_wait_ms}" "${mbd_run_ms}" "${mbd_test_total_ms}" >> "${MBD_TESTSUITE_TIMING_FILE}"
+    fi
+
     printf "%s(%d:%d:%d)\n" "${status}" ${rc} $((exit_status)) $((expected_test_status)) > "${mbd_status_file}"
 
     return $((exit_status))
@@ -890,14 +1018,20 @@ else
     export mbdyn_print_res
     export mbdyn_suppressed_errors
     export mbdyn_enable_gtest
+    export mbdyn_timing
+    export mbdyn_timing_mode
     export update_reference_test_status
     export use_reference_test_status
     export skip_expected_failures
     export MBDYN_EXEC
     export MBDYN_ARGS_ADD
     export MBD_NUM_THREADS
+    export MBD_INPUT_FILES_CACHE
+    export MBD_TESTSUITE_RESOURCE_LOCK_DIR
+    export MBD_TESTSUITE_TIMING_FILE
     export JUNIT_XML_KEEP_ALL_OUTPUT
     export -f simple_testsuite_run_test
+    export -f mbdyn_timing_now_ms
     export mbdyn_patch_input_sed_expression
     export mbdyn_patch_input_sed_args
 
@@ -930,7 +1064,7 @@ for mbd_filename in ${MBD_INPUT_FILES_FOUND}; do
     status="unexpected"
 
     if test -f "${mbd_status_file}"; then
-        status=`cat ${mbd_status_file}`
+        status=$(<"${mbd_status_file}")
     fi
 
     rm -f "${mbd_status_file}"
@@ -1044,6 +1178,15 @@ fi
 ((exit_status&=~mbd_exit_status_mask))
 
 printf "${program_name} exit status 0x%X\n" $((exit_status))
+
+if test "${mbdyn_timing}" = "yes"; then
+    mbdyn_timing_now_ms
+    mbdyn_suite_total_ms=$((MBDYN_TIMING_NOW_MS - mbdyn_suite_start_ms))
+    printf 'suite\t%s\t%s\t\t\t0\t0\t0\t%d\n' \
+        "${mbdyn_timing_mode}" "${mbdyn_testsuite_prefix_output}" "${mbdyn_suite_total_ms}" >> "${MBD_TESTSUITE_TIMING_FILE}"
+    printf 'TESTSUITE_TIMING suite mode=%s elapsed_ms=%d timing_file=%s\n' \
+        "${mbdyn_timing_mode}" "${mbdyn_suite_total_ms}" "${MBD_TESTSUITE_TIMING_FILE}"
+fi
 
 printf "@END_SIMPLE_TESTSUITE_REPORT@\n"
 
