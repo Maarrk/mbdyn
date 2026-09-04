@@ -14,6 +14,7 @@ import os
 import pathlib
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -65,6 +66,7 @@ class Result:
     junit: str = ""
     patched_copy: str = ""
     time_file: str = ""
+    junit_valid: bool = False
 
 @dataclass(frozen=True)
 class WorkerDone:
@@ -420,7 +422,7 @@ def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
         while True:
             task = task_q.get()
             if task is None: break
-            start = ms(); patch_ms = 0; lock_ms = 0; temporary = copied = None; fds: list[int] = []
+            start = ms(); patch_ms = 0; lock_ms = 0; temporary = copied = None; task_tmpdir: pathlib.Path | None = None; fds: list[int] = []
             try:
                 inp = task.input
                 if inp.excluded or (cfg["skip_expected"] and inp.expected != 0) or ((task.patch or cfg["abort_after_step"] is not None) and inp.run_script):
@@ -428,6 +430,12 @@ def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
                 if cfg["exec_solver"] == "no":
                     result_q.put(Result(task, "skipped", -1, total_ms=ms()-start)); continue
                 outdir = pathlib.Path(task.patch.outdir if task.patch else cfg["output"]); outdir.mkdir(parents=True, exist_ok=True)
+                # Include files are configuration-wide and read-only, but a
+                # solver may create fixed-name temporary files.  Give each
+                # patched task its own directory so configurations no longer
+                # need to be serialized to avoid TMPDIR collisions.
+                if task.patch:
+                    task_tmpdir = pathlib.Path(tempfile.mkdtemp(prefix=f".tmp-{inp.index}-", dir=outdir))
                 filename = inp.path
                 if task.patch:
                     ps = ms(); filename, copied = patch_file(task); temporary = filename; patch_ms = ms()-ps
@@ -437,7 +445,7 @@ def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
                 output = str(outdir / f"{base}_mbdyn_output{suffix}"); log = output + ".stdout"
                 junit = str(outdir / f"junit_xml_report_{base}{suffix}.xml")
                 time_file = str(outdir / f"{base}_mbdyn_output_time{suffix}.log")
-                env = octave_environment(cfg, junit); env["TMPDIR"] = str(outdir)
+                env = octave_environment(cfg, junit); env["TMPDIR"] = str(task_tmpdir or outdir)
                 if task.patch:
                     env.update({"MBD_TESTSUITE_INITIAL_VALUE_BEGIN": task.patch.init_begin,
                                 "MBD_TESTSUITE_INITIAL_VALUE_END": task.patch.init_end,
@@ -468,9 +476,11 @@ def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
                     fcntl.flock(fd, fcntl.LOCK_UN); os.close(fd)
                 fds = []
                 status = "passed" if rc == 0 else ("timeout" if rc == 124 else { -2: "interrupted", -15: "terminated", -9: "killed", 130: "interrupted", 143: "terminated", 137: "killed" }.get(rc, "failed"))
+                junit_valid = False
                 if status == "passed":
                     junit_status = subprocess.run(["awk", "-f", str(ROOT / "parse_test_suite_status.awk"), junit],
                                                    text=True, capture_output=True)
+                    junit_valid = junit_status.returncode == 0
                     if junit_status.returncode == 0:
                         steps = re.findall(r"^End of simulation at time [0-9.-]+ after ([0-9]+) steps;$",
                                            pathlib.Path(log).read_text(errors="replace"), re.M)
@@ -478,7 +488,7 @@ def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
                 if copied and status.startswith("passed") and cfg["keep"] not in {"all"}:
                     pathlib.Path(copied).unlink(missing_ok=True)
                 detail = pathlib.Path(time_file).read_text(errors="replace") if pathlib.Path(time_file).is_file() else ""
-                result_q.put(Result(task, status, rc, patch_ms, lock_ms, run_ms, ms()-start, detail=detail, log=log, output=output, junit=junit, patched_copy=copied or "", time_file=time_file))
+                result_q.put(Result(task, status, rc, patch_ms, lock_ms, run_ms, ms()-start, detail=detail, log=log, output=output, junit=junit, patched_copy=copied or "", time_file=time_file, junit_valid=junit_valid))
             except Exception:
                 outdir = pathlib.Path(task.patch.outdir if task.patch else cfg["output"])
                 outdir.mkdir(parents=True, exist_ok=True)
@@ -493,6 +503,8 @@ def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
                     except OSError:
                         pass
                 if temporary: pathlib.Path(temporary).unlink(missing_ok=True)
+                if task_tmpdir:
+                    shutil.rmtree(task_tmpdir, ignore_errors=True)
     finally:
         # A process with no work may exit while another consumer is still
         # running.  Its exit is normal, not evidence that work was lost.
@@ -583,13 +595,14 @@ def apply_reference(status: str, expected: int, args: argparse.Namespace) -> str
         return f"known-failure-{status}" if failed else status
     return f"regression-{status}" if failed else "fixed-failure"
 
-def cleanup(result: Result, status: str, args: argparse.Namespace) -> None:
-    keep = args.keep_output == "all" or (args.keep_output == "failed" and base_status(status) in {"failed", "unexpected"}) or (args.keep_output == "unexpected" and base_status(status) == "unexpected")
-    if keep: return
+def keep_result(result: Result, status: str, args: argparse.Namespace) -> bool:
+    return (args.keep_output == "all" or
+            (args.keep_output == "failed" and base_status(status) in {"failed", "unexpected"}) or
+            (args.keep_output == "unexpected" and base_status(status) == "unexpected"))
+
+def result_output_base(result: Result, args: argparse.Namespace) -> pathlib.Path | None:
+    """Return the output prefix selected by the legacy cleanup logic."""
     output = pathlib.Path(result.output) if result.output else None
-    # A custom script may ignore -o.  Match the legacy runner's log message
-    # before selecting the output prefix, but never delete outside its output
-    # tree.
     if result.log and pathlib.Path(result.log).is_file():
         found = re.findall(r'^output in file\s*"([^"]+)"', pathlib.Path(result.log).read_text(errors="replace"), re.M)
         if found:
@@ -601,10 +614,36 @@ def cleanup(result: Result, status: str, args: argparse.Namespace) -> None:
                 output = candidate
             except ValueError:
                 pass
-    if output and pathlib.Path(str(output) + ".log").is_file():
-        for generated in output.parent.glob(output.name + "*"):
-            if generated.is_file():
+    return output
+
+def cleanup_solver_outputs(results: list[Result], args: argparse.Namespace) -> None:
+    """Delete generated solver files with one scan per output directory.
+
+    Calling ``glob(output.name + '*')`` for every task made final cleanup
+    quadratic in the number of files in a patched configuration.
+    """
+    prefixes: dict[pathlib.Path, set[str]] = {}
+    standard = re.compile(r"^(.*_mbdyn_output_)([0-9]+)(?:$|[._].*)")
+    for result in results:
+        if keep_result(result, result.status, args):
+            continue
+        output = result_output_base(result, args)
+        if output and pathlib.Path(str(output) + ".log").is_file():
+            prefixes.setdefault(output.parent, set()).add(output.name)
+    for parent, names in prefixes.items():
+        try:
+            entries = list(parent.iterdir())
+        except OSError:
+            continue
+        for generated in entries:
+            if not generated.is_file():
+                continue
+            match = standard.match(generated.name)
+            if match and match.group(1) + match.group(2) in names:
                 generated.unlink(missing_ok=True)
+
+def cleanup(result: Result, status: str, args: argparse.Namespace) -> None:
+    if keep_result(result, status, args): return
     for path in (result.log,):
         if path: pathlib.Path(path).unlink(missing_ok=True)
     if result.time_file:
@@ -614,10 +653,11 @@ def cleanup(result: Result, status: str, args: argparse.Namespace) -> None:
     junit_keep = args.keep_output_junit_xml == "always" or (
         args.keep_output_junit_xml == "not-passed" and raw_base not in {"passed", "timeout"}) or (
         args.keep_output_junit_xml == "failed" and raw_base in {"failed", "unexpected"})
-    if result.junit and not junit_keep and pathlib.Path(result.junit).is_file():
-        parsed = subprocess.run(["awk", "-f", str(ROOT / "parse_test_suite_status.awk"), result.junit], capture_output=True)
-        if parsed.returncode == 0:
-            pathlib.Path(result.junit).unlink(missing_ok=True)
+    # The worker has already parsed a successful JUnit report to establish
+    # the task status.  Re-spawning awk here for every completed task made
+    # final cleanup serial and took tens of minutes in the private matrix.
+    if result.junit and result.junit_valid and not junit_keep:
+        pathlib.Path(result.junit).unlink(missing_ok=True)
 
 def run(mode: str, args: argparse.Namespace) -> int:
     if args.tasks < 1 or args.threads < 1: raise SystemExit("--tasks and --threads must be positive")
@@ -700,70 +740,59 @@ def run(mode: str, args: argparse.Namespace) -> int:
 
     try:
         if mode == "patched":
-            # A patched configuration owns a shared output/TMPDIR.  The
-            # legacy outer scheduler runs one input at a time within a
-            # configuration, while several configurations run concurrently.
-            # Preserve that resource boundary without restoring nested
-            # parallelism: at most --tasks configurations are active, and
-            # each consumer receives one file/configuration task at a time.
-            active: dict[str, list[object]] = {}
-            next_configuration = 0
+            # A single global producer interleaves configurations and input
+            # files.  Consumers can therefore use all --tasks slots even
+            # when the matrix has fewer compatible configurations than CPUs.
+            # Each patched task receives an isolated TMPDIR in worker().
+            def task_source():
+                for round_index in range(len(specs)):
+                    for input_index, inp in enumerate(inputs):
+                        spec = specs[(round_index + input_index) % len(specs)]
+                        assert spec is not None
+                        yield Task(inp, spec)
 
-            def schedule_next(state: list[object]) -> bool:
-                nonlocal pending
-                spec, position = state
-                assert isinstance(spec, PatchSpec) and isinstance(position, int)
-                while position < len(inputs):
-                    task = Task(inputs[position], spec); position += 1; state[1] = position
-                    if producer_skips(task):
-                        record(Result(task, "skipped", -1, total_ms=0))
-                        continue
-                    task_q.put(task); pending += 1
-                    return True
-                config_end[spec.key] = ms()
-                return False
-
-            def activate_configuration() -> bool:
-                nonlocal next_configuration
-                if next_configuration >= len(specs): return False
-                spec = specs[next_configuration]; next_configuration += 1
+            remaining = {spec.key: len(inputs) for spec in specs if spec is not None}
+            for spec in specs:
                 assert spec is not None
                 config_start[spec.key] = ms()
-                state: list[object] = [spec, 0]
-                active[spec.key] = state
-                if not schedule_next(state): active.pop(spec.key, None)
-                return True
-
-            while len(active) < args.tasks and next_configuration < len(specs):
-                activate_configuration()
-            while active:
-                try: r = result_q.get(timeout=1)
-                except Empty:
-                    raise_if_worker_failed()
-                    continue
-                if isinstance(r, WorkerDone):
-                    raise_if_worker_failed()
-                    continue
-                pending -= 1; record(r)
-                assert r.task.patch is not None
-                state = active[r.task.patch.key]
-                if not schedule_next(state): active.pop(r.task.patch.key, None)
-                while len(active) < args.tasks and next_configuration < len(specs):
-                    activate_configuration()
         else:
-            for inp in inputs:
-                task = Task(inp, None)
+            def task_source():
+                for inp in inputs:
+                    yield Task(inp, None)
+
+        source = iter(task_source())
+        source_exhausted = False
+
+        def completed(result: Result) -> None:
+            record(result)
+            if result.task.patch is not None:
+                key = result.task.patch.key
+                remaining[key] -= 1
+                if remaining[key] == 0:
+                    config_end[key] = ms()
+
+        def feed_consumers() -> None:
+            nonlocal pending, source_exhausted
+            while pending < args.tasks and not source_exhausted:
+                try:
+                    task = next(source)
+                except StopIteration:
+                    source_exhausted = True
+                    break
                 if producer_skips(task):
-                    record(Result(task, "skipped", -1, total_ms=0))
+                    completed(Result(task, "skipped", -1, total_ms=0))
                     continue
                 task_q.put(task); pending += 1
-            while pending:
-                try: r = result_q.get(timeout=1)
-                except Empty:
-                    raise_if_worker_failed()
-                    continue
-                if isinstance(r, WorkerDone): continue
-                pending -= 1; record(r)
+        feed_consumers()
+        while pending:
+            try: r = result_q.get(timeout=1)
+            except Empty:
+                raise_if_worker_failed()
+                continue
+            if isinstance(r, WorkerDone):
+                raise_if_worker_failed()
+                continue
+            pending -= 1; completed(r); feed_consumers()
         for _ in workers: task_q.put(None)
         finished_workers: set[int] = set()
         while len(finished_workers) < len(workers):
@@ -790,6 +819,9 @@ def run(mode: str, args: argparse.Namespace) -> int:
         expected = update_reference(r, raw_status, bit, args)
         status = apply_reference(raw_status, expected, args); r.status = status
         categories.setdefault(report_category(status), []).append(r)
+    cleanup_solver_outputs(results, args)
+    for r in results:
+        status = r.status
         cleanup(r, status, args)
     counts = Counter(report_category(r.status) for r in results)
     # The old report treats an empty PASSED section as bit 0x1, even if all
@@ -830,7 +862,12 @@ def run(mode: str, args: argparse.Namespace) -> int:
     for key, label in labels:
         entries = categories.get(key, [])
         print(f"{label}: {len(entries)}")
-        for r in entries: print(f"  {r.task.input.path}:{r.status}")
+        # The legacy patched driver keeps the individual inner-runner
+        # reports in per-configuration logs; it does not concatenate tens of
+        # thousands of successful entries into the CI log.  Keep the global
+        # counts while avoiding GitLab log truncation.
+        if mode != "patched":
+            for r in entries: print(f"  {r.task.input.path}:{r.status}")
     print("@END_SIMPLE_TESTSUITE_REPORT@")
     if args.timing == "yes":
         with timing.open("a") as f: f.write(f"suite\t{timing_mode}\t{output}\t\t\t0\t0\t0\t{ms()-suite_start}\n")
