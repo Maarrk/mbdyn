@@ -710,7 +710,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
     task_q: mp.Queue = mp.Queue(maxsize=max(2, 2*args.tasks)); result_q: mp.Queue = mp.Queue()
     workers = [mp.Process(target=worker, args=(task_q, result_q, cfg)) for _ in range(args.tasks)]
     for p in workers: p.start()
-    pending = 0; results: list[Result] = []; config_start: dict[str, int] = {}; config_end: dict[str, int] = {}
+    pending = 0; results: list[Result] = []; timing_rows: list[str] = []; config_start: dict[str, int] = {}; config_end: dict[str, int] = {}
 
     def record(result: Result) -> None:
         """Collect a completed task and emit its parent-owned diagnostics."""
@@ -721,8 +721,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
             print(result.detail, end="" if result.detail.endswith("\n") else "\n")
         if args.timing == "yes":
             task_mode = "patched" if (result.task.patch or abort_patch) else "unpatched"
-            with timing.open("a") as f:
-                f.write(f"test\t{task_mode}\t{result.task.input.path}\t{result.task.input.index}\t{result.status}\t{result.patch_ms}\t{result.lock_ms}\t{result.run_ms}\t{result.total_ms}\n")
+            timing_rows.append(f"test\t{task_mode}\t{result.task.input.path}\t{result.task.input.index}\t{result.status}\t{result.patch_ms}\t{result.lock_ms}\t{result.run_ms}\t{result.total_ms}\n")
 
     def producer_skips(task: Task) -> bool:
         inp = task.input
@@ -773,7 +772,11 @@ def run(mode: str, args: argparse.Namespace) -> int:
 
         def feed_consumers() -> None:
             nonlocal pending, source_exhausted
-            while pending < args.tasks and not source_exhausted:
+            # Keep a small ready backlog.  ``pending`` counts queued and
+            # running tasks, whereas only ``args.tasks`` workers can execute
+            # a solver.  Without this prefill, a short test leaves its worker
+            # idle while the parent receives and records its Result.
+            while pending < 2 * args.tasks and not source_exhausted:
                 try:
                     task = next(source)
                 except StopIteration:
@@ -847,6 +850,9 @@ def run(mode: str, args: argparse.Namespace) -> int:
                 for include in (spec.init_begin, spec.init_end, spec.control_begin, spec.control_end):
                     pathlib.Path(include).unlink(missing_ok=True)
                 configuration_log.unlink(missing_ok=True)
+    if args.timing == "yes" and timing_rows:
+        with timing.open("a") as f:
+            f.writelines(timing_rows)
     if args.timing == "yes" and mode == "patched":
         with timing.open("a") as f:
             f.write(f"phase\tpatched\t{output}\t\tpreparation\t0\t0\t0\t{preparation_ms}\n")
