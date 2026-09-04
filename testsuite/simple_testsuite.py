@@ -51,6 +51,11 @@ class Task:
     input: InputSpec
     patch: PatchSpec | None
 
+@dataclass(frozen=True)
+class TaskBatch:
+    """A small ordered unit of work for one persistent consumer."""
+    tasks: tuple[Task, ...]
+
 @dataclass
 class Result:
     task: Task
@@ -113,6 +118,8 @@ def parser(mode: str) -> argparse.ArgumentParser:
     p.add_argument("--exclude-initial-value", type=int, default=0)
     p.add_argument("--threads", type=int, default=int(os.environ.get("MBD_NUM_THREADS", "1")))
     p.add_argument("--tasks", type=int, default=default_tasks())
+    p.add_argument("--task-batch-size", type=int, default=int(os.environ.get("MBD_TESTSUITE_TASK_BATCH_SIZE", "4")),
+                   help="patched tasks issued per consumer queue message")
     p.add_argument("--verbose", choices=("yes", "no"), default="no")
     p.add_argument("--keep-output", choices=("all", "failed", "unexpected", "no"), default="unexpected")
     p.add_argument("--keep-output-junit-xml", choices=("always", "not-passed", "failed", "none"),
@@ -249,6 +256,9 @@ def compatible(linear: str, handler: str, scale: str, when: str, nonlinear: str,
     if nonlinear in {"nox", "nox-direct"} or nonlinear.startswith("nox-broyden"):
         if linear in {"naive", "qr", "lapack", "siconosdense"}: return False
     if nonlinear == "bfgs" and linear not in {"spqr", "qr"}: return False
+    # The legacy loop excludes this combination before it reaches the
+    # abort-after special cases below.
+    if assembly == "include" and skip == "skip": return False
     if abort == "derivatives" and skip == "skip":
         return linear == "umfpack" and handler == "map" and scale == "rowmaxcolumnmax" and when == "never" and nonlinear == "newtonraphson" and method == "impliciteuler"
     if abort != "derivatives" and skip == "skip": return False
@@ -461,89 +471,91 @@ def junit_status_ok(path: str) -> bool:
 def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
     try:
         while True:
-            task = task_q.get()
-            if task is None: break
-            start = ms(); patch_ms = 0; lock_ms = 0; temporary = copied = None; task_tmpdir: pathlib.Path | None = None; fds: list[int] = []
-            try:
-                inp = task.input
-                if inp.excluded or (cfg["skip_expected"] and inp.expected != 0) or ((task.patch or cfg["abort_after_step"] is not None) and inp.run_script):
-                    result_q.put(Result(task, "skipped", -1, total_ms=ms()-start)); continue
-                if cfg["exec_solver"] == "no":
-                    result_q.put(Result(task, "skipped", -1, total_ms=ms()-start)); continue
-                outdir = pathlib.Path(task.patch.outdir if task.patch else cfg["output"]); outdir.mkdir(parents=True, exist_ok=True)
-                # Include files are configuration-wide and read-only, but a
-                # solver may create fixed-name temporary files.  Give each
-                # patched task its own directory so configurations no longer
-                # need to be serialized to avoid TMPDIR collisions.
-                if task.patch:
-                    task_tmpdir = pathlib.Path(tempfile.mkdtemp(prefix=f".tmp-{inp.index}-", dir=outdir))
-                filename = inp.path
-                if task.patch:
-                    ps = ms(); filename, copied = patch_file(task); temporary = filename; patch_ms = ms()-ps
-                elif cfg["abort_after_step"] is not None:
-                    ps = ms(); filename, copied = abort_after_file(task, cfg["abort_after_step"], outdir); temporary = filename; patch_ms = ms()-ps
-                base = pathlib.Path(inp.path).stem; suffix = f"_{inp.index}"
-                output = str(outdir / f"{base}_mbdyn_output{suffix}"); log = output + ".stdout"
-                junit = str(outdir / f"junit_xml_report_{base}{suffix}.xml")
-                time_file = str(outdir / f"{base}_mbdyn_output_time{suffix}.log")
-                env = octave_environment(cfg, junit); env["TMPDIR"] = str(task_tmpdir or outdir)
-                if task.patch:
-                    env.update({"MBD_TESTSUITE_INITIAL_VALUE_BEGIN": task.patch.init_begin,
-                                "MBD_TESTSUITE_INITIAL_VALUE_END": task.patch.init_end,
-                                "MBD_TESTSUITE_CONTROL_DATA_BEGIN": task.patch.control_begin,
-                                "MBD_TESTSUITE_CONTROL_DATA_END": task.patch.control_end})
-                env["OMP_NUM_THREADS"] = "1"
-                env["MKL_NUM_THREADS"] = "1"
-                env["OPENBLAS_NUM_THREADS"] = "1"
-                env["MBD_NUM_THREADS"] = str(cfg["threads"])
-                if inp.run_script:
-                    if inp.run_script.endswith(".sh"):
-                        pathlib.Path(inp.run_script).chmod(pathlib.Path(inp.run_script).stat().st_mode | 0o111)
-                    command = ([os.environ.get("OCTAVE_EXEC", "octave"), *shlex.split(env["GTEST_OCTAVE_ARGS"]), "-q", "-f"] if inp.run_script.endswith(".m") else [])
-                    command += [inp.run_script, "-f", inp.path, "-o", output]
-                else:
-                    command = shlex.split(cfg["mbdyn_exec"]) + shlex.split(cfg["mbdyn_args"]) + ["-f", filename, "-o", output] + shlex.split(env.get("GTEST_MBDYN_ARGS", ""))
-                if cfg["print_resources"] in {"all", "time"}:
-                    command = shlex.split(os.environ.get("TESTSUITE_TIME_CMD", "/usr/bin/time --verbose")) + ["--output", time_file] + command
-                fds, lock_ms = locks(cfg["lockdir"], inp.ports)
-                run_start = ms()
-                with open(log, "w") as lf:
-                    try:
-                        rc = subprocess.run(command, cwd=str(pathlib.Path(inp.path).parent), env=env, stdout=lf, stderr=subprocess.STDOUT, timeout=cfg["timeout_seconds"]).returncode
-                    except subprocess.TimeoutExpired: rc = 124
-                    lf.flush()
-                run_ms = ms()-run_start
-                for fd in fds:
-                    fcntl.flock(fd, fcntl.LOCK_UN); os.close(fd)
-                fds = []
-                status = "passed" if rc == 0 else ("timeout" if rc == 124 else { -2: "interrupted", -15: "terminated", -9: "killed", 130: "interrupted", 143: "terminated", 137: "killed" }.get(rc, "failed"))
-                junit_valid = False
-                if status == "passed":
-                    junit_valid = junit_status_ok(junit)
-                    if junit_valid:
-                        steps = re.findall(r"^End of simulation at time [0-9.-]+ after ([0-9]+) steps;$",
-                                           pathlib.Path(log).read_text(errors="replace"), re.M)
-                        status = "passed" + (f"{{Steps={steps[-1]}}}" if steps else "")
-                if copied and status.startswith("passed") and cfg["keep"] not in {"all"}:
-                    pathlib.Path(copied).unlink(missing_ok=True)
-                detail = pathlib.Path(time_file).read_text(errors="replace") if pathlib.Path(time_file).is_file() else ""
-                result_q.put(Result(task, status, rc, patch_ms, lock_ms, run_ms, ms()-start, detail=detail, log=log, output=output, junit=junit, patched_copy=copied or "", time_file=time_file, junit_valid=junit_valid))
-            except Exception:
-                outdir = pathlib.Path(task.patch.outdir if task.patch else cfg["output"])
-                outdir.mkdir(parents=True, exist_ok=True)
-                log = outdir / f"{pathlib.Path(task.input.path).stem}_mbdyn_output_{task.input.index}.stdout"
-                detail = traceback.format_exc()
-                log.write_text(f"Python testsuite worker failure:\n{detail}")
-                result_q.put(Result(task, "unexpected", 255, patch_ms, lock_ms, total_ms=ms()-start, detail=detail, log=str(log)))
-            finally:
-                for fd in fds:
-                    try:
+            item = task_q.get()
+            if item is None: break
+            tasks = item.tasks if isinstance(item, TaskBatch) else (item,)
+            for task in tasks:
+                start = ms(); patch_ms = 0; lock_ms = 0; temporary = copied = None; task_tmpdir: pathlib.Path | None = None; fds: list[int] = []
+                try:
+                    inp = task.input
+                    if inp.excluded or (cfg["skip_expected"] and inp.expected != 0) or ((task.patch or cfg["abort_after_step"] is not None) and inp.run_script):
+                        result_q.put(Result(task, "skipped", -1, total_ms=ms()-start)); continue
+                    if cfg["exec_solver"] == "no":
+                        result_q.put(Result(task, "skipped", -1, total_ms=ms()-start)); continue
+                    outdir = pathlib.Path(task.patch.outdir if task.patch else cfg["output"]); outdir.mkdir(parents=True, exist_ok=True)
+                    # Include files are configuration-wide and read-only, but a
+                    # solver may create fixed-name temporary files.  Give each
+                    # patched task its own directory so configurations no longer
+                    # need to be serialized to avoid TMPDIR collisions.
+                    if task.patch:
+                        task_tmpdir = pathlib.Path(tempfile.mkdtemp(prefix=f".tmp-{inp.index}-", dir=outdir))
+                    filename = inp.path
+                    if task.patch:
+                        ps = ms(); filename, copied = patch_file(task); temporary = filename; patch_ms = ms()-ps
+                    elif cfg["abort_after_step"] is not None:
+                        ps = ms(); filename, copied = abort_after_file(task, cfg["abort_after_step"], outdir); temporary = filename; patch_ms = ms()-ps
+                    base = pathlib.Path(inp.path).stem; suffix = f"_{inp.index}"
+                    output = str(outdir / f"{base}_mbdyn_output{suffix}"); log = output + ".stdout"
+                    junit = str(outdir / f"junit_xml_report_{base}{suffix}.xml")
+                    time_file = str(outdir / f"{base}_mbdyn_output_time{suffix}.log")
+                    env = octave_environment(cfg, junit); env["TMPDIR"] = str(task_tmpdir or outdir)
+                    if task.patch:
+                        env.update({"MBD_TESTSUITE_INITIAL_VALUE_BEGIN": task.patch.init_begin,
+                                    "MBD_TESTSUITE_INITIAL_VALUE_END": task.patch.init_end,
+                                    "MBD_TESTSUITE_CONTROL_DATA_BEGIN": task.patch.control_begin,
+                                    "MBD_TESTSUITE_CONTROL_DATA_END": task.patch.control_end})
+                    env["OMP_NUM_THREADS"] = "1"
+                    env["MKL_NUM_THREADS"] = "1"
+                    env["OPENBLAS_NUM_THREADS"] = "1"
+                    env["MBD_NUM_THREADS"] = str(cfg["threads"])
+                    if inp.run_script:
+                        if inp.run_script.endswith(".sh"):
+                            pathlib.Path(inp.run_script).chmod(pathlib.Path(inp.run_script).stat().st_mode | 0o111)
+                        command = ([os.environ.get("OCTAVE_EXEC", "octave"), *shlex.split(env["GTEST_OCTAVE_ARGS"]), "-q", "-f"] if inp.run_script.endswith(".m") else [])
+                        command += [inp.run_script, "-f", inp.path, "-o", output]
+                    else:
+                        command = shlex.split(cfg["mbdyn_exec"]) + shlex.split(cfg["mbdyn_args"]) + ["-f", filename, "-o", output] + shlex.split(env.get("GTEST_MBDYN_ARGS", ""))
+                    if cfg["print_resources"] in {"all", "time"}:
+                        command = shlex.split(os.environ.get("TESTSUITE_TIME_CMD", "/usr/bin/time --verbose")) + ["--output", time_file] + command
+                    fds, lock_ms = locks(cfg["lockdir"], inp.ports)
+                    run_start = ms()
+                    with open(log, "w") as lf:
+                        try:
+                            rc = subprocess.run(command, cwd=str(pathlib.Path(inp.path).parent), env=env, stdout=lf, stderr=subprocess.STDOUT, timeout=cfg["timeout_seconds"]).returncode
+                        except subprocess.TimeoutExpired: rc = 124
+                        lf.flush()
+                    run_ms = ms()-run_start
+                    for fd in fds:
                         fcntl.flock(fd, fcntl.LOCK_UN); os.close(fd)
-                    except OSError:
-                        pass
-                if temporary: pathlib.Path(temporary).unlink(missing_ok=True)
-                if task_tmpdir:
-                    shutil.rmtree(task_tmpdir, ignore_errors=True)
+                    fds = []
+                    status = "passed" if rc == 0 else ("timeout" if rc == 124 else { -2: "interrupted", -15: "terminated", -9: "killed", 130: "interrupted", 143: "terminated", 137: "killed" }.get(rc, "failed"))
+                    junit_valid = False
+                    if status == "passed":
+                        junit_valid = junit_status_ok(junit)
+                        if junit_valid:
+                            steps = re.findall(r"^End of simulation at time [0-9.-]+ after ([0-9]+) steps;$",
+                                               pathlib.Path(log).read_text(errors="replace"), re.M)
+                            status = "passed" + (f"{{Steps={steps[-1]}}}" if steps else "")
+                    if copied and status.startswith("passed") and cfg["keep"] not in {"all"}:
+                        pathlib.Path(copied).unlink(missing_ok=True)
+                    detail = pathlib.Path(time_file).read_text(errors="replace") if pathlib.Path(time_file).is_file() else ""
+                    result_q.put(Result(task, status, rc, patch_ms, lock_ms, run_ms, ms()-start, detail=detail, log=log, output=output, junit=junit, patched_copy=copied or "", time_file=time_file, junit_valid=junit_valid))
+                except Exception:
+                    outdir = pathlib.Path(task.patch.outdir if task.patch else cfg["output"])
+                    outdir.mkdir(parents=True, exist_ok=True)
+                    log = outdir / f"{pathlib.Path(task.input.path).stem}_mbdyn_output_{task.input.index}.stdout"
+                    detail = traceback.format_exc()
+                    log.write_text(f"Python testsuite worker failure:\n{detail}")
+                    result_q.put(Result(task, "unexpected", 255, patch_ms, lock_ms, total_ms=ms()-start, detail=detail, log=str(log)))
+                finally:
+                    for fd in fds:
+                        try:
+                            fcntl.flock(fd, fcntl.LOCK_UN); os.close(fd)
+                        except OSError:
+                            pass
+                    if temporary: pathlib.Path(temporary).unlink(missing_ok=True)
+                    if task_tmpdir:
+                        shutil.rmtree(task_tmpdir, ignore_errors=True)
     finally:
         # A process with no work may exit while another consumer is still
         # running.  Its exit is normal, not evidence that work was lost.
@@ -699,7 +711,8 @@ def cleanup(result: Result, status: str, args: argparse.Namespace) -> None:
         pathlib.Path(result.junit).unlink(missing_ok=True)
 
 def run(mode: str, args: argparse.Namespace) -> int:
-    if args.tasks < 1 or args.threads < 1: raise SystemExit("--tasks and --threads must be positive")
+    if args.tasks < 1 or args.threads < 1 or args.task_batch_size < 1:
+        raise SystemExit("--tasks, --threads and --task-batch-size must be positive")
     if args.patch_input == "yes" and args.abort_after_step is not None:
         raise SystemExit("--patch-input must not be used in combination with --abort-after-step")
     output = pathlib.Path(args.prefix_output).resolve(); output.mkdir(parents=True, exist_ok=True)
@@ -801,6 +814,8 @@ def run(mode: str, args: argparse.Namespace) -> int:
 
         source = iter(task_source())
         source_exhausted = False
+        batch_size = args.task_batch_size if mode == "patched" else 1
+        batches_issued = 0
 
         def completed(result: Result) -> None:
             record(result)
@@ -811,17 +826,26 @@ def run(mode: str, args: argparse.Namespace) -> int:
                     config_end[key] = ms()
 
         def feed_consumers() -> None:
-            nonlocal pending, source_exhausted
-            while pending < args.tasks and not source_exhausted:
-                try:
-                    task = next(source)
-                except StopIteration:
-                    source_exhausted = True
-                    break
-                if producer_skips(task):
-                    completed(Result(task, "skipped", -1, total_ms=0))
-                    continue
-                task_q.put(task); pending += 1
+            nonlocal pending, source_exhausted, batches_issued
+            # First issue one task to every consumer.  Thereafter each queue
+            # item contains a small globally interleaved chunk, so a worker
+            # can run several short tests without a parent/queue round trip.
+            while pending < args.tasks * batch_size and not source_exhausted:
+                target_size = 1 if batches_issued < args.tasks else batch_size
+                batch: list[Task] = []
+                while len(batch) < target_size and not source_exhausted:
+                    try:
+                        task = next(source)
+                    except StopIteration:
+                        source_exhausted = True
+                        break
+                    if producer_skips(task):
+                        completed(Result(task, "skipped", -1, total_ms=0))
+                    else:
+                        batch.append(task)
+                if batch:
+                    task_q.put(TaskBatch(tuple(batch)) if len(batch) > 1 else batch[0])
+                    pending += len(batch); batches_issued += 1
         feed_consumers()
         while pending:
             try: r = result_q.get(timeout=1)

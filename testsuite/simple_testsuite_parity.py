@@ -123,6 +123,13 @@ def main() -> int:
             for name in ("mbd_init_val_begin.set", "mbd_init_val_end.set", "mbd_control_data_begin.set", "mbd_control_data_end.set"):
                 require((work / "legacy-patched" / tail / name).read_text() == (work / "python-patched" / tail / name).read_text(), f"patched include differs: {tail}/{name}")
 
+        # Legacy rejects include+skip before its derivatives special case.
+        # This used to leave two extra configurations in the public matrix.
+        include_skip = ["--linear-solvers", "umfpack", "--matrix-handlers", "map", "--scale-methods", "rowmaxcolumnmax", "--scale-when", "never", "--autodiff", "autodiff noautodiff", "--nonlinear-solvers", "newtonraphson", "--method", "impliciteuler", "--output-format", "netcdf-text", "--abort-after", "derivatives", "--skip-initial-joint-assembly", "skip", "--initial-assembly-of-deformable-and-force-elements", "include", "--exec-solver", "no"]
+        legacy_include_skip = invoke(ROOT / "simple_testsuite_patched_legacy.sh", ["--prefix-output", str(work / "legacy-include-skip"), "--prefix-input", str(inputs), *include_skip], env)
+        python_include_skip = invoke(ROOT / "simple_testsuite.py", ["patched", "--prefix-output", str(work / "python-include-skip"), "--prefix-input", str(inputs), *include_skip], env)
+        require(legacy_include_skip.returncode == python_include_skip.returncode == 0 and not list((work / "legacy-include-skip").rglob("mbd_init_val_end.set")) and not list((work / "python-include-skip").rglob("mbd_init_val_end.set")), "include+skip derivative matrix pruning differs")
+
         execution_matrix = ["--linear-solvers", "umfpack", "--matrix-handlers", "map", "--scale-methods", "rowmaxcolumnmax", "--scale-when", "never", "--autodiff", "autodiff", "--nonlinear-solvers", "newtonraphson", "--method", "impliciteuler", "--output-format", "netcdf-text", "--abort-after", "input", "--skip-initial-joint-assembly", "not-skip", "--initial-assembly-of-deformable-and-force-elements", "exclude", "--keep-output", "all"]
         legacy_execution = invoke(ROOT / "simple_testsuite_patched_legacy.sh", ["--prefix-output", str(work / "legacy-patched-execution"), "--prefix-input", str(inputs), "--mbdyn-exec", str(mock), *execution_matrix], env | {"MBDYN_PARITY_REQUIRE_PATCH_ENV": "yes"})
         python_execution = invoke(ROOT / "simple_testsuite.py", ["patched", "--prefix-output", str(work / "python-patched-execution"), "--prefix-input", str(inputs), "--mbdyn-exec", str(mock), *execution_matrix], env | {"MBDYN_PARITY_REQUIRE_PATCH_ENV": "yes"})
