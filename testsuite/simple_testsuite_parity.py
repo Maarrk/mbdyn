@@ -14,7 +14,7 @@ import sys
 import tempfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from simple_testsuite import InputSpec, PatchSpec, Task, abort_after_file, octave_environment, patch_file
+from simple_testsuite import InputSpec, PatchSpec, Task, abort_after_file, junit_status_ok, octave_environment, patch_file
 
 ROOT = pathlib.Path(__file__).resolve().parent
 
@@ -74,6 +74,25 @@ def main() -> int:
         env = os.environ | {"MBDYN_ARGS_ADD": "", "HOME": str(work)}
         python_env = octave_environment({"mbdyn_exec": str(mock), "mbdyn_args": "", "enable_gtest": "no"}, str(work / "report.xml"))
         require(str(ROOT.parent / "libraries" / "libmbc") in python_env["PYTHONPATH"], "custom Python runners cannot import libmbc")
+
+        # junit_status_ok() is an in-process port of the permissive legacy
+        # AWK parser.  Compare direct exit-status semantics, including odd
+        # but intentional cases where AWK ignores malformed XML attributes.
+        junit_cases = {
+            "valid.xml": '<testsuites tests="2" failures="0" disabled="0" errors="0"></testsuites>\n',
+            "failure.xml": '<testsuites tests="2" failures="1" disabled="0" errors="0"></testsuites>\n',
+            "error.xml": '<testsuites tests="2" failures="0" disabled="0" errors="1"></testsuites>\n',
+            "reordered.xml": '<testsuites failures="1" tests="2" disabled="0" errors="0"></testsuites>\n',
+            "octave.txt": '  FAIL> 2\nPASSES 3 out of 4 test\n',
+            "gtest.txt": 'x <FAILED> x 3 test\n',
+            "malformed.xml": '<testsuites this is not XML>\n',
+        }
+        for name, contents in junit_cases.items():
+            candidate = work / name; candidate.write_text(contents)
+            awk_status = subprocess.run(["awk", "-f", str(ROOT / "parse_test_suite_status.awk"), str(candidate)], capture_output=True).returncode == 0
+            require(junit_status_ok(str(candidate)) == awk_status, f"JUnit AWK parity differs for {name}")
+        missing_junit = work / "missing.xml"
+        require(not junit_status_ok(str(missing_junit)), "missing JUnit file must fail like AWK")
         base = ["--prefix-input", str(inputs), "--mbdyn-exec", str(mock), "--tasks", "2", "--keep-output", "all"]
 
         legacy = invoke(ROOT / "simple_testsuite_legacy.sh", ["--prefix-output", str(work / "legacy"), *base], env)

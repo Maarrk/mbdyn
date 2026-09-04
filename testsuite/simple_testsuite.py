@@ -417,6 +417,47 @@ def locks(root: str, ports: tuple[int, ...]):
         fcntl.flock(fd, fcntl.LOCK_EX); fds.append(fd)
     return fds, ms()-start
 
+def awk_number(value: str) -> float:
+    """The small numeric subset needed by gawk's strtonum() calls below."""
+    try:
+        return float(value)
+    except ValueError:
+        return 0.0
+
+def junit_status_ok(path: str) -> bool:
+    """Return the exit-status meaning of parse_test_suite_status.awk.
+
+    The legacy helper is deliberately a permissive line parser, not an XML
+    parser.  Preserve its rules so malformed or unrecognised JUnit content
+    remains non-failing exactly as before; a missing/unreadable file fails as
+    gawk does.  This avoids one awk process for every successful simulation.
+    """
+    try:
+        lines = pathlib.Path(path).read_text(errors="replace").splitlines()
+    except OSError:
+        return False
+    failed = 0.0
+    for line in lines:
+        fields = line.split()
+        if line.startswith("  FAIL>") and len(fields) >= 2:
+            failed += awk_number(fields[1])
+        if re.fullmatch(r"PASSES [0-9]+ out of [0-9]+ test", line) and len(fields) >= 5:
+            failed += awk_number(fields[4]) - awk_number(fields[1])
+        if line.startswith("FAILED>") and len(fields) >= 2:
+            failed += awk_number(fields[1])
+        if len(fields) >= 5 and re.search(r"\bFAILED\b", fields[1]) and re.match(r"^[0-9]", fields[3]) and re.search(r"\btest\b", fields[4]):
+            failed += awk_number(fields[3])
+        if line == "!!!!! test failed":
+            failed += 1
+        if (len(fields) >= 5 and re.search(r"\btestsuites\b", fields[0]) and
+                re.search(r'\btests="[0-9]+"', fields[1]) and
+                re.search(r'\bfailures="[0-9]+"', fields[2]) and
+                re.search(r'\berrors="[0-9]+"', fields[4])):
+            tests, failures, errors = fields[1].split('"'), fields[2].split('"'), fields[4].split('"')
+            if len(tests) == len(failures) == len(errors) == 3:
+                failed += awk_number(failures[1]) + awk_number(errors[1])
+    return failed <= 0
+
 def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
     try:
         while True:
@@ -478,10 +519,8 @@ def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
                 status = "passed" if rc == 0 else ("timeout" if rc == 124 else { -2: "interrupted", -15: "terminated", -9: "killed", 130: "interrupted", 143: "terminated", 137: "killed" }.get(rc, "failed"))
                 junit_valid = False
                 if status == "passed":
-                    junit_status = subprocess.run(["awk", "-f", str(ROOT / "parse_test_suite_status.awk"), junit],
-                                                   text=True, capture_output=True)
-                    junit_valid = junit_status.returncode == 0
-                    if junit_status.returncode == 0:
+                    junit_valid = junit_status_ok(junit)
+                    if junit_valid:
                         steps = re.findall(r"^End of simulation at time [0-9.-]+ after ([0-9]+) steps;$",
                                            pathlib.Path(log).read_text(errors="replace"), re.M)
                         status = "passed" + (f"{{Steps={steps[-1]}}}" if steps else "")
@@ -710,7 +749,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
     task_q: mp.Queue = mp.Queue(maxsize=max(2, 2*args.tasks)); result_q: mp.Queue = mp.Queue()
     workers = [mp.Process(target=worker, args=(task_q, result_q, cfg)) for _ in range(args.tasks)]
     for p in workers: p.start()
-    pending = 0; results: list[Result] = []; timing_rows: list[str] = []; config_start: dict[str, int] = {}; config_end: dict[str, int] = {}
+    pending = 0; results: list[Result] = []; config_start: dict[str, int] = {}; config_end: dict[str, int] = {}
 
     def record(result: Result) -> None:
         """Collect a completed task and emit its parent-owned diagnostics."""
@@ -721,7 +760,8 @@ def run(mode: str, args: argparse.Namespace) -> int:
             print(result.detail, end="" if result.detail.endswith("\n") else "\n")
         if args.timing == "yes":
             task_mode = "patched" if (result.task.patch or abort_patch) else "unpatched"
-            timing_rows.append(f"test\t{task_mode}\t{result.task.input.path}\t{result.task.input.index}\t{result.status}\t{result.patch_ms}\t{result.lock_ms}\t{result.run_ms}\t{result.total_ms}\n")
+            with timing.open("a") as f:
+                f.write(f"test\t{task_mode}\t{result.task.input.path}\t{result.task.input.index}\t{result.status}\t{result.patch_ms}\t{result.lock_ms}\t{result.run_ms}\t{result.total_ms}\n")
 
     def producer_skips(task: Task) -> bool:
         inp = task.input
@@ -772,11 +812,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
 
         def feed_consumers() -> None:
             nonlocal pending, source_exhausted
-            # Keep a small ready backlog.  ``pending`` counts queued and
-            # running tasks, whereas only ``args.tasks`` workers can execute
-            # a solver.  Without this prefill, a short test leaves its worker
-            # idle while the parent receives and records its Result.
-            while pending < 2 * args.tasks and not source_exhausted:
+            while pending < args.tasks and not source_exhausted:
                 try:
                     task = next(source)
                 except StopIteration:
@@ -850,9 +886,6 @@ def run(mode: str, args: argparse.Namespace) -> int:
                 for include in (spec.init_begin, spec.init_end, spec.control_begin, spec.control_end):
                     pathlib.Path(include).unlink(missing_ok=True)
                 configuration_log.unlink(missing_ok=True)
-    if args.timing == "yes" and timing_rows:
-        with timing.open("a") as f:
-            f.writelines(timing_rows)
     if args.timing == "yes" and mode == "patched":
         with timing.open("a") as f:
             f.write(f"phase\tpatched\t{output}\t\tpreparation\t0\t0\t0\t{preparation_ms}\n")
