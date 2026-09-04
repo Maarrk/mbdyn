@@ -14,7 +14,7 @@ import sys
 import tempfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from simple_testsuite import InputSpec, PatchSpec, Task, abort_after_file, patch_file
+from simple_testsuite import InputSpec, PatchSpec, Task, abort_after_file, octave_environment, patch_file
 
 ROOT = pathlib.Path(__file__).resolve().parent
 
@@ -40,7 +40,7 @@ trace = os.environ.get('MBDYN_PARITY_TRACE')
 if trace:
     with open(trace, 'a') as file:
         file.write(f'{time.monotonic():.9f}\\n')
-    time.sleep(.20)
+    time.sleep(float(os.environ.get('MBDYN_PARITY_SLEEP', '.20')))
 print('End of simulation at time 0 after 3 steps;')
 for arg in sys.argv:
     if arg.startswith('--gtest_output=xml:'):
@@ -65,6 +65,8 @@ def main() -> int:
         (inputs / "malformed.mbd").write_text("begin: data; begin: initial value;\n")
         mock = work / "mock-mbdyn"; mock.write_text(MOCK); mock.chmod(0o755)
         env = os.environ | {"MBDYN_ARGS_ADD": "", "HOME": str(work)}
+        python_env = octave_environment({"mbdyn_exec": str(mock), "mbdyn_args": "", "enable_gtest": "no"}, str(work / "report.xml"))
+        require(str(ROOT.parent / "libraries" / "libmbc") in python_env["PYTHONPATH"], "custom Python runners cannot import libmbc")
         base = ["--prefix-input", str(inputs), "--mbdyn-exec", str(mock), "--tasks", "2", "--keep-output", "all"]
 
         legacy = invoke(ROOT / "simple_testsuite_legacy.sh", ["--prefix-output", str(work / "legacy"), *base], env)
@@ -139,6 +141,14 @@ def main() -> int:
         parallel_starts = sorted(float(value) for value in parallel_trace.read_text().splitlines())
         require(len(parallel_starts) == 2 and parallel_starts[1] - parallel_starts[0] < .18, "independent tasks did not use both consumers")
 
+        # An idle consumer is entitled to finish before a busy one.  Its
+        # clean exit must not abort the still-running task (the failure seen
+        # in the first desktop producer/consumer validation).
+        one_task = work / "one-task"; one_task.mkdir()
+        (one_task / "only.mbd").write_text(INPUT)
+        orderly_exit = invoke(ROOT / "simple_testsuite.py", ["plain", "--prefix-output", str(work / "one-task-out"), "--prefix-input", str(one_task), "--mbdyn-exec", str(mock), "--enable-gtest", "no", "--tasks", "2"], env | {"MBDYN_PARITY_TRACE": str(work / "one-task-trace"), "MBDYN_PARITY_SLEEP": "1.2"})
+        require(orderly_exit.returncode == 0 and "FAILED-UNEXPECTED: 0" in orderly_exit.stdout, "an orderly idle-consumer exit aborted pending work")
+
         # The producer must rotate configurations across files rather than
         # enumerate a complete matrix for the first file before touching the
         # second.  Dry-run makes this scheduling invariant observable without
@@ -159,6 +169,22 @@ def main() -> int:
             command = (["plain"] if program.name == "simple_testsuite.py" else []) + ["--prefix-output", str(work / f"{label}-out"), "--prefix-input", str(scripted), "--mbdyn-exec", str(mock), "--enable-gtest", "no", "--keep-output", "all"]
             completed = invoke(program, command, env | {"MBDYN_PARITY_EXPECT_EXEC": str(mock)})
             require(completed.returncode == 0 and "PASSED" in completed.stdout, f"custom run script differs: {label}")
+
+        # --abort-after-step implies an input patch.  Legacy deliberately
+        # skips custom run scripts in that case, since they may ignore the
+        # patched input file; the Python worker must make the same choice.
+        for label, program in (("legacy-custom-patch", ROOT / "simple_testsuite_legacy.sh"), ("python-custom-patch", ROOT / "simple_testsuite.py")):
+            scripted = work / label; scripted.mkdir()
+            (scripted / "case.mbd").write_text(INPUT)
+            invocation_trace = work / f"{label}-invoked"
+            run_script = scripted / "case_run.sh"
+            run_script.write_text(f"#!/bin/sh\nprintf invoked > {invocation_trace}\n")
+            run_script.chmod(0o755)
+            output_dir = work / f"{label}-out"
+            command = (["plain"] if program.name == "simple_testsuite.py" else []) + ["--prefix-output", str(output_dir), "--prefix-input", str(scripted), "--mbdyn-exec", str(mock), "--enable-gtest", "no", "--abort-after-step", "1", "--exit-status-mask", "0x1", "--timing", "yes"]
+            completed = invoke(program, command, env)
+            require(completed.returncode == 0 and "SKIPPED" in completed.stdout and not invocation_trace.exists(), f"patched custom run script was not skipped: {label}; rc={completed.returncode}; stdout={completed.stdout!r}; stderr={completed.stderr!r}")
+            require("test\tpatched\t" in (output_dir / "mbdyn-testsuite-timing.tsv").read_text(), f"abort-after timing mode differs: {label}")
         for label, program in (("legacy-generator", ROOT / "simple_testsuite_legacy.sh"), ("python-generator", ROOT / "simple_testsuite.py")):
             generated = work / label; generated.mkdir()
             (generated / "case.mbd").write_text(INPUT)

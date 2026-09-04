@@ -66,6 +66,11 @@ class Result:
     patched_copy: str = ""
     time_file: str = ""
 
+@dataclass(frozen=True)
+class WorkerDone:
+    """In-band acknowledgement that a consumer has flushed all results."""
+    pid: int
+
 def ms() -> int:
     return time.monotonic_ns() // 1_000_000
 
@@ -393,7 +398,9 @@ def octave_environment(cfg: dict, junit: str) -> dict:
     env["MBOCT_MBDYN_PKG_MBDYN_SOLVER_COMMAND"] = " ".join(
         part for part in (cfg["mbdyn_exec"], cfg["mbdyn_args"], gtest) if part)
     env["GTEST_OCTAVE_ARGS"] = f"--gtest_output=xml:{junit}" if os.environ.get("OCTAVE_EXEC", "octave").startswith("gtest-") else ""
-    env["PYTHONPATH"] = f"{env.get('PYTHONPATH', '')}:{ROOT / 'libraries' / 'libmbc'}"
+    # libraries/ is a sibling of testsuite/, not a child of it.  This is
+    # required by custom Python runners such as gopal2010_static_run.sh.
+    env["PYTHONPATH"] = f"{env.get('PYTHONPATH', '')}:{ROOT.parent / 'libraries' / 'libmbc'}"
     return env
 
 def locks(root: str, ports: tuple[int, ...]):
@@ -404,82 +411,89 @@ def locks(root: str, ports: tuple[int, ...]):
     return fds, ms()-start
 
 def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
-    while True:
-        task = task_q.get()
-        if task is None: return
-        start = ms(); patch_ms = 0; lock_ms = 0; temporary = copied = None; fds: list[int] = []
-        try:
-            inp = task.input
-            if inp.excluded or (cfg["skip_expected"] and inp.expected != 0) or (task.patch and inp.run_script):
-                result_q.put(Result(task, "skipped", -1, total_ms=ms()-start)); continue
-            if cfg["exec_solver"] == "no":
-                result_q.put(Result(task, "skipped", -1, total_ms=ms()-start)); continue
-            outdir = pathlib.Path(task.patch.outdir if task.patch else cfg["output"]); outdir.mkdir(parents=True, exist_ok=True)
-            filename = inp.path
-            if task.patch:
-                ps = ms(); filename, copied = patch_file(task); temporary = filename; patch_ms = ms()-ps
-            elif cfg["abort_after_step"] is not None:
-                ps = ms(); filename, copied = abort_after_file(task, cfg["abort_after_step"], outdir); temporary = filename; patch_ms = ms()-ps
-            base = pathlib.Path(inp.path).stem; suffix = f"_{inp.index}"
-            output = str(outdir / f"{base}_mbdyn_output{suffix}"); log = output + ".stdout"
-            junit = str(outdir / f"junit_xml_report_{base}{suffix}.xml")
-            time_file = str(outdir / f"{base}_mbdyn_output_time{suffix}.log")
-            env = octave_environment(cfg, junit); env["TMPDIR"] = str(outdir)
-            if task.patch:
-                env.update({"MBD_TESTSUITE_INITIAL_VALUE_BEGIN": task.patch.init_begin,
-                            "MBD_TESTSUITE_INITIAL_VALUE_END": task.patch.init_end,
-                            "MBD_TESTSUITE_CONTROL_DATA_BEGIN": task.patch.control_begin,
-                            "MBD_TESTSUITE_CONTROL_DATA_END": task.patch.control_end})
-            env["OMP_NUM_THREADS"] = "1"
-            env["MKL_NUM_THREADS"] = "1"
-            env["OPENBLAS_NUM_THREADS"] = "1"
-            env["MBD_NUM_THREADS"] = str(cfg["threads"])
-            if inp.run_script:
-                if inp.run_script.endswith(".sh"):
-                    pathlib.Path(inp.run_script).chmod(pathlib.Path(inp.run_script).stat().st_mode | 0o111)
-                command = ([os.environ.get("OCTAVE_EXEC", "octave"), *shlex.split(env["GTEST_OCTAVE_ARGS"]), "-q", "-f"] if inp.run_script.endswith(".m") else [])
-                command += [inp.run_script, "-f", inp.path, "-o", output]
-            else:
-                command = shlex.split(cfg["mbdyn_exec"]) + shlex.split(cfg["mbdyn_args"]) + ["-f", filename, "-o", output] + shlex.split(env.get("GTEST_MBDYN_ARGS", ""))
-            if cfg["print_resources"] in {"all", "time"}:
-                command = shlex.split(os.environ.get("TESTSUITE_TIME_CMD", "/usr/bin/time --verbose")) + ["--output", time_file] + command
-            fds, lock_ms = locks(cfg["lockdir"], inp.ports)
-            run_start = ms()
-            with open(log, "w") as lf:
-                try:
-                    rc = subprocess.run(command, cwd=str(pathlib.Path(inp.path).parent), env=env, stdout=lf, stderr=subprocess.STDOUT, timeout=cfg["timeout_seconds"]).returncode
-                except subprocess.TimeoutExpired: rc = 124
-                lf.flush()
-            run_ms = ms()-run_start
-            for fd in fds:
-                fcntl.flock(fd, fcntl.LOCK_UN); os.close(fd)
-            fds = []
-            status = "passed" if rc == 0 else ("timeout" if rc == 124 else { -2: "interrupted", -15: "terminated", -9: "killed", 130: "interrupted", 143: "terminated", 137: "killed" }.get(rc, "failed"))
-            if status == "passed":
-                junit_status = subprocess.run(["awk", "-f", str(ROOT / "parse_test_suite_status.awk"), junit],
-                                               text=True, capture_output=True)
-                if junit_status.returncode == 0:
-                    steps = re.findall(r"^End of simulation at time [0-9.-]+ after ([0-9]+) steps;$",
-                                       pathlib.Path(log).read_text(errors="replace"), re.M)
-                    status = "passed" + (f"{{Steps={steps[-1]}}}" if steps else "")
-            if copied and status.startswith("passed") and cfg["keep"] not in {"all"}:
-                pathlib.Path(copied).unlink(missing_ok=True)
-            detail = pathlib.Path(time_file).read_text(errors="replace") if pathlib.Path(time_file).is_file() else ""
-            result_q.put(Result(task, status, rc, patch_ms, lock_ms, run_ms, ms()-start, detail=detail, log=log, output=output, junit=junit, patched_copy=copied or "", time_file=time_file))
-        except Exception:
-            outdir = pathlib.Path(task.patch.outdir if task.patch else cfg["output"])
-            outdir.mkdir(parents=True, exist_ok=True)
-            log = outdir / f"{pathlib.Path(task.input.path).stem}_mbdyn_output_{task.input.index}.stdout"
-            detail = traceback.format_exc()
-            log.write_text(f"Python testsuite worker failure:\n{detail}")
-            result_q.put(Result(task, "unexpected", 255, patch_ms, lock_ms, total_ms=ms()-start, detail=detail, log=str(log)))
-        finally:
-            for fd in fds:
-                try:
+    try:
+        while True:
+            task = task_q.get()
+            if task is None: break
+            start = ms(); patch_ms = 0; lock_ms = 0; temporary = copied = None; fds: list[int] = []
+            try:
+                inp = task.input
+                if inp.excluded or (cfg["skip_expected"] and inp.expected != 0) or ((task.patch or cfg["abort_after_step"] is not None) and inp.run_script):
+                    result_q.put(Result(task, "skipped", -1, total_ms=ms()-start)); continue
+                if cfg["exec_solver"] == "no":
+                    result_q.put(Result(task, "skipped", -1, total_ms=ms()-start)); continue
+                outdir = pathlib.Path(task.patch.outdir if task.patch else cfg["output"]); outdir.mkdir(parents=True, exist_ok=True)
+                filename = inp.path
+                if task.patch:
+                    ps = ms(); filename, copied = patch_file(task); temporary = filename; patch_ms = ms()-ps
+                elif cfg["abort_after_step"] is not None:
+                    ps = ms(); filename, copied = abort_after_file(task, cfg["abort_after_step"], outdir); temporary = filename; patch_ms = ms()-ps
+                base = pathlib.Path(inp.path).stem; suffix = f"_{inp.index}"
+                output = str(outdir / f"{base}_mbdyn_output{suffix}"); log = output + ".stdout"
+                junit = str(outdir / f"junit_xml_report_{base}{suffix}.xml")
+                time_file = str(outdir / f"{base}_mbdyn_output_time{suffix}.log")
+                env = octave_environment(cfg, junit); env["TMPDIR"] = str(outdir)
+                if task.patch:
+                    env.update({"MBD_TESTSUITE_INITIAL_VALUE_BEGIN": task.patch.init_begin,
+                                "MBD_TESTSUITE_INITIAL_VALUE_END": task.patch.init_end,
+                                "MBD_TESTSUITE_CONTROL_DATA_BEGIN": task.patch.control_begin,
+                                "MBD_TESTSUITE_CONTROL_DATA_END": task.patch.control_end})
+                env["OMP_NUM_THREADS"] = "1"
+                env["MKL_NUM_THREADS"] = "1"
+                env["OPENBLAS_NUM_THREADS"] = "1"
+                env["MBD_NUM_THREADS"] = str(cfg["threads"])
+                if inp.run_script:
+                    if inp.run_script.endswith(".sh"):
+                        pathlib.Path(inp.run_script).chmod(pathlib.Path(inp.run_script).stat().st_mode | 0o111)
+                    command = ([os.environ.get("OCTAVE_EXEC", "octave"), *shlex.split(env["GTEST_OCTAVE_ARGS"]), "-q", "-f"] if inp.run_script.endswith(".m") else [])
+                    command += [inp.run_script, "-f", inp.path, "-o", output]
+                else:
+                    command = shlex.split(cfg["mbdyn_exec"]) + shlex.split(cfg["mbdyn_args"]) + ["-f", filename, "-o", output] + shlex.split(env.get("GTEST_MBDYN_ARGS", ""))
+                if cfg["print_resources"] in {"all", "time"}:
+                    command = shlex.split(os.environ.get("TESTSUITE_TIME_CMD", "/usr/bin/time --verbose")) + ["--output", time_file] + command
+                fds, lock_ms = locks(cfg["lockdir"], inp.ports)
+                run_start = ms()
+                with open(log, "w") as lf:
+                    try:
+                        rc = subprocess.run(command, cwd=str(pathlib.Path(inp.path).parent), env=env, stdout=lf, stderr=subprocess.STDOUT, timeout=cfg["timeout_seconds"]).returncode
+                    except subprocess.TimeoutExpired: rc = 124
+                    lf.flush()
+                run_ms = ms()-run_start
+                for fd in fds:
                     fcntl.flock(fd, fcntl.LOCK_UN); os.close(fd)
-                except OSError:
-                    pass
-            if temporary: pathlib.Path(temporary).unlink(missing_ok=True)
+                fds = []
+                status = "passed" if rc == 0 else ("timeout" if rc == 124 else { -2: "interrupted", -15: "terminated", -9: "killed", 130: "interrupted", 143: "terminated", 137: "killed" }.get(rc, "failed"))
+                if status == "passed":
+                    junit_status = subprocess.run(["awk", "-f", str(ROOT / "parse_test_suite_status.awk"), junit],
+                                                   text=True, capture_output=True)
+                    if junit_status.returncode == 0:
+                        steps = re.findall(r"^End of simulation at time [0-9.-]+ after ([0-9]+) steps;$",
+                                           pathlib.Path(log).read_text(errors="replace"), re.M)
+                        status = "passed" + (f"{{Steps={steps[-1]}}}" if steps else "")
+                if copied and status.startswith("passed") and cfg["keep"] not in {"all"}:
+                    pathlib.Path(copied).unlink(missing_ok=True)
+                detail = pathlib.Path(time_file).read_text(errors="replace") if pathlib.Path(time_file).is_file() else ""
+                result_q.put(Result(task, status, rc, patch_ms, lock_ms, run_ms, ms()-start, detail=detail, log=log, output=output, junit=junit, patched_copy=copied or "", time_file=time_file))
+            except Exception:
+                outdir = pathlib.Path(task.patch.outdir if task.patch else cfg["output"])
+                outdir.mkdir(parents=True, exist_ok=True)
+                log = outdir / f"{pathlib.Path(task.input.path).stem}_mbdyn_output_{task.input.index}.stdout"
+                detail = traceback.format_exc()
+                log.write_text(f"Python testsuite worker failure:\n{detail}")
+                result_q.put(Result(task, "unexpected", 255, patch_ms, lock_ms, total_ms=ms()-start, detail=detail, log=str(log)))
+            finally:
+                for fd in fds:
+                    try:
+                        fcntl.flock(fd, fcntl.LOCK_UN); os.close(fd)
+                    except OSError:
+                        pass
+                if temporary: pathlib.Path(temporary).unlink(missing_ok=True)
+    finally:
+        # A process with no work may exit while another consumer is still
+        # running.  Its exit is normal, not evidence that work was lost.
+        # Queue this after every Result so the parent can distinguish orderly
+        # completion from an actual worker crash.
+        result_q.put(WorkerDone(os.getpid()))
 
 # Per-test bits are the values written by simple_testsuite_run_test().  The
 # final process status is intentionally different; it is assembled from the
@@ -605,7 +619,11 @@ def run(mode: str, args: argparse.Namespace) -> int:
     if args.patch_input == "yes" and args.abort_after_step is not None:
         raise SystemExit("--patch-input must not be used in combination with --abort-after-step")
     output = pathlib.Path(args.prefix_output).resolve(); output.mkdir(parents=True, exist_ok=True)
-    timing_mode = "patched" if mode == "patched" or args.patch_input == "yes" else "unpatched"
+    # The Bash runner implements --abort-after-step with a temporary input
+    # patch, and labels that pass as patched for timing.  It is nevertheless
+    # distinct from --patch-input, which injects configuration include files.
+    abort_patch = args.abort_after_step is not None
+    timing_mode = "patched" if mode == "patched" or args.patch_input == "yes" or abort_patch else "unpatched"
     args.prefix_input = str(pathlib.Path(args.prefix_input).resolve())
     lockdir = os.environ.get("MBD_TESTSUITE_RESOURCE_LOCK_DIR", str(output / ".resource-locks"))
     timing = pathlib.Path(os.environ.get("MBD_TESTSUITE_TIMING_FILE", str(output / "mbdyn-testsuite-timing.tsv")))
@@ -630,8 +648,8 @@ def run(mode: str, args: argparse.Namespace) -> int:
         for round_index in range(len(specs)):
             for input_index, inp in enumerate(inputs):
                 spec = specs[(round_index + input_index) % len(specs)]
-                skipped = inp.excluded or (args.skip_expected_failures == "yes" and inp.expected != 0) or (spec is not None and inp.run_script is not None) or args.exec_solver == "no"
-                fields = ("SKIP" if skipped else "TASK", "patched" if spec else "unpatched", str(inp.index), inp.path)
+                skipped = inp.excluded or (args.skip_expected_failures == "yes" and inp.expected != 0) or ((spec is not None or abort_patch) and inp.run_script is not None) or args.exec_solver == "no"
+                fields = ("SKIP" if skipped else "TASK", "patched" if (spec or abort_patch) else "unpatched", str(inp.index), inp.path)
                 print("\t".join((*fields, spec.key if spec else "")))
                 count += 1
         print(f"MANIFEST\t{count}\tinputs={len(inputs)}\tconfigurations={len(specs)}")
@@ -645,7 +663,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
     # began configuration work, so its preparation phase includes this time.
     preparation_ms = ms() - suite_start
     task_q: mp.Queue = mp.Queue(maxsize=max(2, 2*args.tasks)); result_q: mp.Queue = mp.Queue()
-    workers = [mp.Process(target=worker, args=(task_q, result_q, cfg), daemon=True) for _ in range(args.tasks)]
+    workers = [mp.Process(target=worker, args=(task_q, result_q, cfg)) for _ in range(args.tasks)]
     for p in workers: p.start()
     pending = 0; results: list[Result] = []; per_config = Counter(); config_done = Counter(); config_start: dict[str, int] = {}; config_end: dict[str, int] = {}
     try:
@@ -656,13 +674,13 @@ def run(mode: str, args: argparse.Namespace) -> int:
             for input_index, inp in enumerate(inputs):
                 spec = specs[(round_index + input_index) % len(specs)]
                 task = Task(inp, spec)
-                producer_skip = inp.excluded or (args.skip_expected_failures == "yes" and inp.expected != 0) or (spec is not None and inp.run_script is not None) or args.exec_solver == "no"
+                producer_skip = inp.excluded or (args.skip_expected_failures == "yes" and inp.expected != 0) or ((spec is not None or abort_patch) and inp.run_script is not None) or args.exec_solver == "no"
                 if producer_skip:
                     results.append(Result(task, "skipped", -1, total_ms=0))
                     if spec:
                         per_config[spec.key] += 1; config_done[spec.key] += 1; config_start.setdefault(spec.key, ms())
                     if args.timing == "yes":
-                        with timing.open("a") as f: f.write(f"test\t{'patched' if spec else 'unpatched'}\t{inp.path}\t{inp.index}\tskipped\t0\t0\t0\t0\n")
+                        with timing.open("a") as f: f.write(f"test\t{'patched' if (spec or abort_patch) else 'unpatched'}\t{inp.path}\t{inp.index}\tskipped\t0\t0\t0\t0\n")
                     continue
                 task_q.put(task); pending += 1
                 if spec:
@@ -671,17 +689,23 @@ def run(mode: str, args: argparse.Namespace) -> int:
         for key, count in per_config.items():
             if config_done[key] == count:
                 config_end[key] = ms()
-        while pending:
+        finished_workers: set[int] = set()
+        while pending or len(finished_workers) < len(workers):
             try: r = result_q.get(timeout=1)
             except Empty:
-                if any(not p.is_alive() for p in workers):
-                    # Do not wait indefinitely for an item owned by a dead
-                    # consumer.  Preserve completed results and make the
-                    # aggregate report explicitly unexpected.
+                failed_workers = [p for p in workers if p.exitcode not in (None, 0)]
+                if failed_workers:
+                    # Do not wait indefinitely for an item owned by a
+                    # crashed consumer.  A clean exit is handled through its
+                    # in-band WorkerDone acknowledgement above.
                     diagnostic = InputSpec("<testsuite consumer>", 0, -1, False, (), None, None)
-                    results.append(Result(Task(diagnostic, None), "unexpected", 255, detail="a testsuite consumer died"))
+                    exits = ", ".join(f"pid={p.pid}, exitcode={p.exitcode}" for p in failed_workers)
+                    results.append(Result(Task(diagnostic, None), "unexpected", 255, detail=f"a testsuite consumer died ({exits})"))
                     pending = 0
                     break
+                continue
+            if isinstance(r, WorkerDone):
+                finished_workers.add(r.pid)
                 continue
             pending -= 1; results.append(r)
             if args.verbose == "yes" and r.log:
@@ -694,7 +718,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
                 if config_done[key] == per_config[key]:
                     config_end[key] = ms()
             if args.timing == "yes":
-                with timing.open("a") as f: f.write(f"test\t{'patched' if r.task.patch else 'unpatched'}\t{r.task.input.path}\t{r.task.input.index}\t{r.status}\t{r.patch_ms}\t{r.lock_ms}\t{r.run_ms}\t{r.total_ms}\n")
+                with timing.open("a") as f: f.write(f"test\t{'patched' if (r.task.patch or abort_patch) else 'unpatched'}\t{r.task.input.path}\t{r.task.input.index}\t{r.status}\t{r.patch_ms}\t{r.lock_ms}\t{r.run_ms}\t{r.total_ms}\n")
     except KeyboardInterrupt:
         diagnostic = InputSpec("<testsuite interrupted>", 0, -1, False, (), None, None)
         results.append(Result(Task(diagnostic, None), "interrupted", 130, detail="interrupted by signal"))
