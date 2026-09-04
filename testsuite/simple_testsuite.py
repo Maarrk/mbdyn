@@ -51,11 +51,6 @@ class Task:
     input: InputSpec
     patch: PatchSpec | None
 
-@dataclass(frozen=True)
-class TaskBatch:
-    """A small ordered unit of work for one persistent consumer."""
-    tasks: tuple[Task, ...]
-
 @dataclass
 class Result:
     task: Task
@@ -118,8 +113,6 @@ def parser(mode: str) -> argparse.ArgumentParser:
     p.add_argument("--exclude-initial-value", type=int, default=0)
     p.add_argument("--threads", type=int, default=int(os.environ.get("MBD_NUM_THREADS", "1")))
     p.add_argument("--tasks", type=int, default=default_tasks())
-    p.add_argument("--task-batch-size", type=int, default=int(os.environ.get("MBD_TESTSUITE_TASK_BATCH_SIZE", "4")),
-                   help="patched tasks issued per consumer queue message")
     p.add_argument("--verbose", choices=("yes", "no"), default="no")
     p.add_argument("--keep-output", choices=("all", "failed", "unexpected", "no"), default="unexpected")
     p.add_argument("--keep-output-junit-xml", choices=("always", "not-passed", "failed", "none"),
@@ -471,9 +464,9 @@ def junit_status_ok(path: str) -> bool:
 def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
     try:
         while True:
-            item = task_q.get()
-            if item is None: break
-            tasks = item.tasks if isinstance(item, TaskBatch) else (item,)
+            task = task_q.get()
+            if task is None: break
+            tasks = (task,)
             for task in tasks:
                 start = ms(); patch_ms = 0; lock_ms = 0; temporary = copied = None; task_tmpdir: pathlib.Path | None = None; fds: list[int] = []
                 try:
@@ -711,8 +704,7 @@ def cleanup(result: Result, status: str, args: argparse.Namespace) -> None:
         pathlib.Path(result.junit).unlink(missing_ok=True)
 
 def run(mode: str, args: argparse.Namespace) -> int:
-    if args.tasks < 1 or args.threads < 1 or args.task_batch_size < 1:
-        raise SystemExit("--tasks, --threads and --task-batch-size must be positive")
+    if args.tasks < 1 or args.threads < 1: raise SystemExit("--tasks and --threads must be positive")
     if args.patch_input == "yes" and args.abort_after_step is not None:
         raise SystemExit("--patch-input must not be used in combination with --abort-after-step")
     output = pathlib.Path(args.prefix_output).resolve(); output.mkdir(parents=True, exist_ok=True)
@@ -814,9 +806,6 @@ def run(mode: str, args: argparse.Namespace) -> int:
 
         source = iter(task_source())
         source_exhausted = False
-        batch_size = args.task_batch_size if mode == "patched" else 1
-        batches_issued = 0
-
         def completed(result: Result) -> None:
             record(result)
             if result.task.patch is not None:
@@ -826,26 +815,17 @@ def run(mode: str, args: argparse.Namespace) -> int:
                     config_end[key] = ms()
 
         def feed_consumers() -> None:
-            nonlocal pending, source_exhausted, batches_issued
-            # First issue one task to every consumer.  Thereafter each queue
-            # item contains a small globally interleaved chunk, so a worker
-            # can run several short tests without a parent/queue round trip.
-            while pending < args.tasks * batch_size and not source_exhausted:
-                target_size = 1 if batches_issued < args.tasks else batch_size
-                batch: list[Task] = []
-                while len(batch) < target_size and not source_exhausted:
-                    try:
-                        task = next(source)
-                    except StopIteration:
-                        source_exhausted = True
-                        break
-                    if producer_skips(task):
-                        completed(Result(task, "skipped", -1, total_ms=0))
-                    else:
-                        batch.append(task)
-                if batch:
-                    task_q.put(TaskBatch(tuple(batch)) if len(batch) > 1 else batch[0])
-                    pending += len(batch); batches_issued += 1
+            nonlocal pending, source_exhausted
+            while pending < args.tasks and not source_exhausted:
+                try:
+                    task = next(source)
+                except StopIteration:
+                    source_exhausted = True
+                    break
+                if producer_skips(task):
+                    completed(Result(task, "skipped", -1, total_ms=0))
+                    continue
+                task_q.put(task); pending += 1
         feed_consumers()
         while pending:
             try: r = result_q.get(timeout=1)
