@@ -236,7 +236,7 @@ def include_files(spec: PatchSpec, values: dict[str, str]) -> None:
 
 def compatible(linear: str, handler: str, scale: str, when: str, nonlinear: str, autodiff: str,
                method: str, abort: str, skip: str, assembly: str) -> bool:
-    """Port the compatibility pruning in simple_testsuite_patched_legacy.sh."""
+    """Compatibility pruning for the patched configuration matrix."""
     if linear in {"naive", "lapack", "qr", "siconosdense", "siconossparse"} and handler != "map": return False
     if linear == "y12" and handler not in {"map", "cc", "dir"}: return False
     if linear in {"pardiso", "pardiso_64", "spqr"} and handler not in {"map", "grad"}: return False

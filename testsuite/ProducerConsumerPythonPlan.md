@@ -289,24 +289,18 @@ stop the suite and return failure instead of waiting forever.
   configurations.
 * No GNU Parallel dependency remains in the execution path.
 
-## Desktop CI parity gate
+## Desktop CI validation
 
-Before removing the retained legacy scripts, run the synthetic preflight from
-this directory:
+Run the synthetic preflight from this directory:
 
     python3 simple_testsuite_parity.py
 
-It exercises input discovery, status/reference handling, the native patcher
-against the legacy sed program, configuration pruning/include files, custom
-run and generator scripts, resource locks, two-consumer concurrency and
-producer round-robin order.  It creates only a temporary fixture.
+It exercises the Python runner's input discovery, status/reference handling,
+configuration pruning/include files, custom run and generator scripts,
+resource locks, two-consumer concurrency and producer round-robin order.  It
+creates only a temporary fixture.
 
-Then run the public, private and module CI jobs on the desktop with the
-Python default.  Compare them with a repeat using:
-
-    MBD_TESTSUITE_USE_LEGACY=yes
-
-For each paired run compare selected input count, report-category counts,
-JUnit XML files, retained artifacts and timing TSV schema/records.  In the
-patched jobs also compare configuration directories and `.failed` markers.
-Only remove the legacy escape hatch after those comparisons agree.
+Then run the public, private and module CI jobs on the desktop and verify
+selected input counts, report-category counts, JUnit XML files, retained
+artifacts and timing TSV schema/records.  In patched jobs, also verify
+configuration directories and `.failed` markers.
