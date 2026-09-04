@@ -23,6 +23,7 @@ end: data;
 begin: initial value;
 end: initial value;
 begin: control data;
+    use automatic differentiation;
 end: control data;
 begin: nodes;
 end: nodes;
@@ -40,6 +41,12 @@ trace = os.environ.get('MBDYN_PARITY_TRACE')
 if trace:
     with open(trace, 'a') as file:
         file.write(f'{time.monotonic():.9f}\\n')
+    time.sleep(float(os.environ.get('MBDYN_PARITY_SLEEP', '.20')))
+config_trace = os.environ.get('MBDYN_PARITY_CONFIG_TRACE')
+if config_trace:
+    output = sys.argv[sys.argv.index('-o') + 1]
+    with open(config_trace, 'a') as file:
+        file.write(f'{time.monotonic():.9f}\\t{output}\\n')
     time.sleep(float(os.environ.get('MBDYN_PARITY_SLEEP', '.20')))
 print('End of simulation at time 0 after 3 steps;')
 for arg in sys.argv:
@@ -140,6 +147,20 @@ def main() -> int:
         require(parallel_run.returncode == 0, "unlocked concurrency fixture failed")
         parallel_starts = sorted(float(value) for value in parallel_trace.read_text().splitlines())
         require(len(parallel_starts) == 2 and parallel_starts[1] - parallel_starts[0] < .18, "independent tasks did not use both consumers")
+
+        # A configuration has a shared output/TMPDIR.  It must therefore be
+        # serial internally, while independent configurations still occupy
+        # separate consumers.  This is the legacy patched-run scheduling
+        # boundary and prevents I/O contention in the full matrix.
+        config_trace = work / "configuration-starts"
+        configuration_run = invoke(ROOT / "simple_testsuite.py", ["patched", "--prefix-output", str(work / "configuration-out"), "--prefix-input", str(unlocked), "--mbdyn-exec", str(mock), "--enable-gtest", "no", "--tasks", "2", "--linear-solvers", "umfpack klu", "--matrix-handlers", "map", "--scale-methods", "rowmaxcolumnmax", "--scale-when", "always", "--autodiff", "autodiff", "--nonlinear-solvers", "newtonraphson", "--method", "impliciteuler", "--output-format", "netcdf-text", "--abort-after", "none", "--skip-initial-joint-assembly", "not-skip", "--initial-assembly-of-deformable-and-force-elements", "exclude"], env | {"MBDYN_PARITY_CONFIG_TRACE": str(config_trace)})
+        starts_by_configuration: dict[str, list[float]] = {}
+        for line in config_trace.read_text().splitlines():
+            started, output_name = line.split("\t", 1)
+            starts_by_configuration.setdefault(str(pathlib.Path(output_name).parent), []).append(float(started))
+        require(configuration_run.returncode == 0 and len(starts_by_configuration) == 2 and all(len(starts) == 2 and starts[1] - starts[0] >= .18 for starts in starts_by_configuration.values()), "tasks within one patched configuration overlapped")
+        first_starts = sorted(starts[0] for starts in starts_by_configuration.values())
+        require(first_starts[1] - first_starts[0] < .18, "independent patched configurations did not use both consumers")
 
         # An idle consumer is entitled to finish before a busy one.  Its
         # clean exit must not abort the still-running task (the failure seen

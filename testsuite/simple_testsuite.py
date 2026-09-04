@@ -324,7 +324,12 @@ def patch_file(task: Task) -> tuple[str, str]:
         re.compile(r"^[ \t]*(?:\blinear|\bnonlinear)[ \t]*solver[ \t]*:[ \tA-Za-z0-9,.+\-]*;[ \t]*$", re.ASCII),
         re.compile(r"^[ \t]*threads[ \t]*:[ \t]*(?:assembly|solver)[ \t]*,[ \tA-Za-z0-9,.+\-]*;[ \t]*$", re.ASCII),
         re.compile(r"^[ \t]*threads[ \t]*:[ \t]*disable[ \t]*;[ \t]*$", re.ASCII),
-        re.compile(r"^[ \t]*use[ \t]*automatic[ \t]*differentiation[ \t]*;[ \t]*$", re.ASCII),
+        # Deliberately preserve the legacy sed expression's final
+        # ``[[:space:]]$`` (without ``*``).  Thus a normal line ending in
+        # ``;`` is *not* removed; only one trailing whitespace character
+        # triggers the substitution.  This seemingly odd behavior is relied
+        # on by the existing noautodiff matrix results.
+        re.compile(r"^[ \t]*use[ \t]*automatic[ \t]*differentiation[ \t]*;[ \t]$", re.ASCII),
     )
     output: list[str] = []
     for raw in text.splitlines(keepends=True):
@@ -665,60 +670,113 @@ def run(mode: str, args: argparse.Namespace) -> int:
     task_q: mp.Queue = mp.Queue(maxsize=max(2, 2*args.tasks)); result_q: mp.Queue = mp.Queue()
     workers = [mp.Process(target=worker, args=(task_q, result_q, cfg)) for _ in range(args.tasks)]
     for p in workers: p.start()
-    pending = 0; results: list[Result] = []; per_config = Counter(); config_done = Counter(); config_start: dict[str, int] = {}; config_end: dict[str, int] = {}
+    pending = 0; results: list[Result] = []; config_start: dict[str, int] = {}; config_end: dict[str, int] = {}
+
+    def record(result: Result) -> None:
+        """Collect a completed task and emit its parent-owned diagnostics."""
+        results.append(result)
+        if args.verbose == "yes" and result.log:
+            print(pathlib.Path(result.log).read_text(errors="replace"), end="")
+        if args.print_resources in {"all", "time"} and result.detail:
+            print(result.detail, end="" if result.detail.endswith("\n") else "\n")
+        if args.timing == "yes":
+            task_mode = "patched" if (result.task.patch or abort_patch) else "unpatched"
+            with timing.open("a") as f:
+                f.write(f"test\t{task_mode}\t{result.task.input.path}\t{result.task.input.index}\t{result.status}\t{result.patch_ms}\t{result.lock_ms}\t{result.run_ms}\t{result.total_ms}\n")
+
+    def producer_skips(task: Task) -> bool:
+        inp = task.input
+        return (inp.excluded or (args.skip_expected_failures == "yes" and inp.expected != 0)
+                or ((task.patch is not None or abort_patch) and inp.run_script is not None)
+                or args.exec_solver == "no")
+
+    def raise_if_worker_failed() -> None:
+        failed_workers = [p for p in workers if p.exitcode not in (None, 0)]
+        if failed_workers:
+            diagnostic = InputSpec("<testsuite consumer>", 0, -1, False, (), None, None)
+            exits = ", ".join(f"pid={p.pid}, exitcode={p.exitcode}" for p in failed_workers)
+            record(Result(Task(diagnostic, None), "unexpected", 255, detail=f"a testsuite consumer died ({exits})"))
+            raise RuntimeError("a testsuite consumer died")
+
     try:
-        # Rotate configurations across inputs.  This keeps later files fed
-        # before the first file's entire patch matrix has been consumed, while
-        # still giving every (input, configuration) pair exactly one task.
-        for round_index in range(len(specs)):
-            for input_index, inp in enumerate(inputs):
-                spec = specs[(round_index + input_index) % len(specs)]
-                task = Task(inp, spec)
-                producer_skip = inp.excluded or (args.skip_expected_failures == "yes" and inp.expected != 0) or ((spec is not None or abort_patch) and inp.run_script is not None) or args.exec_solver == "no"
-                if producer_skip:
-                    results.append(Result(task, "skipped", -1, total_ms=0))
-                    if spec:
-                        per_config[spec.key] += 1; config_done[spec.key] += 1; config_start.setdefault(spec.key, ms())
-                    if args.timing == "yes":
-                        with timing.open("a") as f: f.write(f"test\t{'patched' if (spec or abort_patch) else 'unpatched'}\t{inp.path}\t{inp.index}\tskipped\t0\t0\t0\t0\n")
+        if mode == "patched":
+            # A patched configuration owns a shared output/TMPDIR.  The
+            # legacy outer scheduler runs one input at a time within a
+            # configuration, while several configurations run concurrently.
+            # Preserve that resource boundary without restoring nested
+            # parallelism: at most --tasks configurations are active, and
+            # each consumer receives one file/configuration task at a time.
+            active: dict[str, list[object]] = {}
+            next_configuration = 0
+
+            def schedule_next(state: list[object]) -> bool:
+                nonlocal pending
+                spec, position = state
+                assert isinstance(spec, PatchSpec) and isinstance(position, int)
+                while position < len(inputs):
+                    task = Task(inputs[position], spec); position += 1; state[1] = position
+                    if producer_skips(task):
+                        record(Result(task, "skipped", -1, total_ms=0))
+                        continue
+                    task_q.put(task); pending += 1
+                    return True
+                config_end[spec.key] = ms()
+                return False
+
+            def activate_configuration() -> bool:
+                nonlocal next_configuration
+                if next_configuration >= len(specs): return False
+                spec = specs[next_configuration]; next_configuration += 1
+                assert spec is not None
+                config_start[spec.key] = ms()
+                state: list[object] = [spec, 0]
+                active[spec.key] = state
+                if not schedule_next(state): active.pop(spec.key, None)
+                return True
+
+            while len(active) < args.tasks and next_configuration < len(specs):
+                activate_configuration()
+            while active:
+                try: r = result_q.get(timeout=1)
+                except Empty:
+                    raise_if_worker_failed()
+                    continue
+                if isinstance(r, WorkerDone):
+                    raise_if_worker_failed()
+                    continue
+                pending -= 1; record(r)
+                assert r.task.patch is not None
+                state = active[r.task.patch.key]
+                if not schedule_next(state): active.pop(r.task.patch.key, None)
+                while len(active) < args.tasks and next_configuration < len(specs):
+                    activate_configuration()
+        else:
+            for inp in inputs:
+                task = Task(inp, None)
+                if producer_skips(task):
+                    record(Result(task, "skipped", -1, total_ms=0))
                     continue
                 task_q.put(task); pending += 1
-                if spec:
-                    per_config[spec.key] += 1; config_start.setdefault(spec.key, ms())
+            while pending:
+                try: r = result_q.get(timeout=1)
+                except Empty:
+                    raise_if_worker_failed()
+                    continue
+                if isinstance(r, WorkerDone): continue
+                pending -= 1; record(r)
         for _ in workers: task_q.put(None)
-        for key, count in per_config.items():
-            if config_done[key] == count:
-                config_end[key] = ms()
         finished_workers: set[int] = set()
-        while pending or len(finished_workers) < len(workers):
+        while len(finished_workers) < len(workers):
             try: r = result_q.get(timeout=1)
             except Empty:
-                failed_workers = [p for p in workers if p.exitcode not in (None, 0)]
-                if failed_workers:
-                    # Do not wait indefinitely for an item owned by a
-                    # crashed consumer.  A clean exit is handled through its
-                    # in-band WorkerDone acknowledgement above.
-                    diagnostic = InputSpec("<testsuite consumer>", 0, -1, False, (), None, None)
-                    exits = ", ".join(f"pid={p.pid}, exitcode={p.exitcode}" for p in failed_workers)
-                    results.append(Result(Task(diagnostic, None), "unexpected", 255, detail=f"a testsuite consumer died ({exits})"))
-                    pending = 0
-                    break
+                raise_if_worker_failed()
                 continue
             if isinstance(r, WorkerDone):
                 finished_workers.add(r.pid)
-                continue
-            pending -= 1; results.append(r)
-            if args.verbose == "yes" and r.log:
-                print(pathlib.Path(r.log).read_text(errors="replace"), end="")
-            if args.print_resources in {"all", "time"} and r.detail:
-                print(r.detail, end="" if r.detail.endswith("\n") else "\n")
-            if r.task.patch:
-                key = r.task.patch.key
-                config_done[key] += 1
-                if config_done[key] == per_config[key]:
-                    config_end[key] = ms()
-            if args.timing == "yes":
-                with timing.open("a") as f: f.write(f"test\t{'patched' if (r.task.patch or abort_patch) else 'unpatched'}\t{r.task.input.path}\t{r.task.input.index}\t{r.status}\t{r.patch_ms}\t{r.lock_ms}\t{r.run_ms}\t{r.total_ms}\n")
+            else:
+                # Results should have been drained before sentinels; retain a
+                # late one rather than silently dropping it.
+                record(r)
     except KeyboardInterrupt:
         diagnostic = InputSpec("<testsuite interrupted>", 0, -1, False, (), None, None)
         results.append(Result(Task(diagnostic, None), "interrupted", 130, detail="interrupted by signal"))
