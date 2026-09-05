@@ -22590,8 +22590,14 @@ namespace {
      template <typename U>
      void ThermalFluidModel::GetViscosityLiquid(const U& p, const U& T, U& eta) const
      {
-          // Dirk Bartel 2009 equation (6-11)
-          eta = eta0 * exp(Aeta2_Aeta3 * (T0 - T) / (Aeta3 + T - T0) + alphap * (p - pc));
+	  U dp = p - pc;
+
+	  if (dp < 0.) {
+	       SpGradientTraits<U>::ResizeReset(dp, 0., 0);
+	  }
+
+	  // Dirk Bartel 2009 equation (6-11)
+	  eta = eta0 * exp(Aeta2_Aeta3 * (T0 - T) / (Aeta3 + T - T0) + alphap * dp);
      }
 
      template <typename U>
@@ -22612,16 +22618,23 @@ namespace {
      template <typename U>
      U ThermalFluidModel::GetDensityLiquid(const U& p, const U& T, U* drho_dp, U* drho_dT) const
      {
-          if (drho_dp) {
-               *drho_dp = rho0 * (1 - beta * (T - T0)) * (Arho1 / (1. + Arho2 * (p - pc)) - Arho1 * (p - pc) / pow(1. + Arho2 * (p - pc), 2) * Arho2);
-          }
+	  U dp = p - pc;
 
-          if (drho_dT) {
-               *drho_dT = -rho0 * beta * (1. + Arho1 * (p - pc) / (1. + Arho2 * (p - pc)));
-          }
+	  if (dp < 0.) {
+	       SpGradientTraits<U>::ResizeReset(dp, 0., 0);
+	       if (drho_dp) {
+		    SpGradientTraits<U>::ResizeReset(*drho_dp, 0., 0);
+	       }
+	  } else if (drho_dp) {
+	       *drho_dp = rho0 * (1 - beta * (T - T0)) * (Arho1 / (1. + Arho2 * dp) - Arho1 * dp / pow(1. + Arho2 * dp, 2) * Arho2);
+	  }
 
-          // Dirk Bartel 2009 equation (6-1), (6-2)
-          return rho0 * (1 - beta * (T - T0)) * (1. + (Arho1 * (p - pc)) / (1. + Arho2 * (p - pc)));
+	  if (drho_dT) {
+	       *drho_dT = -rho0 * beta * (1. + Arho1 * dp / (1. + Arho2 * dp));
+	  }
+
+	  // Dirk Bartel 2009 equation (6-1), (6-2)
+	  return rho0 * (1 - beta * (T - T0)) * (1. + (Arho1 * dp) / (1. + Arho2 * dp));
      }
 
      template <typename U>
