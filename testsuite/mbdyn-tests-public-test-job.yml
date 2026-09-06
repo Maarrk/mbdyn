@@ -36,6 +36,8 @@
 
 variables:
   MBD_TESTSUITE_TIMING: "yes"
+  # One-second consumer-state samples diagnose scheduler under-utilisation.
+  MBD_TESTSUITE_SCHEDULER_TIMING: "yes"
   ## Error codes which should not cause the pipeline to fail (see simple_testsuite.sh):
   ## - no tests were executed     (0x001)
   ## - timeout                    (0x002)

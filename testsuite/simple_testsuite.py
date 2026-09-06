@@ -574,13 +574,21 @@ def junit_status_ok(path: str) -> bool:
                 failed += awk_number(failures[1]) + awk_number(errors[1])
     return failed <= 0
 
-def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
+SCHEDULER_STATES = ("idle", "setup", "resource-wait", "running", "postprocess")
+
+def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict,
+           scheduler_states: object | None = None, worker_slot: int = -1) -> None:
+    def set_scheduler_state(name: str) -> None:
+        if scheduler_states is not None:
+            scheduler_states[worker_slot] = SCHEDULER_STATES.index(name)
     try:
         while True:
+            set_scheduler_state("idle")
             task = task_q.get()
             if task is None: break
             tasks = (task,)
             for task in tasks:
+                set_scheduler_state("setup")
                 start = ms(); patch_ms = 0; lock_ms = 0; temporary = copied = None; task_tmpdir: pathlib.Path | None = None; fds: list[int] = []
                 try:
                     inp = task.input
@@ -623,7 +631,9 @@ def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
                         command = shlex.split(cfg["mbdyn_exec"]) + shlex.split(cfg["mbdyn_args"]) + ["-f", filename, "-o", output] + shlex.split(env.get("GTEST_MBDYN_ARGS", ""))
                     if cfg["print_resources"] in {"all", "time"}:
                         command = shlex.split(os.environ.get("TESTSUITE_TIME_CMD", "/usr/bin/time --verbose")) + ["--output", time_file] + command
+                    set_scheduler_state("resource-wait")
                     fds, lock_ms = locks(cfg["lockdir"], inp.ports)
+                    set_scheduler_state("running")
                     run_start = ms()
                     with open(log, "w") as lf:
                         try:
@@ -634,6 +644,7 @@ def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
                     for fd in fds:
                         fcntl.flock(fd, fcntl.LOCK_UN); os.close(fd)
                     fds = []
+                    set_scheduler_state("postprocess")
                     status = "passed" if rc == 0 else ("timeout" if rc == 124 else { -2: "interrupted", -15: "terminated", -9: "killed", 130: "interrupted", 143: "terminated", 137: "killed" }.get(rc, "failed"))
                     junit_valid = False
                     if status == "passed":
@@ -647,6 +658,7 @@ def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict) -> None:
                     detail = pathlib.Path(time_file).read_text(errors="replace") if pathlib.Path(time_file).is_file() else ""
                     result_q.put(Result(task, status, rc, patch_ms, lock_ms, run_ms, ms()-start, detail=detail, log=log, output=output, junit=junit, patched_copy=copied or "", time_file=time_file, junit_valid=junit_valid))
                 except Exception:
+                    set_scheduler_state("postprocess")
                     outdir = pathlib.Path(task.patch.outdir if task.patch else cfg["output"])
                     outdir.mkdir(parents=True, exist_ok=True)
                     log = outdir / f"{pathlib.Path(task.input.path).stem}_mbdyn_output_{task.input.index}.stdout"
@@ -829,12 +841,20 @@ def run(mode: str, args: argparse.Namespace) -> int:
     args.prefix_input = str(pathlib.Path(args.prefix_input).resolve())
     lockdir = os.environ.get("MBD_TESTSUITE_RESOURCE_LOCK_DIR", str(output / ".resource-locks"))
     timing = pathlib.Path(os.environ.get("MBD_TESTSUITE_TIMING_FILE", str(output / "mbdyn-testsuite-timing.tsv")))
+    scheduler_timing = None
+    if os.environ.get("MBD_TESTSUITE_SCHEDULER_TIMING", "no") == "yes":
+        scheduler_timing = pathlib.Path(os.environ.get(
+            "MBD_TESTSUITE_SCHEDULER_TIMING_FILE",
+            str(timing.with_name(timing.stem + "-scheduler.tsv"))))
     if args.timing == "yes" and not timing.exists():
         timing.parent.mkdir(parents=True, exist_ok=True)
         # Keep the established nine fields in place; the trailing
         # configuration key makes it possible to compare one input across
         # matrix configurations without changing existing field positions.
         timing.write_text("scope\tmode\ttarget\tindex\tstatus\tpatch_ms\tresource_wait_ms\trun_ms\ttotal_ms\tconfiguration\n")
+    if scheduler_timing is not None:
+        scheduler_timing.parent.mkdir(parents=True, exist_ok=True)
+        scheduler_timing.write_text("elapsed_ms\tsubmitted\tcompleted\tpending\tidle\tsetup\tresource_wait\trunning\tpostprocess\tworkers_alive\tsource_exhausted\n")
     suite_start = ms(); inputs = discover(args); print(f"{len(inputs)} valid input files were found")
     if mode == "patched":
         specs: list[PatchSpec | None] = patches(args, materialize=not args.dry_run)
@@ -868,9 +888,13 @@ def run(mode: str, args: argparse.Namespace) -> int:
     # began configuration work, so its preparation phase includes this time.
     preparation_ms = ms() - suite_start
     task_q: mp.Queue = mp.Queue(maxsize=max(2, 2*args.tasks)); result_q: mp.Queue = mp.Queue()
-    workers = [mp.Process(target=worker, args=(task_q, result_q, cfg)) for _ in range(args.tasks)]
+    scheduler_states = mp.Array("b", args.tasks, lock=False) if scheduler_timing is not None else None
+    workers = [mp.Process(target=worker, args=(task_q, result_q, cfg, scheduler_states, slot))
+               for slot in range(args.tasks)]
     for p in workers: p.start()
-    pending = 0; results: list[Result] = []; config_start: dict[str, int] = {}; config_end: dict[str, int] = {}
+    pending = submitted = completed_count = 0
+    last_scheduler_sample = -1000
+    results: list[Result] = []; config_start: dict[str, int] = {}; config_end: dict[str, int] = {}
 
     def record(result: Result) -> None:
         """Collect a completed task and emit its parent-owned diagnostics."""
@@ -925,6 +949,8 @@ def run(mode: str, args: argparse.Namespace) -> int:
         source = iter(task_source())
         source_exhausted = False
         def completed(result: Result) -> None:
+            nonlocal completed_count
+            completed_count += 1
             record(result)
             if result.task.patch is not None:
                 key = result.task.patch.key
@@ -933,7 +959,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
                     config_end[key] = ms()
 
         def feed_consumers() -> None:
-            nonlocal pending, source_exhausted
+            nonlocal pending, submitted, source_exhausted
             while pending < args.tasks and not source_exhausted:
                 try:
                     task = next(source)
@@ -943,17 +969,33 @@ def run(mode: str, args: argparse.Namespace) -> int:
                 if producer_skips(task):
                     completed(Result(task, "skipped", -1, total_ms=0))
                     continue
-                task_q.put(task); pending += 1
+                task_q.put(task); pending += 1; submitted += 1
+        def sample_scheduler(force: bool = False) -> None:
+            nonlocal last_scheduler_sample
+            if scheduler_timing is None:
+                return
+            elapsed = ms() - suite_start
+            if not force and elapsed - last_scheduler_sample < 1000:
+                return
+            counts = Counter(SCHEDULER_STATES[state] for state in scheduler_states)
+            alive = sum(process.is_alive() for process in workers)
+            with scheduler_timing.open("a") as f:
+                f.write(f"{elapsed}\t{submitted}\t{completed_count}\t{pending}\t{counts['idle']}\t{counts['setup']}\t{counts['resource-wait']}\t{counts['running']}\t{counts['postprocess']}\t{alive}\t{int(source_exhausted)}\n")
+            last_scheduler_sample = elapsed
         feed_consumers()
+        sample_scheduler(force=True)
         while pending:
             try: r = result_q.get(timeout=1)
             except Empty:
                 raise_if_worker_failed()
+                sample_scheduler()
                 continue
             if isinstance(r, WorkerDone):
                 raise_if_worker_failed()
+                sample_scheduler()
                 continue
             pending -= 1; completed(r); feed_consumers()
+            sample_scheduler()
         for _ in workers: task_q.put(None)
         finished_workers: set[int] = set()
         while len(finished_workers) < len(workers):
@@ -967,6 +1009,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
                 # Results should have been drained before sentinels; retain a
                 # late one rather than silently dropping it.
                 record(r)
+        sample_scheduler(force=True)
     except KeyboardInterrupt:
         diagnostic = InputSpec("<testsuite interrupted>", 0, -1, False, (), None, None)
         results.append(Result(Task(diagnostic, None), "interrupted", 130, detail="interrupted by signal"))
