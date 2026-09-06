@@ -8,6 +8,7 @@ final report.
 from __future__ import annotations
 
 import argparse
+import configparser
 import fcntl
 import multiprocessing as mp
 import os
@@ -23,9 +24,148 @@ import traceback
 from collections import Counter
 from dataclasses import dataclass
 from queue import Empty
-from typing import Generator, List, Tuple
 
 ROOT = pathlib.Path(__file__).resolve().parent
+DEFAULT_PATCH_CONFIG = ROOT / "simple_testsuite_patched.ini"
+
+@dataclass(frozen=True)
+class MatrixRule:
+    when: tuple[tuple[str, tuple[str, ...]], ...]
+    unless: tuple[tuple[str, tuple[str, ...]], ...]
+    allow: tuple[tuple[str, tuple[str, ...]], ...]
+    deny: tuple[tuple[str, tuple[str, ...]], ...]
+    allow_any: tuple[tuple[tuple[str, tuple[str, ...]], ...], ...]
+    reject: bool
+
+    @property
+    def fields(self) -> set[str]:
+        fields = {field for field, _ in self.when + self.unless + self.allow + self.deny}
+        for alternatives in self.allow_any:
+            fields.update(field for field, _ in alternatives)
+        return fields
+
+@dataclass(frozen=True)
+class PatchMatrixConfig:
+    fields: tuple[str, ...]
+    options: dict[str, str]
+    arguments: dict[str, str]
+    defaults: dict[str, str]
+    rules: tuple[MatrixRule, ...]
+
+_PATCH_CONFIG_CACHE: dict[pathlib.Path, PatchMatrixConfig] = {}
+
+def _rule_choices(text: str) -> tuple[str, ...]:
+    values = tuple(text.split())
+    if not values:
+        raise ValueError("expected at least one value")
+    return values
+
+def load_patch_config(filename: str | os.PathLike[str] = DEFAULT_PATCH_CONFIG) -> PatchMatrixConfig:
+    """Load the patched matrix defaults and compatibility rules once."""
+    path = pathlib.Path(filename).resolve()
+    if path in _PATCH_CONFIG_CACHE:
+        return _PATCH_CONFIG_CACHE[path]
+    parser = configparser.ConfigParser(interpolation=None)
+    parser.optionxform = str
+    if not parser.read(path):
+        raise RuntimeError(f"cannot read patched matrix configuration: {path}")
+    if not parser.has_section("matrix") or not parser.has_section("options") or not parser.has_section("arguments") or not parser.has_section("defaults"):
+        raise RuntimeError(f"{path}: missing [matrix], [options], [arguments], or [defaults] section")
+    try:
+        fields = _rule_choices(parser.get("matrix", "fields"))
+    except (configparser.Error, ValueError) as error:
+        raise RuntimeError(f"{path}: [matrix] fields must be a non-empty whitespace-separated list") from error
+    if len(set(fields)) != len(fields):
+        raise RuntimeError(f"{path}: [matrix] fields contains duplicates")
+    for section in ("options", "arguments", "defaults"):
+        unknown = set(parser.options(section)) - set(fields)
+        if unknown:
+            raise RuntimeError(f"{path}: unknown [{section}] fields: {', '.join(sorted(unknown))}")
+    options = {field: parser.get("options", field, fallback="") for field in fields}
+    missing_options = [field for field, value in options.items() if not value.startswith("--") or any(char.isspace() for char in value)]
+    if missing_options or len(set(options.values())) != len(options):
+        raise RuntimeError(f"{path}: [options] must define unique long options for every matrix field")
+    arguments = {field: parser.get("arguments", field, fallback="") for field in fields}
+    missing_arguments = [field for field, value in arguments.items() if not value.isidentifier()]
+    if missing_arguments or len(set(arguments.values())) != len(arguments):
+        raise RuntimeError(f"{path}: [arguments] must define unique Python argument names for every matrix field")
+    defaults = {field: parser.get("defaults", field, fallback="") for field in fields}
+    missing = [field for field, value in defaults.items() if not value.split()]
+    if missing:
+        raise RuntimeError(f"{path}: missing default values for {', '.join(missing)}")
+    rules: list[MatrixRule] = []
+    for section in parser.sections():
+        if section in {"matrix", "options", "arguments", "defaults"}:
+            continue
+        if not section.startswith("rule "):
+            raise RuntimeError(f"{path}: section [{section}] must be [matrix], [options], [arguments], [defaults], or start with [rule ]")
+        groups: dict[str, list[tuple[str, tuple[str, ...]]]] = {key: [] for key in ("when", "unless", "allow", "deny")}
+        any_groups: dict[str, list[tuple[str, tuple[str, ...]]]] = {}
+        reject = False
+        for key, text in parser.items(section):
+            if key == "reject":
+                try:
+                    reject = parser.getboolean(section, key)
+                except ValueError as error:
+                    raise RuntimeError(f"{path}: [{section}] reject must be yes or no") from error
+                continue
+            pieces = key.split(".")
+            try:
+                if len(pieces) == 2 and pieces[0] in groups and pieces[1] in fields:
+                    groups[pieces[0]].append((pieces[1], _rule_choices(text)))
+                elif len(pieces) == 3 and pieces[0] == "allow_any" and pieces[2] in fields and pieces[1]:
+                    any_groups.setdefault(pieces[1], []).append((pieces[2], _rule_choices(text)))
+                else:
+                    raise ValueError("unknown setting")
+            except ValueError as error:
+                raise RuntimeError(f"{path}: [{section}] invalid {key} = {text!r}") from error
+        rule = MatrixRule(tuple(groups["when"]), tuple(groups["unless"]), tuple(groups["allow"]),
+                          tuple(groups["deny"]), tuple(tuple(group) for group in any_groups.values()), reject)
+        if not rule.fields:
+            raise RuntimeError(f"{path}: [{section}] does not reference a matrix field")
+        rules.append(rule)
+    result = PatchMatrixConfig(fields, options, arguments, defaults, tuple(rules))
+    _PATCH_CONFIG_CACHE[path] = result
+    return result
+
+def _matches(value: str, choices: tuple[str, ...]) -> bool:
+    return any(value.startswith(choice[7:]) if choice.startswith("prefix:") else value == choice
+               for choice in choices)
+
+def compiled_matrix_rules(rules: tuple[MatrixRule, ...], fields: tuple[str, ...]) -> dict[str, tuple]:
+    """Attach each rule to the last selected field it needs to inspect."""
+    order = {field: index for index, field in enumerate(fields)}
+    indexed: dict[str, list] = {field: [] for field in fields}
+    for rule in rules:
+        def violates(values: dict[str, str], rule=rule) -> bool:
+            if any(not _matches(values[field], choices) for field, choices in rule.when): return False
+            if any(_matches(values[field], choices) for field, choices in rule.unless): return False
+            if rule.reject: return True
+            if any(not _matches(values[field], choices) for field, choices in rule.allow): return True
+            if any(_matches(values[field], choices) for field, choices in rule.deny): return True
+            return any(not any(_matches(values[field], choices) for field, choices in alternatives)
+                       for alternatives in rule.allow_any)
+        indexed[max(rule.fields, key=order.__getitem__)].append(violates)
+    return {field: tuple(predicates) for field, predicates in indexed.items()}
+
+def get_valid_configurations(args):
+    """Generate compatible patched configurations using the configured rules."""
+    config = load_patch_config(args.patch_config)
+    dimensions = tuple((field, words(getattr(args, config.arguments[field]))) for field in config.fields)
+    predicates = compiled_matrix_rules(config.rules, config.fields)
+
+    def generate(index: int, values: dict[str, str]):
+        if index == len(dimensions):
+            yield tuple(values[field] for field, _ in dimensions)
+            return
+        field, choices = dimensions[index]
+        for choice in choices:
+            values[field] = choice
+            if not any(predicate(values) for predicate in predicates[field]):
+                yield from generate(index + 1, values)
+        values.pop(field)
+
+    yield from generate(0, {})
 
 
 
@@ -105,7 +245,7 @@ def timeout_seconds(value: str) -> float | None:
     # seconds (not minutes).
     return float(match.group(1)) * {"": 1, "s": 1, "m": 60, "h": 3600}[match.group(2)]
 
-def parser(mode: str) -> argparse.ArgumentParser:
+def parser(mode: str, patch_config: str | os.PathLike[str] = DEFAULT_PATCH_CONFIG) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog=f"simple_testsuite.py {mode}")
     p.add_argument("--prefix-output", required=True)
     p.add_argument("--prefix-input", required=True)
@@ -138,17 +278,11 @@ def parser(mode: str) -> argparse.ArgumentParser:
     p.add_argument("--suppressed-errors", default="")
     p.add_argument("--dry-run", action="store_true", help="print the producer task manifest without generators or consumers")
     if mode == "patched":
-        p.add_argument("--linear-solvers", default="naive umfpack klu pardiso pardiso_64 y12 qr lapack siconossparse siconosdense")
-        p.add_argument("--matrix-handlers", default="map cc dir grad")
-        p.add_argument("--scale-methods", default="rowmaxcolumnmax iterative lapack rowmax columnmax rowsum columnsum")
-        p.add_argument("--scale-when", default="never always once")
-        p.add_argument("--nonlinear-solvers", default="newtonraphson linesearch linesearch-modified nox nox-newton-krylov nox-direct nox-broyden2 nox-broyden3 nox-broyden1 mcpnewtonminfb mcpnewtonfb bfgs siconosmcpnewtonminfb siconosmcpnewtonfb")
-        p.add_argument("--autodiff", default="autodiff noautodiff")
-        p.add_argument("--method", default="impliciteuler cranknicolson ms2,0.6 ms3,0.6 ms4,0.6 ss2,0.6 ss3,0.6 ss4,0.6 hope,0.6 Bathe,0.6 msstc3,0.6 msstc4,0.6 msstc5,0.6 mssth3,0.6 mssth4,0.6 mssth5,0.6 DIRK33 DIRK43 DIRK54 hybrid,ms,0.6")
-        p.add_argument("--output-format", default="netcdf-text")
-        p.add_argument("--abort-after", default="input assembly derivatives regularstep,2")
-        p.add_argument("--skip-initial-joint-assembly", default="not-skip skip")
-        p.add_argument("--initial-assembly-of-deformable-and-force-elements", default="exclude include")
+        config = load_patch_config(patch_config)
+        p.add_argument("--patch-config", default=str(pathlib.Path(patch_config).resolve()),
+                       help="INI file supplying patched defaults and compatibility rules")
+        for field in config.fields:
+            p.add_argument(config.options[field], dest=config.arguments[field], default=config.defaults[field])
         p.add_argument("--configuration-jobs", type=int, default=None, help="deprecated; --tasks is the global worker count")
     return p
 
@@ -237,100 +371,19 @@ def include_files(spec: PatchSpec, values: dict[str, str]) -> None:
                                pathlib.Path(spec.init_end).read_text(), pathlib.Path(spec.control_begin).read_text(),
                                pathlib.Path(spec.control_end).read_text()]) + "\n")
 
-def get_valid_configurations(args) -> Generator[Tuple[str, ...], None, None]:
-    """Generates only compatible configuration tuples directly without full Cartesian product."""
-
-    linear_solvers = words(args.linear_solvers)
-    matrix_handlers = words(args.matrix_handlers)
-    scale_methods = words(args.scale_methods)
-    scale_when_opts = words(args.scale_when)
-    autodiff_opts = words(args.autodiff)
-    nonlinear_solvers = words(args.nonlinear_solvers)
-    methods = words(args.method)
-    output_formats = words(args.output_format)
-    abort_after_opts = words(args.abort_after)
-    skip_joint_opts = words(args.skip_initial_joint_assembly)
-    assembly_opts = words(args.initial_assembly_of_deformable_and_force_elements)
-
-    for linear in linear_solvers:
-        # Constraint: linear -> handler
-        if linear in {"naive", "lapack", "qr", "siconosdense", "siconossparse"}:
-            valid_handlers = [h for h in matrix_handlers if h == "map"]
-        elif linear == "y12":
-            valid_handlers = [h for h in matrix_handlers if h in {"map", "cc", "dir"}]
-        elif linear in {"pardiso", "pardiso_64", "spqr"}:
-            valid_handlers = [h for h in matrix_handlers if h in {"map", "grad"}]
-        else:
-            valid_handlers = matrix_handlers
-
-        for handler in valid_handlers:
-            # Constraint: handler -> autodiff
-            valid_autodiff = [ad for ad in autodiff_opts if not (handler == "grad" and ad == "noautodiff")]
-
-            for when in scale_when_opts:
-                # Constraint: linear -> when
-                if linear in {"belos", "amesos", "siconosdense", "siconossparse", "pardiso", "pardiso_64", "qr", "spqr", "y12"} and when != "never":
-                    continue
-
-                for scale in scale_methods:
-                    # Constraint: when -> scale
-                    if when == "never" and scale != "rowmaxcolumnmax":
-                        continue
-
-                    for ad in valid_autodiff:
-                        for nonlinear in nonlinear_solvers:
-                            # Constraint: nonlinear & ad
-                            if nonlinear == "mcpnewtonminfb" and ad == "noautodiff":
-                                continue
-                            # Constraint: nonlinear & linear
-                            if nonlinear == "mcpnewtonfb" and linear in {"siconosdense", "siconossparse"}:
-                                continue
-                            if nonlinear.startswith("siconosmcp") and linear != "siconosdense":
-                                continue
-                            if (nonlinear in {"nox", "nox-direct"} or nonlinear.startswith("nox-broyden")) and linear in {"naive", "qr", "lapack", "siconosdense"}:
-                                continue
-                            if nonlinear == "bfgs" and linear not in {"spqr", "qr"}:
-                                continue
-
-                            for method in methods:
-                                for output in output_formats:
-                                    for abort in abort_after_opts:
-                                        for skip in skip_joint_opts:
-                                            for assembly in assembly_opts:
-                                                # Structural constraints on assembly, skip, abort
-                                                if assembly == "include" and skip == "skip":
-                                                    continue
-                                                if assembly == "include" and not (abort == "assembly" and skip != "skip"):
-                                                    continue
-
-                                                if abort == "derivatives":
-                                                    if method != "impliciteuler":
-                                                        continue
-                                                    if skip == "skip" and not (linear == "umfpack" and handler == "map" and scale == "rowmaxcolumnmax" and when == "never" and nonlinear == "newtonraphson"):
-                                                        continue
-                                                elif skip == "skip":
-                                                    continue
-
-                                                if abort == "input" and not (linear == "umfpack" and handler == "map" and scale == "rowmaxcolumnmax" and when == "never" and nonlinear == "newtonraphson" and method == "impliciteuler"):
-                                                    continue
-                                                if abort == "assembly" and not (nonlinear == "newtonraphson" and method == "impliciteuler"):
-                                                    continue
-                                                if abort.startswith("regularstep,"):
-                                                    if not (((nonlinear == "newtonraphson") or method.startswith("ms2")) and
-                                                            ((linear == "umfpack") or method.startswith("ms2")) and
-                                                            ((handler == "map") or method.startswith("ms2")) and
-                                                            ((scale == "rowmaxcolumnmax") or method.startswith("ms2")) and
-                                                            ((when == "never") or method.startswith("ms2"))):
-                                                        continue
-
-                                                yield (linear, handler, scale, when, ad, nonlinear, method, output, abort, skip, assembly)
-
 def patches(args: argparse.Namespace, materialize: bool = True) -> list[PatchSpec]:
     result: list[PatchSpec] = []
-    dimensions = (words(args.linear_solvers), words(args.matrix_handlers), words(args.scale_methods), words(args.scale_when), words(args.autodiff), words(args.nonlinear_solvers), words(args.method), words(args.output_format), words(args.abort_after), words(args.skip_initial_joint_assembly), words(args.initial_assembly_of_deformable_and_force_elements))
     base = pathlib.Path(args.prefix_output).resolve()
+    config = load_patch_config(args.patch_config)
     for vals in get_valid_configurations(args):
-        linear, handler, scale, when, ad, nonlinear, method, output, abort, skip, assembly = vals
+        selected = dict(zip(config.fields, vals))
+        try:
+            linear = selected["linear"]; handler = selected["handler"]; scale = selected["scale"]
+            when = selected["when"]; ad = selected["autodiff"]; nonlinear = selected["nonlinear"]
+            method = selected["method"]; output = selected["output"]; abort = selected["abort"]
+            skip = selected["skip"]; assembly = selected["assembly"]
+        except KeyError as error:
+            raise RuntimeError(f"{args.patch_config}: [matrix] fields is missing required field {error.args[0]!r}") from error
         key = "/".join(vals); out = base / key
         spec = PatchSpec(key, str(out), str(out/"mbd_init_val_begin.set"), str(out/"mbd_init_val_end.set"), str(out/"mbd_control_data_begin.set"), str(out/"mbd_control_data_end.set"))
         nonlin = {
@@ -982,9 +1035,29 @@ def run(mode: str, args: argparse.Namespace) -> int:
     return total_bits & ~mask
 
 def main() -> int:
-    if len(sys.argv) < 2 or sys.argv[1] not in {"plain", "patched"}:
-        print("usage: simple_testsuite.py {plain|patched} [options]", file=sys.stderr); return 2
-    mode = sys.argv[1]; args = parser(mode).parse_args(sys.argv[2:])
+    if len(sys.argv) < 2 or sys.argv[1] not in {"plain", "patched", "validate-patch-config"}:
+        print("usage: simple_testsuite.py {plain|patched|validate-patch-config} [options]", file=sys.stderr); return 2
+    mode = sys.argv[1]
+    if mode == "validate-patch-config":
+        validator = argparse.ArgumentParser(prog="simple_testsuite.py validate-patch-config")
+        validator.add_argument("--patch-config", default=str(DEFAULT_PATCH_CONFIG),
+                               help="INI file supplying patched defaults and compatibility rules")
+        selected = validator.parse_args(sys.argv[2:])
+        try:
+            config = load_patch_config(selected.patch_config)
+        except RuntimeError as error:
+            print(f"invalid patched matrix configuration: {error}", file=sys.stderr)
+            return 2
+        print(f"valid patched matrix configuration: {pathlib.Path(selected.patch_config).resolve()} "
+              f"({len(config.fields)} fields, {len(config.rules)} rules)")
+        return 0
+    if mode == "patched":
+        selector = argparse.ArgumentParser(add_help=False)
+        selector.add_argument("--patch-config", default=str(DEFAULT_PATCH_CONFIG))
+        selected, _ = selector.parse_known_args(sys.argv[2:])
+        args = parser(mode, selected.patch_config).parse_args(sys.argv[2:])
+    else:
+        args = parser(mode).parse_args(sys.argv[2:])
     if mode == "patched" and args.configuration_jobs is not None:
         print("simple_testsuite.py: --configuration-jobs is deprecated; --tasks is the global consumer limit", file=sys.stderr)
     return run(mode, args)
