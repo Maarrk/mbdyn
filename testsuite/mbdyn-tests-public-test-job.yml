@@ -110,11 +110,11 @@ mbdyn-tests-public-test-job:   # This job runs in the test stage.
       - chmod +x testsuite/simple_testsuite.sh
       - log_file="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/${MBD_TESTS_PUBLIC_LOG_FILE}"
       - echo "-------------- RESTARTED TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_RESTART_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-restarted.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_RESTART_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
       - echo "-------------- ORIGINAL TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-original.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
       - echo "-------------- PATCHED TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite_patched.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}"
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-patched.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite_patched.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}"
       - cd "${MBD_TESTS_PUBLIC_OUTPUT_DIR}"
       - find . -name 'junit_xml_report_*.xml' -print0 | xargs -0 "${CI_PROJECT_DIR}/testsuite/junit_xml_relative_path.py" -p "${CI_PROJECT_DIR}"
   artifacts:
@@ -122,7 +122,7 @@ mbdyn-tests-public-test-job:   # This job runs in the test stage.
     expire_in: 24h
     paths:
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR/$MBD_TESTS_PUBLIC_LOG_FILE
-      - $MBD_TESTS_PUBLIC_OUTPUT_DIR/mbdyn-testsuite-timing.tsv
+      - $MBD_TESTS_PUBLIC_OUTPUT_DIR/mbdyn-testsuite-timing-*.tsv
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR/**/*.stdout
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR/**/junit_xml_report_*.xml
     when: always
@@ -172,7 +172,7 @@ mbdyn-tests-public-test-job-gcov:   # This job runs in the test stage.
       - chmod +x testsuite/simple_testsuite.sh
       - log_file="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/${MBD_TESTS_PUBLIC_LOG_FILE}"
       - echo "-------------- PATCHED TESTS --------------------" | tee "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite_patched.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --scale-when "always" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}"
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-patched.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite_patched.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --scale-when "always" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}"
       - cd "${MBD_TESTS_PUBLIC_OUTPUT_DIR}"
       - find . -name 'junit_xml_report_*.xml' -print0 | xargs -0 "${CI_PROJECT_DIR}/testsuite/junit_xml_relative_path.py" -p "${CI_PROJECT_DIR}"
   artifacts:
@@ -180,7 +180,7 @@ mbdyn-tests-public-test-job-gcov:   # This job runs in the test stage.
     expire_in: 24h
     paths:
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/$MBD_TESTS_PUBLIC_LOG_FILE
-      - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/mbdyn-testsuite-timing.tsv
+      - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/mbdyn-testsuite-timing-*.tsv
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/**/*.stdout
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_GCOV/**/junit_xml_report_*.xml
       - $MBD_BUILD_DIR_GCOV
@@ -231,9 +231,9 @@ mbdyn-tests-public-test-job-debug:   # This job runs in the test stage.
       - chmod +x testsuite/simple_testsuite.sh
       - log_file="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/${MBD_TESTS_PUBLIC_LOG_FILE}"
       - echo "-------------- ORIGINAL TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-original.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
       - echo "-------------- PATCHED TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite_patched.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}"
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-patched.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite_patched.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}"
       - cd "${MBD_TESTS_PUBLIC_OUTPUT_DIR}"
       - find . -name 'junit_xml_report_*.xml' -print0 | xargs -0 "${CI_PROJECT_DIR}/testsuite/junit_xml_relative_path.py" -p "${CI_PROJECT_DIR}"
   artifacts:
@@ -241,7 +241,7 @@ mbdyn-tests-public-test-job-debug:   # This job runs in the test stage.
     expire_in: 24h
     paths:
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_DEBUG/$MBD_TESTS_PUBLIC_LOG_FILE
-      - $MBD_TESTS_PUBLIC_OUTPUT_DIR_DEBUG/mbdyn-testsuite-timing.tsv
+      - $MBD_TESTS_PUBLIC_OUTPUT_DIR_DEBUG/mbdyn-testsuite-timing-*.tsv
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_DEBUG/**/*.stdout
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_DEBUG/**/junit_xml_report_*.xml
     when: always
@@ -270,7 +270,7 @@ mbdyn-tests-public-test-job-nodeps:   # This job runs in the test stage.
       - chmod +x testsuite/simple_testsuite.sh
       - log_file="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/${MBD_TESTS_PUBLIC_LOG_FILE}"
       - echo "-------------- ORIGINAL TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --enable-gtest no --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-original.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --enable-gtest no --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
       - cd "${MBD_TESTS_PUBLIC_OUTPUT_DIR}"
       - find . -name 'junit_xml_report_*.xml' -print0 | xargs -0 "${CI_PROJECT_DIR}/testsuite/junit_xml_relative_path.py" -p "${CI_PROJECT_DIR}"
   artifacts:
@@ -278,6 +278,7 @@ mbdyn-tests-public-test-job-nodeps:   # This job runs in the test stage.
     expire_in: 24h
     paths:
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR/$MBD_TESTS_PUBLIC_LOG_FILE
+      - $MBD_TESTS_PUBLIC_OUTPUT_DIR/mbdyn-testsuite-timing-*.tsv
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR/**/*.stdout
     when: always
 
@@ -338,9 +339,9 @@ mbdyn-tests-public-test-job-clang:   # This job runs in the test stage.
       - chmod +x testsuite/simple_testsuite.sh
       - log_file="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/${MBD_TESTS_PUBLIC_LOG_FILE}"
       - echo "-------------- RESTARTED TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_RESTART_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-restarted.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_RESTART_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
       - echo "-------------- ORIGINAL TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-original.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
       - cd "${MBD_TESTS_PUBLIC_OUTPUT_DIR}"
       - find . -name 'junit_xml_report_*.xml' -print0 | xargs -0 "${CI_PROJECT_DIR}/testsuite/junit_xml_relative_path.py" -p "${CI_PROJECT_DIR}"
   artifacts:
@@ -348,7 +349,7 @@ mbdyn-tests-public-test-job-clang:   # This job runs in the test stage.
     expire_in: 24h
     paths:
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_CLANG/$MBD_TESTS_PUBLIC_LOG_FILE
-      - $MBD_TESTS_PUBLIC_OUTPUT_DIR_CLANG/mbdyn-testsuite-timing.tsv
+      - $MBD_TESTS_PUBLIC_OUTPUT_DIR_CLANG/mbdyn-testsuite-timing-*.tsv
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_CLANG/**/*.stdout
       - $MBD_TESTS_PUBLIC_OUTPUT_DIR_CLANG/**/junit_xml_report_*.xml
     when: always

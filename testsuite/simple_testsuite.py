@@ -831,7 +831,10 @@ def run(mode: str, args: argparse.Namespace) -> int:
     timing = pathlib.Path(os.environ.get("MBD_TESTSUITE_TIMING_FILE", str(output / "mbdyn-testsuite-timing.tsv")))
     if args.timing == "yes" and not timing.exists():
         timing.parent.mkdir(parents=True, exist_ok=True)
-        timing.write_text("scope\tmode\ttarget\tindex\tstatus\tpatch_ms\tresource_wait_ms\trun_ms\ttotal_ms\n")
+        # Keep the established nine fields in place; the trailing
+        # configuration key makes it possible to compare one input across
+        # matrix configurations without changing existing field positions.
+        timing.write_text("scope\tmode\ttarget\tindex\tstatus\tpatch_ms\tresource_wait_ms\trun_ms\ttotal_ms\tconfiguration\n")
     suite_start = ms(); inputs = discover(args); print(f"{len(inputs)} valid input files were found")
     if mode == "patched":
         specs: list[PatchSpec | None] = patches(args, materialize=not args.dry_run)
@@ -878,8 +881,10 @@ def run(mode: str, args: argparse.Namespace) -> int:
             print(result.detail, end="" if result.detail.endswith("\n") else "\n")
         if args.timing == "yes":
             task_mode = "patched" if (result.task.patch or abort_patch) else "unpatched"
+            configuration = (result.task.patch.key if result.task.patch else
+                             "abort-after-step" if abort_patch else "")
             with timing.open("a") as f:
-                f.write(f"test\t{task_mode}\t{result.task.input.path}\t{result.task.input.index}\t{result.status}\t{result.patch_ms}\t{result.lock_ms}\t{result.run_ms}\t{result.total_ms}\n")
+                f.write(f"test\t{task_mode}\t{result.task.input.path}\t{result.task.input.index}\t{result.status}\t{result.patch_ms}\t{result.lock_ms}\t{result.run_ms}\t{result.total_ms}\t{configuration}\n")
 
     def producer_skips(task: Task) -> bool:
         inp = task.input
@@ -1005,14 +1010,14 @@ def run(mode: str, args: argparse.Namespace) -> int:
                 configuration_log.unlink(missing_ok=True)
     if args.timing == "yes" and mode == "patched":
         with timing.open("a") as f:
-            f.write(f"phase\tpatched\t{output}\t\tpreparation\t0\t0\t0\t{preparation_ms}\n")
+            f.write(f"phase\tpatched\t{output}\t\tpreparation\t0\t0\t0\t{preparation_ms}\t\n")
             for spec in specs:
                 assert spec is not None
                 relevant = [result for result in results if result.task.patch == spec]
                 status = "FAILED" if any(report_category(result.status) not in {"passed", "skipped", "known-failure"} for result in relevant) else "PASSED"
                 elapsed = config_end.get(spec.key, ms()) - config_start.get(spec.key, suite_start)
-                f.write(f"configuration\tpatched\t{spec.outdir}\t\t{status}\t0\t0\t{elapsed}\t{elapsed}\n")
-            f.write(f"phase\tpatched\t{output}\t\tconfigurations\t0\t0\t0\t{ms()-suite_start-preparation_ms}\n")
+                f.write(f"configuration\tpatched\t{spec.outdir}\t\t{status}\t0\t0\t{elapsed}\t{elapsed}\t{spec.key}\n")
+            f.write(f"phase\tpatched\t{output}\t\tconfigurations\t0\t0\t0\t{ms()-suite_start-preparation_ms}\t\n")
     print("@BEGIN_SIMPLE_TESTSUITE_REPORT@")
     labels = (("passed", "PASSED"), ("timeout", "TIMEOUT"), ("module", "FAILED-MODULE"), ("suppressed", "FAILED-SUPPRESSED"), ("failed", "FAILED"), ("regression", "REGRESSIONS"), ("unexpected", "FAILED-UNEXPECTED"), ("fixed-failure", "FIXED-FAILURES"), ("known-failure", "KNOWN-FAILURES"), ("skipped", "SKIPPED"))
     for key, label in labels:
@@ -1026,7 +1031,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
             for r in entries: print(f"  {r.task.input.path}:{r.status}")
     print("@END_SIMPLE_TESTSUITE_REPORT@")
     if args.timing == "yes":
-        with timing.open("a") as f: f.write(f"suite\t{timing_mode}\t{output}\t\t\t0\t0\t0\t{ms()-suite_start}\n")
+        with timing.open("a") as f: f.write(f"suite\t{timing_mode}\t{output}\t\t\t0\t0\t0\t{ms()-suite_start}\t\n")
     mask = int(args.exit_status_mask, 0)
     # The legacy patched driver always masks the plain runner's "no passed
     # tests" bit during its preparation/configuration orchestration.
