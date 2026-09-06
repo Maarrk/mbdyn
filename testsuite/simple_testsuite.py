@@ -22,10 +22,13 @@ import time
 import traceback
 from collections import Counter
 from dataclasses import dataclass
-from itertools import product
 from queue import Empty
+from typing import Generator, List, Tuple
 
 ROOT = pathlib.Path(__file__).resolve().parent
+
+
+
 
 @dataclass(frozen=True)
 class InputSpec:
@@ -234,43 +237,100 @@ def include_files(spec: PatchSpec, values: dict[str, str]) -> None:
                                pathlib.Path(spec.init_end).read_text(), pathlib.Path(spec.control_begin).read_text(),
                                pathlib.Path(spec.control_end).read_text()]) + "\n")
 
-def compatible(linear: str, handler: str, scale: str, when: str, nonlinear: str, autodiff: str,
-               method: str, abort: str, skip: str, assembly: str) -> bool:
-    """Compatibility pruning for the patched configuration matrix."""
-    if linear in {"naive", "lapack", "qr", "siconosdense", "siconossparse"} and handler != "map": return False
-    if linear == "y12" and handler not in {"map", "cc", "dir"}: return False
-    if linear in {"pardiso", "pardiso_64", "spqr"} and handler not in {"map", "grad"}: return False
-    if when == "never" and scale != "rowmaxcolumnmax": return False
-    if linear in {"belos", "amesos", "siconosdense", "siconossparse", "pardiso", "pardiso_64", "qr", "spqr", "y12"} and when != "never": return False
-    if handler == "grad" and autodiff == "noautodiff": return False
-    if nonlinear == "mcpnewtonminfb" and autodiff == "noautodiff": return False
-    if nonlinear == "mcpnewtonfb" and linear in {"siconosdense", "siconossparse"}: return False
-    if nonlinear.startswith("siconosmcp") and linear != "siconosdense": return False
-    if nonlinear in {"nox", "nox-direct"} or nonlinear.startswith("nox-broyden"):
-        if linear in {"naive", "qr", "lapack", "siconosdense"}: return False
-    if nonlinear == "bfgs" and linear not in {"spqr", "qr"}: return False
-    # The legacy loop excludes this combination before it reaches the
-    # abort-after special cases below.
-    if assembly == "include" and skip == "skip": return False
-    if abort == "derivatives" and skip == "skip":
-        return linear == "umfpack" and handler == "map" and scale == "rowmaxcolumnmax" and when == "never" and nonlinear == "newtonraphson" and method == "impliciteuler"
-    if abort != "derivatives" and skip == "skip": return False
-    if assembly == "include" and not (abort == "assembly" and skip != "skip"): return False
-    if abort == "input":
-        return linear == "umfpack" and handler == "map" and scale == "rowmaxcolumnmax" and when == "never" and nonlinear == "newtonraphson" and method == "impliciteuler"
-    if abort == "assembly": return nonlinear == "newtonraphson" and method == "impliciteuler"
-    if abort == "derivatives": return method == "impliciteuler"
-    if abort.startswith("regularstep,"):
-        return ((nonlinear == "newtonraphson") or method.startswith("ms2")) and ((linear == "umfpack") or method.startswith("ms2")) and ((handler == "map") or method.startswith("ms2")) and ((scale == "rowmaxcolumnmax") or method.startswith("ms2")) and ((when == "never") or method.startswith("ms2"))
-    return True
+def get_valid_configurations(args) -> Generator[Tuple[str, ...], None, None]:
+    """Generates only compatible configuration tuples directly without full Cartesian product."""
+
+    linear_solvers = words(args.linear_solvers)
+    matrix_handlers = words(args.matrix_handlers)
+    scale_methods = words(args.scale_methods)
+    scale_when_opts = words(args.scale_when)
+    autodiff_opts = words(args.autodiff)
+    nonlinear_solvers = words(args.nonlinear_solvers)
+    methods = words(args.method)
+    output_formats = words(args.output_format)
+    abort_after_opts = words(args.abort_after)
+    skip_joint_opts = words(args.skip_initial_joint_assembly)
+    assembly_opts = words(args.initial_assembly_of_deformable_and_force_elements)
+
+    for linear in linear_solvers:
+        # Constraint: linear -> handler
+        if linear in {"naive", "lapack", "qr", "siconosdense", "siconossparse"}:
+            valid_handlers = [h for h in matrix_handlers if h == "map"]
+        elif linear == "y12":
+            valid_handlers = [h for h in matrix_handlers if h in {"map", "cc", "dir"}]
+        elif linear in {"pardiso", "pardiso_64", "spqr"}:
+            valid_handlers = [h for h in matrix_handlers if h in {"map", "grad"}]
+        else:
+            valid_handlers = matrix_handlers
+
+        for handler in valid_handlers:
+            # Constraint: handler -> autodiff
+            valid_autodiff = [ad for ad in autodiff_opts if not (handler == "grad" and ad == "noautodiff")]
+
+            for when in scale_when_opts:
+                # Constraint: linear -> when
+                if linear in {"belos", "amesos", "siconosdense", "siconossparse", "pardiso", "pardiso_64", "qr", "spqr", "y12"} and when != "never":
+                    continue
+
+                for scale in scale_methods:
+                    # Constraint: when -> scale
+                    if when == "never" and scale != "rowmaxcolumnmax":
+                        continue
+
+                    for ad in valid_autodiff:
+                        for nonlinear in nonlinear_solvers:
+                            # Constraint: nonlinear & ad
+                            if nonlinear == "mcpnewtonminfb" and ad == "noautodiff":
+                                continue
+                            # Constraint: nonlinear & linear
+                            if nonlinear == "mcpnewtonfb" and linear in {"siconosdense", "siconossparse"}:
+                                continue
+                            if nonlinear.startswith("siconosmcp") and linear != "siconosdense":
+                                continue
+                            if (nonlinear in {"nox", "nox-direct"} or nonlinear.startswith("nox-broyden")) and linear in {"naive", "qr", "lapack", "siconosdense"}:
+                                continue
+                            if nonlinear == "bfgs" and linear not in {"spqr", "qr"}:
+                                continue
+
+                            for method in methods:
+                                for output in output_formats:
+                                    for abort in abort_after_opts:
+                                        for skip in skip_joint_opts:
+                                            for assembly in assembly_opts:
+                                                # Structural constraints on assembly, skip, abort
+                                                if assembly == "include" and skip == "skip":
+                                                    continue
+                                                if assembly == "include" and not (abort == "assembly" and skip != "skip"):
+                                                    continue
+
+                                                if abort == "derivatives":
+                                                    if method != "impliciteuler":
+                                                        continue
+                                                    if skip == "skip" and not (linear == "umfpack" and handler == "map" and scale == "rowmaxcolumnmax" and when == "never" and nonlinear == "newtonraphson"):
+                                                        continue
+                                                elif skip == "skip":
+                                                    continue
+
+                                                if abort == "input" and not (linear == "umfpack" and handler == "map" and scale == "rowmaxcolumnmax" and when == "never" and nonlinear == "newtonraphson" and method == "impliciteuler"):
+                                                    continue
+                                                if abort == "assembly" and not (nonlinear == "newtonraphson" and method == "impliciteuler"):
+                                                    continue
+                                                if abort.startswith("regularstep,"):
+                                                    if not (((nonlinear == "newtonraphson") or method.startswith("ms2")) and
+                                                            ((linear == "umfpack") or method.startswith("ms2")) and
+                                                            ((handler == "map") or method.startswith("ms2")) and
+                                                            ((scale == "rowmaxcolumnmax") or method.startswith("ms2")) and
+                                                            ((when == "never") or method.startswith("ms2"))):
+                                                        continue
+
+                                                yield (linear, handler, scale, when, ad, nonlinear, method, output, abort, skip, assembly)
 
 def patches(args: argparse.Namespace, materialize: bool = True) -> list[PatchSpec]:
     result: list[PatchSpec] = []
     dimensions = (words(args.linear_solvers), words(args.matrix_handlers), words(args.scale_methods), words(args.scale_when), words(args.autodiff), words(args.nonlinear_solvers), words(args.method), words(args.output_format), words(args.abort_after), words(args.skip_initial_joint_assembly), words(args.initial_assembly_of_deformable_and_force_elements))
     base = pathlib.Path(args.prefix_output).resolve()
-    for vals in product(*dimensions):
+    for vals in get_valid_configurations(args):
         linear, handler, scale, when, ad, nonlinear, method, output, abort, skip, assembly = vals
-        if not compatible(linear, handler, scale, when, nonlinear, ad, method, abort, skip, assembly): continue
         key = "/".join(vals); out = base / key
         spec = PatchSpec(key, str(out), str(out/"mbd_init_val_begin.set"), str(out/"mbd_init_val_end.set"), str(out/"mbd_control_data_begin.set"), str(out/"mbd_control_data_end.set"))
         nonlin = {
