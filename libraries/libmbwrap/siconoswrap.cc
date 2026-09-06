@@ -102,7 +102,7 @@ void SiconosSolutionManager::Solve()
 #ifdef DEBUG
      MyVectorHandler f(x);
 #endif
-     integer info = NM_gesv(A.pGetMatrix(), x.pdGetVec(), true);
+     integer info = NM_gesv_expert(A.pGetMatrix(), x.pdGetVec(), true);
 
      if (info) {
           silent_cerr("NM_gesv failed with status " << info << "\n");

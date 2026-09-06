@@ -474,8 +474,9 @@ variables:
     description: "Repository of the Siconos library (http://siconos.gforge.inria.fr) to be cloned"
 
   SICONOS_BRANCH:
-    value: "master"
+    value: "main"
     options:
+      - "main"   ## This branch seems to be up to date
       - "master" ## This branch is tracking the main repository, but must be synchronized manually
       - "mbdyn"  ## This branch is intended to be used for MBDyn's testsuite
       - "4.4.0"
