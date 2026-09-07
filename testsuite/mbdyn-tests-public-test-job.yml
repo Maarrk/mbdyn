@@ -372,10 +372,40 @@ mbdyn-tests-public-test-job-clang:   # This job runs in the test stage.
       - mkdir -p ${MBD_TESTS_PUBLIC_OUTPUT_DIR} ## needed for realpath
       - sp_gradient_test --gtest_output=xml:${MBD_TESTS_PUBLIC_OUTPUT_DIR}/junit_xml_report_sp_gradient_test.xml >& /dev/null
       - log_file="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/${MBD_TESTS_PUBLIC_LOG_FILE}"
-      - echo "-------------- RESTARTED TESTS --------------------" | tee -a "${log_file}"
-      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-restarted.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.py plain --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_RESTART_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
-      - echo "-------------- ORIGINAL TESTS --------------------" | tee -a "${log_file}"
-      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-original.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.py plain --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${MBD_TESTS_PUBLIC_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
+      - |
+        phase_dir="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/.phases"
+        restart_output="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/restarted"
+        original_output="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/original"
+        mkdir -p "${phase_dir}" "${restart_output}" "${original_output}"
+        export MBD_TESTSUITE_GLOBAL_SLOT_DIR="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/.global-slots"
+        export MBD_TESTSUITE_GLOBAL_SLOTS="${MBD_TESTS_PUBLIC_NUM_TASKS}"
+        export MBD_TESTSUITE_RESOURCE_LOCK_DIR="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/.resource-locks"
+        MBD_TESTSUITE_TIMING=no testsuite/simple_testsuite.py plain --prepare-only --prefix-output "${restart_output}" --prefix-input "${MBD_TESTS_RESTART_INPUT_DIR}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" ${MBD_SIMPLE_TESTSUITE_FLAGS}
+        MBD_TESTSUITE_TIMING=no testsuite/simple_testsuite.py plain --prepare-only --prefix-output "${original_output}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" ${MBD_SIMPLE_TESTSUITE_FLAGS}
+        (
+          set +e
+          echo "-------------- RESTARTED TESTS --------------------" | tee "${phase_dir}/restarted.log"
+          MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-restarted.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.py plain --exec-gen no --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${restart_output}" --prefix-input "${MBD_TESTS_RESTART_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${phase_dir}/restarted.log" | awk -f testsuite/simple_testsuite_output_filter.awk
+          echo "${PIPESTATUS[0]}" > "${phase_dir}/restarted.status"
+          exit 0
+        ) &
+        restarted_pid=$!
+        (
+          set +e
+          echo "-------------- ORIGINAL TESTS --------------------" | tee "${phase_dir}/original.log"
+          MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PUBLIC_OUTPUT_DIR}/mbdyn-testsuite-timing-original.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.py plain --exec-gen no --use-reference-test-status "${MBD_TESTS_PUBLIC_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PUBLIC_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PUBLIC_TIMEOUT}" --prefix-output "${original_output}" --prefix-input "${MBD_TESTS_PUBLIC_INPUT_DIR}" --tasks "${MBD_TESTS_PUBLIC_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${phase_dir}/original.log" | awk -f testsuite/simple_testsuite_output_filter.awk
+          echo "${PIPESTATUS[0]}" > "${phase_dir}/original.status"
+          exit 0
+        ) &
+        original_pid=$!
+        wait "${restarted_pid}" "${original_pid}"
+        cat "${phase_dir}/restarted.log" "${phase_dir}/original.log" > "${log_file}"
+        read -r restarted_status < "${phase_dir}/restarted.status"
+        read -r original_status < "${phase_dir}/original.status"
+        combined_status=$((restarted_status | original_status))
+        if ((combined_status != 0)); then
+          exit "${combined_status}"
+        fi
       - cd "${MBD_TESTS_PUBLIC_OUTPUT_DIR}"
       - find . -name 'junit_xml_report_*.xml' -print0 | xargs -0 "${CI_PROJECT_DIR}/testsuite/junit_xml_relative_path.py" -p "${CI_PROJECT_DIR}"
   artifacts:
