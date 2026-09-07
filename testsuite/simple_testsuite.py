@@ -277,6 +277,8 @@ def parser(mode: str, patch_config: str | os.PathLike[str] = DEFAULT_PATCH_CONFI
     p.add_argument("--timing", choices=("yes", "no"), default=os.environ.get("MBD_TESTSUITE_TIMING", "no"))
     p.add_argument("--suppressed-errors", default="")
     p.add_argument("--dry-run", action="store_true", help="print the producer task manifest without generators or consumers")
+    p.add_argument("--prepare-only", action="store_true",
+                   help="run input generators and exit before creating consumers")
     if mode == "patched":
         config = load_patch_config(patch_config)
         p.add_argument("--patch-config", default=str(pathlib.Path(patch_config).resolve()),
@@ -533,6 +535,23 @@ def locks(root: str, ports: tuple[int, ...]):
         fcntl.flock(fd, fcntl.LOCK_EX); fds.append(fd)
     return fds, ms()-start
 
+def global_slot_lock(root: str, slots: int, worker_slot: int) -> int | None:
+    """Acquire this worker's cross-process solver slot.
+
+    Separate testsuite invocations map equally numbered workers to the same
+    lock file.  Therefore they may all keep their own worker pools while no
+    more than ``slots`` solver commands can execute at once.  ``flock`` also
+    releases the slot if a worker is killed.
+    """
+    if not root or slots < 1:
+        return None
+    path = pathlib.Path(root)
+    path.mkdir(parents=True, exist_ok=True)
+    fd = os.open(str(path / f"solver-slot-{worker_slot % slots}.lock"),
+                 os.O_CREAT | os.O_WRONLY, 0o644)
+    fcntl.flock(fd, fcntl.LOCK_EX)
+    return fd
+
 def awk_number(value: str) -> float:
     """The small numeric subset needed by gawk's strtonum() calls below."""
     try:
@@ -633,6 +652,11 @@ def worker(task_q: mp.Queue, result_q: mp.Queue, cfg: dict,
                         command = shlex.split(os.environ.get("TESTSUITE_TIME_CMD", "/usr/bin/time --verbose")) + ["--output", time_file] + command
                     set_scheduler_state("resource-wait")
                     fds, lock_ms = locks(cfg["lockdir"], inp.ports)
+                    lock_start = ms()
+                    slot_fd = global_slot_lock(cfg["global_slot_dir"], cfg["global_slots"], worker_slot)
+                    if slot_fd is not None:
+                        fds.append(slot_fd)
+                    lock_ms += ms() - lock_start
                     set_scheduler_state("running")
                     run_start = ms()
                     with open(log, "w") as lf:
@@ -882,8 +906,24 @@ def run(mode: str, args: argparse.Namespace) -> int:
     timeout_seconds_value = timeout_seconds(args.timeout)
     if args.update_reference_test_status != "no":
         args.suppressed_errors = "|".join(value for value in (args.suppressed_errors, "feature") if value)
-    cfg = {"output":str(output), "lockdir":lockdir, "mbdyn_exec":args.mbdyn_exec, "mbdyn_args":args.mbdyn_args_add, "timeout":args.timeout, "timeout_seconds":timeout_seconds_value, "keep":args.keep_output, "skip_expected":args.skip_expected_failures == "yes", "exec_solver":args.exec_solver, "exec_gen":args.exec_gen, "enable_gtest":args.enable_gtest, "abort_after_step":args.abort_after_step, "threads":args.threads, "print_resources":args.print_resources}
+    global_slot_dir = os.environ.get("MBD_TESTSUITE_GLOBAL_SLOT_DIR", "")
+    try:
+        global_slots = int(os.environ.get("MBD_TESTSUITE_GLOBAL_SLOTS", "0"))
+    except ValueError as error:
+        raise SystemExit("MBD_TESTSUITE_GLOBAL_SLOTS must be an integer") from error
+    if global_slots < 0:
+        raise SystemExit("MBD_TESTSUITE_GLOBAL_SLOTS must not be negative")
+    cfg = {"output":str(output), "lockdir":lockdir, "global_slot_dir":global_slot_dir,
+           "global_slots":global_slots, "mbdyn_exec":args.mbdyn_exec,
+           "mbdyn_args":args.mbdyn_args_add, "timeout":args.timeout,
+           "timeout_seconds":timeout_seconds_value, "keep":args.keep_output,
+           "skip_expected":args.skip_expected_failures == "yes", "exec_solver":args.exec_solver,
+           "exec_gen":args.exec_gen, "enable_gtest":args.enable_gtest,
+           "abort_after_step":args.abort_after_step, "threads":args.threads,
+           "print_resources":args.print_resources}
     run_generators(inputs, cfg)
+    if args.prepare_only:
+        return 0
     # The legacy patched driver performed generator preparation before it
     # began configuration work, so its preparation phase includes this time.
     preparation_ms = ms() - suite_start
