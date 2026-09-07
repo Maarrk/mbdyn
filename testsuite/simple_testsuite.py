@@ -536,21 +536,29 @@ def locks(root: str, ports: tuple[int, ...]):
     return fds, ms()-start
 
 def global_slot_lock(root: str, slots: int, worker_slot: int) -> int | None:
-    """Acquire this worker's cross-process solver slot.
+    """Acquire any available cross-process solver slot.
 
-    Separate testsuite invocations map equally numbered workers to the same
-    lock file.  Therefore they may all keep their own worker pools while no
-    more than ``slots`` solver commands can execute at once.  ``flock`` also
-    releases the slot if a worker is killed.
+    Consumers rotate over the slot files with nonblocking ``flock`` calls.
+    Unlike fixed worker-to-slot mapping, this cannot leave a free slot idle
+    merely because the next queued task belongs to a worker mapped to a busy
+    slot.  The short wait avoids busy-spinning, and the kernel releases a held
+    slot automatically if its worker is killed.
     """
     if not root or slots < 1:
         return None
     path = pathlib.Path(root)
     path.mkdir(parents=True, exist_ok=True)
-    fd = os.open(str(path / f"solver-slot-{worker_slot % slots}.lock"),
-                 os.O_CREAT | os.O_WRONLY, 0o644)
-    fcntl.flock(fd, fcntl.LOCK_EX)
-    return fd
+    candidate = (os.getpid() + worker_slot) % slots
+    while True:
+        fd = os.open(str(path / f"solver-slot-{candidate}.lock"),
+                     os.O_CREAT | os.O_WRONLY, 0o644)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return fd
+        except BlockingIOError:
+            os.close(fd)
+        candidate = (candidate + 1) % slots
+        time.sleep(0.002)
 
 def awk_number(value: str) -> float:
     """The small numeric subset needed by gawk's strtonum() calls below."""
