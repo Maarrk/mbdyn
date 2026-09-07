@@ -6,7 +6,7 @@ import json
 import re
 import pandas as pd
 import numpy as np
-from netCDF4 import Dataset
+from netCDF4 import Dataset, chartostring
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QListWidget, QListWidgetItem, QTreeWidget, 
                              QTreeWidgetItem, QPushButton, QFileDialog, QTabWidget, 
@@ -68,9 +68,12 @@ class SignalManager(QObject):
         self.files = {}
         self.source_map = {}
 
-    def add_imported_signal(self, name, data, filename, varname, comp_idx=None, comp_label=None):
+    def add_imported_signal(self, name, data, filename, varname, comp_idx=None,
+                            comp_label=None, time_start=None, time_end=None):
         self.signals[name] = data
-        self.source_map[name] = {"file": filename, "var": varname, "idx": comp_idx, "lbl": comp_label}
+        self.source_map[name] = {"file": filename, "var": varname, "idx": comp_idx,
+                                 "lbl": comp_label, "time_start": time_start,
+                                 "time_end": time_end}
         self.data_changed.emit()
 
     def add_expression_signal(self, name, data, expression):
@@ -535,6 +538,11 @@ class PostProcessor(QMainWindow):
         self.var_search = QLineEdit()
         self.var_search.setPlaceholderText("Filter variables…")
         self.var_search.textChanged.connect(self._filter_tree)
+
+        self.time_start = QLineEdit()
+        self.time_start.setPlaceholderText("Start time (blank = first)")
+        self.time_end = QLineEdit()
+        self.time_end.setPlaceholderText("End time (blank = last)")
         
         self.sig_list = QListWidget()
         self.sig_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -554,7 +562,9 @@ class PostProcessor(QMainWindow):
         btn_load = QPushButton("Load Session")
         btn_load.clicked.connect(self.load_session)
         
-        for w in [btn_open, btn_refresh_files, QLabel("<b>Variables</b>"), self.var_search, self.tree, QLabel("<b>Signals (Dbl-Click to Edit)</b>"), 
+        for w in [btn_open, btn_refresh_files, QLabel("<b>Variables</b>"), self.var_search,
+                  QLabel("<b>Import time range</b>"), self.time_start, self.time_end,
+                  self.tree, QLabel("<b>Signals (Dbl-Click to Edit)</b>"),
                   self.sig_list, btn_calc, btn_export, btn_save, btn_load]:
             s_lay.addWidget(w)
             
@@ -578,16 +588,41 @@ class PostProcessor(QMainWindow):
 
     def _filter_tree(self, text):
         text = text.lower()
+        def visit(item):
+            own_match = text in item.text(0).lower() if text else True
+            child_match = False
+            for j in range(item.childCount()):
+                child_match = visit(item.child(j)) or child_match
+            visible = own_match or child_match
+            item.setHidden(not visible and bool(text))
+            return visible
         for i in range(self.tree.topLevelItemCount()):
-            root = self.tree.topLevelItem(i)
-            any_visible = False
-            for j in range(root.childCount()):
-                var_item = root.child(j)
-                match = text in var_item.text(0).lower() if text else True
-                var_item.setHidden(not match)
-                if match:
-                    any_visible = True
-            root.setHidden(not any_visible and bool(text))
+            visit(self.tree.topLevelItem(i))
+
+    def _time_bounds(self):
+        def value(edit):
+            s = edit.text().strip()
+            if not s:
+                return None
+            try:
+                return float(s)
+            except ValueError:
+                raise ValueError(f"Invalid time value: {s}")
+        return value(self.time_start), value(self.time_end)
+
+    @staticmethod
+    def _time_select(ds, data, start, end):
+        if start is None and end is None or "time" not in ds.variables:
+            return data
+        t = np.asarray(ds.variables["time"][:])
+        lo = 0 if start is None else int(np.searchsorted(t, start, side="left"))
+        hi = len(t) if end is None else int(np.searchsorted(t, end, side="right"))
+        return data[lo:hi]
+
+    @staticmethod
+    def _packed_strings(var):
+        values = chartostring(var[:])
+        return [str(v).rstrip("\x00 ") for v in values]
 
     def show_signal_menu(self, pos):
         item = self.sig_list.itemAt(pos)
@@ -693,19 +728,90 @@ class PostProcessor(QMainWindow):
             self.mgr.files[fname] = path
             with Dataset(path) as ds:
                 root = QTreeWidgetItem([fname])
-                for v_name in ds.variables:
-                    v = ds.variables[v_name]
-                    var_item = QTreeWidgetItem([v_name])
-                    root.addChild(var_item)
-                    if len(v.dimensions) > 1:
-                        sz = ds.dimensions[v.dimensions[1]].size
-                        for i in range(sz):
-                            lbl = ["X", "Y", "Z"][i] if sz == 3 else f"C{i}"
-                            ci = QTreeWidgetItem([lbl])
-                            ci.setData(0, Qt.ItemDataRole.UserRole, i)
-                            var_item.addChild(ci)
+                is_packed = all(v in ds.variables for v in
+                       ("packed.data", "packed.signal_name",
+                        "packed.signal_description", "packed.signal_units"))
+                if is_packed:
+                    self._add_packed_tree(root, fname, ds)
+                else:
+                    for v_name in ds.variables:
+                        v = ds.variables[v_name]
+                        var_item = QTreeWidgetItem([v_name])
+                        root.addChild(var_item)
+                        if len(v.dimensions) > 1:
+                            sz = ds.dimensions[v.dimensions[1]].size
+                            for i in range(sz):
+                                lbl = ["X", "Y", "Z"][i] if sz == 3 else f"C{i}"
+                                ci = QTreeWidgetItem([lbl])
+                                ci.setData(0, Qt.ItemDataRole.UserRole, i)
+                                var_item.addChild(ci)
                 self.tree.addTopLevelItem(root)
                 root.setExpanded(True)
+
+    def _add_packed_tree(self, root, filename, ds):
+        """Build Nodes/Elements/type/label/variable hierarchy for packed output."""
+        names = self._packed_strings(ds.variables["packed.signal_name"])
+        descs = self._packed_strings(ds.variables["packed.signal_description"])
+        units = self._packed_strings(ds.variables["packed.signal_units"])
+
+        # Combine component columns into one selectable source variable.
+        groups = {}
+        for i, name in enumerate(names):
+            base = re.sub(r"\[\d+\]$", "", name)
+            groups.setdefault(base, []).append(i)
+
+        categories = {}
+        for base, indices in groups.items():
+            parts = base.split(".")
+            if len(parts) >= 3 and parts[0] in ("node", "elem"):
+                category = "Nodes" if parts[0] == "node" else "Elements"
+                kind = parts[1]
+                label = parts[2]
+                field = ".".join(parts[3:]) or base
+            else:
+                category, kind, label, field = "Other", "", "", base
+
+            cat = categories.setdefault(category, {})
+            typ = cat.setdefault(kind, {})
+            ent = typ.setdefault(label, [])
+            ent.append((field, base, indices))
+
+        def natural(value):
+            match = re.fullmatch(r"\d+", value)
+            return (0, int(value)) if match else (1, value)
+
+        for category in sorted(categories):
+            cat_item = QTreeWidgetItem([category])
+            root.addChild(cat_item)
+            for kind in sorted(categories[category]):
+                kind_item = QTreeWidgetItem([kind or category])
+                cat_item.addChild(kind_item)
+                for label in sorted(categories[category][kind], key=natural):
+                    entity_item = QTreeWidgetItem([label or "signals"])
+                    kind_item.addChild(entity_item)
+                    for field, base, indices in sorted(categories[category][kind][label]):
+                        first = indices[0]
+                        text = field
+                        if descs[first]:
+                            text += f" — {descs[first]}"
+                        if units[first]:
+                            text += f" [{units[first]}]"
+                        var_item = QTreeWidgetItem([text])
+                        meta = {"packed": True, "indices": indices, "name": base,
+                                "description": descs[first], "units": units[first],
+                                "file": filename}
+                        var_item.setData(0, Qt.ItemDataRole.UserRole, meta)
+                        entity_item.addChild(var_item)
+                        if len(indices) > 1:
+                            for component, idx in enumerate(indices):
+                                comp = QTreeWidgetItem([
+                                    ["X", "Y", "Z"][component]
+                                    if len(indices) == 3 else f"C{component}"])
+                                comp.setData(0, Qt.ItemDataRole.UserRole,
+                                    {**meta, "indices": [idx]})
+                                var_item.addChild(comp)
+        for i in range(root.childCount()):
+            root.child(i).setExpanded(True)
 
     def refresh_all_data(self):
         if not self.mgr.files:
@@ -718,8 +824,12 @@ class PostProcessor(QMainWindow):
                     idx = meta["idx"]
                     if vn in ds.variables:
                         data = ds.variables[vn][:].copy()
-                        if idx is not None:
+                        if isinstance(idx, list):
                             data = data[:, idx]
+                        elif idx is not None:
+                            data = data[:, idx]
+                        data = self._time_select(ds, data, meta.get("time_start"),
+                                                 meta.get("time_end"))
                         self.mgr.signals[name] = data
 
         for name, expr in self.mgr.expressions.items():
@@ -734,21 +844,47 @@ class PostProcessor(QMainWindow):
         parent = item.parent()
         if not parent:
             return
-        idx = item.data(0, Qt.ItemDataRole.UserRole)
-        if parent.parent():
+        item_data = item.data(0, Qt.ItemDataRole.UserRole)
+        packed = isinstance(item_data, dict) and item_data.get("packed", False)
+        indices = item_data.get("indices", []) if packed else []
+        idx = indices[0] if len(indices) == 1 else item_data.get("idx") if packed else item_data
+        if packed:
+            fn = item_data["file"]
+            vn = "packed.data"
+        elif parent.parent():
             fn = parent.parent().text(0)
             vn = parent.text(0)
         else:
             fn = parent.text(0)
             vn = item.text(0)
-            
+
+        if packed:
+            vn = "packed.data"
+
+        try:
+            time_start, time_end = self._time_bounds()
+        except ValueError as exc:
+            QMessageBox.warning(self, "Time range", str(exc))
+            return
+
         with Dataset(self.mgr.files[fn]) as ds:
             data = ds.variables[vn][:].copy()
-            if idx is not None:
+            if packed and len(indices) > 1:
+                data = data[:, indices]
+            elif idx is not None:
                 data = data[:, idx]
+            data = self._time_select(ds, data, time_start, time_end)
         
-        name = f"{vn.replace('.', '_')}_{item.text(0)}_{len(self.mgr.signals)}"
-        self.mgr.add_imported_signal(name, data, fn, vn, idx, item.text(0))
+        if packed:
+            source_label = item_data.get("name", item.text(0))
+            name = f"{source_label.replace('.', '_').replace('[', '_').replace(']', '')}_{len(self.mgr.signals)}"
+            display_label = f"{source_label} — {item_data.get('description', '')}"
+        else:
+            name = f"{vn.replace('.', '_')}_{item.text(0)}_{len(self.mgr.signals)}"
+            display_label = item.text(0)
+        source_idx = indices if packed and len(indices) > 1 else idx
+        self.mgr.add_imported_signal(name, data, fn, vn, source_idx, display_label,
+                                     time_start, time_end)
 
     def create_expression(self):
         dlg = FormulaDialog(self.mgr, parent=self)
@@ -816,8 +952,9 @@ class PostProcessor(QMainWindow):
                     missing.add(sig_name)
                 elif meta["idx"] is not None:
                     v = ds.variables[vn]
+                    indices = meta["idx"] if isinstance(meta["idx"], list) else [meta["idx"]]
                     if (len(v.dimensions) <= 1
-                            or meta["idx"] >= ds.dimensions[v.dimensions[1]].size):
+                            or max(indices) >= ds.dimensions[v.dimensions[1]].size):
                         missing.add(sig_name)
         return missing
 
@@ -962,8 +1099,9 @@ class PostProcessor(QMainWindow):
                     missing_sigs.add(sig_name)
                 elif meta["idx"] is not None:
                     v = ds.variables[vn]
+                    indices = meta["idx"] if isinstance(meta["idx"], list) else [meta["idx"]]
                     if (len(v.dimensions) <= 1
-                            or meta["idx"] >= ds.dimensions[v.dimensions[1]].size):
+                            or max(indices) >= ds.dimensions[v.dimensions[1]].size):
                         missing_sigs.add(sig_name)
 
         if missing_sigs:
@@ -1041,7 +1179,9 @@ class PostProcessor(QMainWindow):
             for name, meta in self.mgr.source_map.items():
                 if meta["file"] == new_bn:
                     data = ds.variables[meta["var"]][:].copy()
-                    if meta["idx"] is not None:
+                    if isinstance(meta["idx"], list):
+                        data = data[:, meta["idx"]]
+                    elif meta["idx"] is not None:
                         data = data[:, meta["idx"]]
                     self.mgr.signals[name] = data
 
@@ -1212,4 +1352,3 @@ if __name__ == "__main__":
     win = PostProcessor()
     win.show()
     sys.exit(app.exec())
-

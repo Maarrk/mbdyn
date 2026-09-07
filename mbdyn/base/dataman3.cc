@@ -1068,6 +1068,11 @@ EndOfUse:
 						bNetCDFsync = true;
 #endif // USE_NETCDF
 					}
+					if (HP.IsKeyWord("packed")) {
+#ifdef USE_NETCDF
+						bNetCDFpacked = true;
+#endif // USE_NETCDF
+					}
 					if (HP.IsKeyWord("no" "sync")) {
 #ifdef USE_NETCDF
 						bNetCDFsync = false;

@@ -214,6 +214,7 @@ protected:
 	/* NetCDF stuff */
 	netCDF::NcFile::FileFormat NetCDF_Format;
 	bool bNetCDFsync;
+	bool bNetCDFpacked;
 	bool bNetCDFnoText;
 	MBDynNcVar Var_Step;
 	MBDynNcVar Var_Time;

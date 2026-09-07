@@ -154,6 +154,7 @@ ResMode(RES_TEXT),
 // NetCDF_Format(netCDF::NcFile::nc4), // 10 times slower than classic!
 NetCDF_Format(netCDF::NcFile::classic),
 bNetCDFsync(false),
+bNetCDFpacked(false),
 bNetCDFnoText(false),
 #endif // USE_NETCDF
 od(EULER_123),

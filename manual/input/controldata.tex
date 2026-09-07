@@ -486,7 +486,8 @@ will replace the current textual output:
 %\begin{verbatim}
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{card} ::= \kw{output results} : \kw{netcdf} [ , \bnt{file_format} ]
-        [ , [ \kw{no} ] \kw{sync} ] [ , [ \kw{no} ] \kw{text} ] ;
+        [ , \kw{packed} ] [ , [ \kw{no} ] \kw{sync} ]
+        [ , [ \kw{no} ] \kw{text} ] ;
 \end{Verbatim}
 %\end{verbatim}
 where
@@ -501,6 +502,12 @@ output file after each time step; this allows to monitor the results of an ongoi
 at the expense of a slightly increased I/O time (\kw{no sync} is also provided, in case the default changes).
 If the optional keyword \kw{no text} is present,
 standard output in ASCII form is disabled (\kw{text} is also provided, in case the default changes).
+For NetCDF-4 output, the optional \kw{packed} keyword stores the
+time-dependent numeric results in a compact packed array, reducing the
+overhead caused by models with many small output variables.  The packed
+array and its signal metadata are described in Section~\ref{sec:NETCDF}.
+The traditional per-entity NetCDF schema remains the default when
+\kw{packed} is omitted.
 
 \subsection{Default Orientation}\label{sec:CONTROLDATA:DEFAULTORIENTATION}
 This statement is used to select the default format for orientation output.
@@ -824,5 +831,4 @@ The following counters can be defined:
 \item \kw{surface loads}
 \item \kw{rigid bodies}
 \end{itemize}
-
 

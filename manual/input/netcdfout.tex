@@ -53,6 +53,23 @@ to changes during the development of MBDyn.
 This chapter is intended to document its current status,
 so it may be incomplete, and occasionally outdated as well.
 
+For NetCDF-4 output, the optional \kw{packed} flag can be used to reduce
+the overhead of models that contain many output variables:
+\begin{Verbatim}[commandchars=\\\{\}]
+    output results: netcdf, nc4, packed, no text;
+\end{Verbatim}
+The default output remains unchanged.  In packed mode the time-dependent
+numeric values are written in the two-dimensional variable
+\kw{packed.data(time,packed\_signal)}.  The variables
+\kw{packed.signal\_name}, \kw{packed.signal\_description}, and
+\kw{packed.signal\_units} describe its columns.  Each column corresponds to
+one scalar component of an ordinary MBDyn NetCDF variable; vector and matrix
+values therefore occupy consecutive columns.  This mode is intended for
+high-throughput output and is not schema-compatible with readers expecting
+the traditional per-entity time-dependent variables.  In packed mode the
+traditional time-dependent variables are omitted from the file.  Omitting
+\kw{packed} retains the traditional schema.
+
 
 
 \section{NetCDF Output}
