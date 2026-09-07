@@ -1094,7 +1094,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
             if result.task.patch is not None:
                 results_by_configuration[result.task.patch.key].append(result)
         configuration_failed = {
-            key: any(report_category(result.status) not in {"passed", "skipped", "known-failure"}
+            key: any(report_category(result.status) not in {"passed", "skipped", "known-failure", "fixed-failure"}
                      for result in relevant)
             for key, relevant in results_by_configuration.items()
         }
