@@ -44,14 +44,56 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <algorithm>
+#include <utility>
 #include <vector>
 #include <typeinfo>
 #include <unordered_map>
+#include <limits>
 
 #if defined(USE_NETCDF)
 #include <netcdf>
 typedef netCDF::NcDim MBDynNcDim; // not const because cannot be if not a pointer (in this case)
-typedef netCDF::NcVar MBDynNcVar;
+class MBDynNcVar {
+        netCDF::NcVar m_var;
+        int m_id;
+        bool m_packedSource;
+
+public:
+        MBDynNcVar() : m_var(), m_id(0), m_packedSource(false) {}
+        MBDynNcVar(const netCDF::NcVar& var) : m_var(var), m_id(var.getId()), m_packedSource(false) {}
+        static MBDynNcVar Packed(int id) {
+                MBDynNcVar var;
+                var.m_id = id;
+                var.m_packedSource = true;
+                return var;
+        }
+        MBDynNcVar& operator=(const netCDF::NcVar& var) {
+                m_var = var;
+                m_id = var.getId();
+                m_packedSource = false;
+                return *this;
+        }
+        int getId() const { return m_id; }
+        bool isNull() const { return m_packedSource ? false : m_var.isNull(); }
+        int getDimCount() const { return m_var.getDimCount(); }
+        netCDF::NcDim getDim(int i) const { return m_var.getDim(i); }
+        template <class... Args>
+        auto putAtt(Args&&... args) const
+                -> decltype(m_var.putAtt(std::forward<Args>(args)...)) {
+                return m_var.putAtt(std::forward<Args>(args)...);
+        }
+        void setChunking(netCDF::NcVar::ChunkMode mode,
+                std::vector<size_t>& chunksizes) const {
+                m_var.setChunking(mode, chunksizes);
+        }
+        template <class... Args>
+        auto putVar(Args&&... args) const
+                -> decltype(m_var.putVar(std::forward<Args>(args)...)) {
+                return m_var.putVar(std::forward<Args>(args)...);
+        }
+        const netCDF::NcVar& NcVar(void) const { return m_var; }
+};
 typedef netCDF::NcFile MBDynNcFile;
 typedef netCDF::NcType MBDynNcType;
 #define MBDynNcInt netCDF::NcType::nc_INT /**< replaces long in netcdf4 */
@@ -246,6 +288,32 @@ private:
         MBDynNcDim m_DimV1;
         MBDynNcDim m_DimV3;
         MBDynNcFile *m_pBinFile;   /* ! one ! binary NetCDF data file */
+        bool m_bNetCDF4;
+        bool m_bNetCDFPacked;
+        struct NcPackedSource {
+                size_t offset;
+                size_t width;
+        };
+        MBDynNcVar m_ncPackedData;
+        MBDynNcDim m_ncPackedSignal;
+        size_t m_ncPackedSignals;
+        int m_ncPackedNextId;
+        std::unordered_map<int, NcPackedSource> m_ncPackedSources;
+        std::vector<std::string> m_ncPackedNames;
+        std::vector<std::string> m_ncPackedDescriptions;
+        std::vector<std::string> m_ncPackedUnits;
+        std::vector<double> m_ncPackedBuffer;
+        std::vector<unsigned char> m_ncPackedWritten;
+        struct NcWriteBuffer {
+                MBDynNcVar var;
+                std::vector<size_t> shape;
+                std::vector<double> data;
+                std::vector<unsigned char> written;
+                size_t width = 1;
+        };
+        std::unordered_map<int, NcWriteBuffer> m_ncWriteBuffers;
+        void BufferNcVar(const MBDynNcVar&, const double*, size_t);
+        void BufferNcPacked(const MBDynNcVar&, const double*, size_t);
 #endif /* USE_NETCDF */
 
         /* handlers to streams */
@@ -317,6 +385,9 @@ public:
         void Open(const OutputHandler::OutFiles out);
 #ifdef USE_NETCDF
         void NetCDFOpen(const OutputHandler::OutFiles out, const netCDF::NcFile::FileFormat NetCDF_Format);
+        void SetNetCDFPacked(bool b) { m_bNetCDFPacked = b; }
+        void PrepareNcPacked(void);
+        void FlushNcBuffers(void);
 #endif
 
         /* Overload for eigenanalysis text output */

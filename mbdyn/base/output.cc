@@ -147,6 +147,10 @@ OutputHandler::OutputHandler(void)
 : FileName(NULL),
 #ifdef USE_NETCDF
 m_pBinFile(0),
+m_bNetCDF4(false),
+m_bNetCDFPacked(false),
+m_ncPackedSignals(0),
+m_ncPackedNextId(-1),
 #endif /* USE_NETCDF */
 iCurrWidth(iDefaultWidth),
 iCurrPrecision(iDefaultPrecision),
@@ -169,6 +173,10 @@ OutputHandler::OutputHandler(const std::string sFName, int iExtNum)
 : FileName(sFName, iExtNum),
 #ifdef USE_NETCDF
 m_pBinFile(0),
+m_bNetCDF4(false),
+m_bNetCDFPacked(false),
+m_ncPackedSignals(0),
+m_ncPackedNextId(-1),
 #endif /* USE_NETCDF */
 iCurrWidth(iDefaultWidth),
 iCurrPrecision(iDefaultPrecision),
@@ -575,6 +583,7 @@ OutputHandler::~OutputHandler(void)
 #ifdef USE_NETCDF
                         if (iCnt == NETCDF) {
                                 if (m_pBinFile != 0) {
+                                        FlushNcBuffers();
                                         delete m_pBinFile;
                                 }
 
@@ -633,6 +642,8 @@ void
 OutputHandler::NetCDFOpen(const OutputHandler::OutFiles out, const netCDF::NcFile::FileFormat NetCDF_Format)
 {
         if (!IsOpen(out)) {
+                m_bNetCDF4 = NetCDF_Format == netCDF::NcFile::nc4
+                        || NetCDF_Format == netCDF::NcFile::nc4classic;
                 m_pBinFile = new netCDF::NcFile(_sPutExt((char*)(psExt[NETCDF])), netCDF::NcFile::replace, NetCDF_Format); // using the default (nc4) mode was seen to drasticly reduce the writing speed, thus using classic format
                 //~ NC_FILL only applies top variables, not files or groups in netcdf-cxx4
                 // also: error messages (throw) are part of the netcdf-cxx4 interface by default...
@@ -1020,7 +1031,13 @@ OutputHandler::GetDim(const std::string& name) const
 /// would slow down the execution
 void
 OutputHandler::WriteNcVar(const MBDynNcVar& Var_Var, const Mat3x3& pGetVar) {
-        Var_Var.putVar(ncStart1x3x3, ncCount1x3x3, pGetVar.pGetMat());
+        if (m_bNetCDFPacked) {
+                BufferNcPacked(Var_Var, pGetVar.pGetMat(), 9);
+        } else if (m_bNetCDF4) {
+                BufferNcVar(Var_Var, pGetVar.pGetMat(), 9);
+        } else {
+                Var_Var.putVar(ncStart1x3x3, ncCount1x3x3, pGetVar.pGetMat());
+        }
 }
 void
 OutputHandler::WriteNcVar(const MBDynNcVar& Var_Var, const Mat3x3& pGetVar,
@@ -1032,7 +1049,13 @@ OutputHandler::WriteNcVar(const MBDynNcVar& Var_Var, const Mat3x3& pGetVar,
 }
 void
 OutputHandler::WriteNcVar(const MBDynNcVar& Var_Var, const Vec3& pGetVar) {
-        Var_Var.putVar(ncStart1x3, ncCount1x3, pGetVar.pGetVec());
+        if (m_bNetCDFPacked) {
+                BufferNcPacked(Var_Var, pGetVar.pGetVec(), 3);
+        } else if (m_bNetCDF4) {
+                BufferNcVar(Var_Var, pGetVar.pGetVec(), 3);
+        } else {
+                Var_Var.putVar(ncStart1x3, ncCount1x3, pGetVar.pGetVec());
+        }
 }
 void
 OutputHandler::WriteNcVar(const MBDynNcVar& Var_Var, const Vec3& pGetVar,
@@ -1045,7 +1068,15 @@ OutputHandler::WriteNcVar(const MBDynNcVar& Var_Var, const Vec3& pGetVar,
 template <class Tvar, typename std::enable_if<std::is_arithmetic<Tvar>::value, bool>::type>
 void
 OutputHandler::WriteNcVar(const MBDynNcVar& Var_Var, const Tvar& pGetVar) {
-        Var_Var.putVar(ncStart1, ncCount1, &pGetVar);
+        if (m_bNetCDFPacked) {
+                const double value = static_cast<double>(pGetVar);
+                BufferNcPacked(Var_Var, &value, 1);
+        } else if (m_bNetCDF4) {
+                const double value = static_cast<double>(pGetVar);
+                BufferNcVar(Var_Var, &value, 1);
+        } else {
+                Var_Var.putVar(ncStart1, ncCount1, &pGetVar);
+        }
 }
 template <class Tvar, class Tstart, typename std::enable_if<std::is_arithmetic<Tvar>::value, bool>::type>
 void
@@ -1078,13 +1109,183 @@ template void OutputHandler::WriteNcVar(const MBDynNcVar&, const doublereal&,
 template void OutputHandler::WriteNcVar(const MBDynNcVar&, const int&,
                 const std::vector<size_t>&, const std::vector<size_t>&);
 
+void
+OutputHandler::BufferNcVar(const MBDynNcVar& var, const double* values, size_t width)
+{
+        constexpr size_t blockSize = 128;
+        const size_t step = static_cast<size_t>(GetCurrentStep());
+        const size_t slot = step % blockSize;
+        NcWriteBuffer& b = m_ncWriteBuffers[var.getId()];
+
+        if (b.data.empty()) {
+                b.var = var;
+                b.width = width;
+                b.shape.resize(var.getDimCount());
+                b.shape[0] = 1;
+                for (size_t i = 1; i < b.shape.size(); ++i) {
+                        b.shape[i] = var.getDim(static_cast<int>(i)).getSize();
+                }
+                b.data.resize(blockSize * width);
+                b.written.assign(blockSize, 0);
+        }
+
+        ASSERT(b.width == width);
+        std::copy(values, values + width, b.data.begin() + slot * width);
+        b.written[slot] = 1;
+}
+
+void
+OutputHandler::BufferNcPacked(const MBDynNcVar& var, const double* values, size_t width)
+{
+        const size_t step = static_cast<size_t>(GetCurrentStep());
+        const size_t slot = step % 128;
+        const auto it = m_ncPackedSources.find(var.getId());
+        if (it == m_ncPackedSources.end()) {
+                var.putVar(ncStart1, ncCount1, values);
+                return;
+        }
+        ASSERT(it->second.width == width);
+        std::copy(values, values + width,
+                m_ncPackedBuffer.begin() + slot*m_ncPackedSignals + it->second.offset);
+        m_ncPackedWritten[slot] = 1;
+}
+
+void
+OutputHandler::PrepareNcPacked(void)
+{
+        if (!m_bNetCDFPacked || m_ncPackedSignals == 0) {
+                return;
+        }
+        m_ncPackedSignal = CreateDim("packed_signal", m_ncPackedSignals);
+        NcDimVec dims(2);
+        dims[0] = DimTime();
+        dims[1] = m_ncPackedSignal;
+        AttrValVec attrs(1);
+        attrs[0] = AttrVal("description", "packed numeric output; columns are described by packed_signal");
+        m_ncPackedData = m_pBinFile->addVar("packed.data", MbNcDouble, dims);
+        m_ncPackedData.putAtt(attrs[0].attr, attrs[0].val);
+        std::vector<size_t> chunksizes{128, m_ncPackedSignals};
+        m_ncPackedData.setChunking(netCDF::NcVar::nc_CHUNKED, chunksizes);
+        const MBDynNcDim textDim = CreateDim("packed_text_len", 256);
+        NcDimVec mdims{m_ncPackedSignal, textDim};
+        MBDynNcVar nameVar = m_pBinFile->addVar("packed.signal_name", MbNcChar, mdims);
+        MBDynNcVar descVar = m_pBinFile->addVar("packed.signal_description", MbNcChar, mdims);
+        MBDynNcVar unitVar = m_pBinFile->addVar("packed.signal_units", MbNcChar, mdims);
+        std::vector<char> names(m_ncPackedSignals*256, 0);
+        std::vector<char> descs(names.size(), 0);
+        std::vector<char> units(names.size(), 0);
+        for (size_t i = 0; i < m_ncPackedSignals; ++i) {
+                std::copy_n(m_ncPackedNames[i].c_str(),
+                        std::min<size_t>(255, m_ncPackedNames[i].size()), names.data()+i*256);
+                std::copy_n(m_ncPackedDescriptions[i].c_str(),
+                        std::min<size_t>(255, m_ncPackedDescriptions[i].size()), descs.data()+i*256);
+                std::copy_n(m_ncPackedUnits[i].c_str(),
+                        std::min<size_t>(255, m_ncPackedUnits[i].size()), units.data()+i*256);
+        }
+        nameVar.putVar(names.data());
+        descVar.putVar(descs.data());
+        unitVar.putVar(units.data());
+        m_ncPackedBuffer.assign(128*m_ncPackedSignals,
+                std::numeric_limits<double>::quiet_NaN());
+        m_ncPackedWritten.assign(128, 0);
+}
+
+void
+OutputHandler::FlushNcBuffers(void)
+{
+        constexpr size_t blockSize = 128;
+        const size_t blockStart = (static_cast<size_t>(GetCurrentStep()) / blockSize)
+                * blockSize;
+
+        if (m_bNetCDFPacked && !m_ncPackedBuffer.empty()) {
+                size_t i = 0;
+                while (i < blockSize) {
+                        while (i < blockSize && !m_ncPackedWritten[i]) {
+                                ++i;
+                        }
+                        const size_t first = i;
+                        while (i < blockSize && m_ncPackedWritten[i]) {
+                                ++i;
+                        }
+                        if (first == i) {
+                                continue;
+                        }
+                        const std::vector<size_t> start{blockStart + first, 0};
+                        const std::vector<size_t> count{i - first, m_ncPackedSignals};
+                        m_ncPackedData.putVar(start, count,
+                                m_ncPackedBuffer.data() + first*m_ncPackedSignals);
+                }
+                std::fill(m_ncPackedWritten.begin(), m_ncPackedWritten.end(), 0);
+                std::fill(m_ncPackedBuffer.begin(), m_ncPackedBuffer.end(),
+                        std::numeric_limits<double>::quiet_NaN());
+                return;
+        }
+
+        for (auto& item : m_ncWriteBuffers) {
+                NcWriteBuffer& b = item.second;
+                size_t i = 0;
+                while (i < blockSize) {
+                        while (i < blockSize && !b.written[i]) {
+                                ++i;
+                        }
+                        const size_t first = i;
+                        while (i < blockSize && b.written[i]) {
+                                ++i;
+                        }
+                        if (first == i) {
+                                continue;
+                        }
+
+                        std::vector<size_t> start(b.shape.size(), 0);
+                        std::vector<size_t> count = b.shape;
+                        start[0] = blockStart + first;
+                        count[0] = i - first;
+                        b.var.putVar(start, count,
+                                b.data.data() + first * b.width);
+                }
+                std::fill(b.written.begin(), b.written.end(), 0);
+        }
+}
+
 MBDynNcVar
 OutputHandler::CreateVar(const std::string& name, const MBDynNcType& type,
         const AttrValVec& attrs, const NcDimVec& dims)
 {
         MBDynNcVar var;
 
+        if (m_bNetCDFPacked && dims.size() > 0 && dims[0].isUnlimited()) {
+                size_t width = 1;
+                for (size_t i = 1; i < dims.size(); ++i) {
+                        width *= dims[i].getSize();
+                }
+                const int id = m_ncPackedNextId--;
+                m_ncPackedSources[id] = {m_ncPackedSignals, width};
+                std::string description, units;
+                for (const AttrVal& a : attrs) {
+                        if (a.attr == "description") description = a.val;
+                        if (a.attr == "units") units = a.val;
+                }
+                for (size_t i = 0; i < width; ++i) {
+                        m_ncPackedNames.push_back(name + "[" + std::to_string(i) + "]");
+                        m_ncPackedDescriptions.push_back(description);
+                        m_ncPackedUnits.push_back(units);
+                }
+                m_ncPackedSignals += width;
+                return MBDynNcVar::Packed(id);
+        }
         var = m_pBinFile->addVar(name, type, dims);
+        if (m_bNetCDF4 && !dims.empty() && dims[0].isUnlimited()) {
+                // MBDyn writes one small hyperslab per variable and timestep.
+                // The NetCDF default chunk for an unlimited dimension is one
+                // record, which makes each such write an HDF5 chunk update.
+                // Keep several records in one chunk to amortize that overhead.
+                std::vector<size_t> chunksizes(dims.size(), 1);
+                chunksizes[0] = 128;
+                for (size_t i = 1; i < dims.size(); ++i) {
+                        chunksizes[i] = dims[i].getSize();
+                }
+                var.setChunking(netCDF::NcVar::nc_CHUNKED, chunksizes);
+        }
         for (AttrValVec::const_iterator i = attrs.begin(); i != attrs.end(); ++i) {
                 var.putAtt(i->attr, i->val);
         }

@@ -1526,6 +1526,7 @@ DataManager::OutputPrepare(void)
 #ifdef USE_NETCDF
 	/* Set up NetCDF stuff if required */
 	if (OutHdl.UseNetCDF(OutputHandler::NETCDF)) {
+		OutHdl.SetNetCDFPacked(bNetCDFpacked);
 		OutHdl.NetCDFOpen(OutputHandler::NETCDF, NetCDF_Format);
 		ASSERT(OutHdl.IsOpen(OutputHandler::NETCDF));
 
@@ -1551,6 +1552,10 @@ DataManager::OutputPrepare(void)
 
 	/* Dati degli elementi */
 	ElemOutputPrepare(OutHdl);
+
+#ifdef USE_NETCDF
+	OutHdl.PrepareNcPacked();
+#endif /* USE_NETCDF */
 }
 
 /* Output setup for Eigenanalysis parameters */
@@ -2521,9 +2526,19 @@ DataManager::Output(long lStep,
 
 	DriveOutput(OutHdl);
 
+	/* Flush the NC4 write buffer before its record slots are reused. */
+#ifdef USE_NETCDF
+	if (OutHdl.UseNetCDF(OutputHandler::NETCDF)
+			&& (OutHdl.GetCurrentStep() + 1) % 128 == 0) {
+		OutHdl.FlushNcBuffers();
+	}
+#endif /* USE_NETCDF */
+
 	OutHdl.IncCurrentStep();
 #ifdef USE_NETCDF
 	if (bNetCDFsync) {
+		/* Make buffered records visible before syncing the file. */
+		OutHdl.FlushNcBuffers();
 		OutHdl.pGetBinFile()->sync(); // only works with netcdf-cxx4 >= 4.3.0, check implemented in configure.ac (see also https://github.com/Unidata/netcdf-cxx4/commit/e013ab35f0219fff92ed8237d2f385e89fd1cf77#diff-59778321f93df82ff613be3e32d9a3ec)
 
 	}
