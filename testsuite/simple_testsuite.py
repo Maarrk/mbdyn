@@ -747,7 +747,7 @@ def update_reference(result: Result, status: str, bit: int, args: argparse.Names
     marker = r"^\s*##\s*@MBDYN_SIMPLE_TESTSUITE_EXIT_STATUS@\s*=\s*[0-9]+\s*$"
     line = f"## @MBDYN_SIMPLE_TESTSUITE_EXIT_STATUS@ = {value}"
     if original_expected == -1:
-        text += (f"\n{'#'*110}\n## Variables to be updated by simple_testsuite.sh --update-reference-test-status\n"
+        text += (f"\n{'#'*110}\n## Variables to be updated by simple_testsuite.py --update-reference-test-status\n"
                  f"## Warning, do not edit!!!\n{line}\n{'#'*110}\n")
         path.write_text(text)
     elif update:
@@ -1035,18 +1035,30 @@ def run(mode: str, args: argparse.Namespace) -> int:
     for category, bit in REPORT_BITS.items():
         if counts[category]:
             total_bits |= bit
+    results_by_configuration: dict[str, list[Result]] = {}
+    configuration_failed: dict[str, bool] = {}
     if mode == "patched":
+        # Index the results once.  Scanning every result separately for every
+        # configuration is O(configurations * results), which approaches one
+        # billion comparisons for the public matrix.
+        results_by_configuration = {spec.key: [] for spec in specs if spec is not None}
+        for result in results:
+            if result.task.patch is not None:
+                results_by_configuration[result.task.patch.key].append(result)
+        configuration_failed = {
+            key: any(report_category(result.status) not in {"passed", "skipped", "known-failure"}
+                     for result in relevant)
+            for key, relevant in results_by_configuration.items()
+        }
         for spec in specs:
             assert spec is not None
-            relevant = [result for result in results if result.task.patch == spec]
-            configuration_failed = any(report_category(result.status) not in {"passed", "skipped", "known-failure"}
-                                       for result in relevant)
-            if configuration_failed:
+            failed = configuration_failed[spec.key]
+            if failed:
                 pathlib.Path(spec.outdir, ".failed").touch()
-            keep_configuration = args.keep_output == "all" or (args.keep_output == "failed" and configuration_failed)
+            keep_configuration = args.keep_output == "all" or (args.keep_output == "failed" and failed)
             configuration_log = pathlib.Path(spec.outdir, "mbdyn-testsuite-patched.log")
             with configuration_log.open("a") as log:
-                log.write(f"TEST \"{spec.outdir}\" {'FAILED' if configuration_failed else 'PASSED'}\n")
+                log.write(f"TEST \"{spec.outdir}\" {'FAILED' if failed else 'PASSED'}\n")
             if not keep_configuration:
                 for include in (spec.init_begin, spec.init_end, spec.control_begin, spec.control_end):
                     pathlib.Path(include).unlink(missing_ok=True)
@@ -1056,8 +1068,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
             f.write(f"phase\tpatched\t{output}\t\tpreparation\t0\t0\t0\t{preparation_ms}\t\n")
             for spec in specs:
                 assert spec is not None
-                relevant = [result for result in results if result.task.patch == spec]
-                status = "FAILED" if any(report_category(result.status) not in {"passed", "skipped", "known-failure"} for result in relevant) else "PASSED"
+                status = "FAILED" if configuration_failed[spec.key] else "PASSED"
                 elapsed = config_end.get(spec.key, ms()) - config_start.get(spec.key, suite_start)
                 f.write(f"configuration\tpatched\t{spec.outdir}\t\t{status}\t0\t0\t{elapsed}\t{elapsed}\t{spec.key}\n")
             f.write(f"phase\tpatched\t{output}\t\tconfigurations\t0\t0\t0\t{ms()-suite_start-preparation_ms}\t\n")

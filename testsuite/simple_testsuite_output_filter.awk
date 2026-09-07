@@ -37,14 +37,14 @@
 
 # purpose:
 ## Currently the amount of output is limited to 4MB in GitLab-CI.
-## Some of our tests based on simple_testsuite.sh are exceeding this limit.
+## Some of our tests based on simple_testsuite.py are exceeding this limit.
 ## In such a situation you may get a message like this one:
 
 ## Job's log exceeded limit of 4194304 bytes.
 ## Job execution will continue but no more output will be collected.
 
-## As a workaround, we may run simple_testsuite.sh as follows:
-## simple_testsuite.sh ... | awk -f simple_testsuite_output_filter.awk
+## As a workaround, we may run simple_testsuite.py as follows:
+## simple_testsuite.py plain ... | awk -f simple_testsuite_output_filter.awk
 
 BEGINFILE {
     output = 0;
