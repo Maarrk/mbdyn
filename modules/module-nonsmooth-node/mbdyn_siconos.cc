@@ -90,6 +90,5 @@ mbdyn_siconos_LCP_call(int sizep, double W_NN[], double bLCP[], double Pkp1[], d
         solparam.processed_iterations = numerics_solver_options->iparam[1];
         solparam.resulting_error = numerics_solver_options->dparam[1];
 
-        solver_options_delete(numerics_solver_options);
-        free(numerics_solver_options);
+        solver_options_delete(numerics_solver_options); // free(numerics_solver_options) would cause a double free
 }
