@@ -139,8 +139,7 @@ void SiconosMCPSolver::Cleanup()
      pMCP = nullptr;
 
      if (pOptions) {
-          solver_options_delete(pOptions);
-          free(pOptions);
+          solver_options_delete(pOptions); // free(pOptions) would cause a double free
      }
 
      pOptions = nullptr;
@@ -313,7 +312,7 @@ void SiconosMCPSolver::compute_nabla_Fmcp(void *env, int n, doublereal *z, Numer
      }
 }
 
-void SiconosMCPSolver::collectStatsIteration(void *env, int size, double *reaction, double *velocity, double error, void *extra_data)
+void SiconosMCPSolver::collectStatsIteration(void *env, size_t size, double *reaction, double *velocity, double error, void *extra_data)
 {
      SiconosMCPSolver* const pSiconosMCP = static_cast<SiconosMCPSolver*>(env);
 

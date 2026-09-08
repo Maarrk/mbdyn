@@ -73,7 +73,7 @@ private:
      void Attach(const NonlinearProblem* pNLP, Solver* pS);
      static void compute_Fmcp(void *env, int n, doublereal *z, doublereal *F);
      static void compute_nabla_Fmcp(void *env, int n, doublereal *z, struct NumericsMatrix *F);
-     static void collectStatsIteration(void *env, int size, double *reaction, double *velocity, double error, void *extra_data);
+     static void collectStatsIteration(void *env, size_t size, double *reaction, double *velocity, double error, void *extra_data);
 
      SiconosIndexMap* pIndexMap;
      SiconosVectorHandler* pRes;
