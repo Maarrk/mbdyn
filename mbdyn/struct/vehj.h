@@ -178,7 +178,7 @@ public:
 	virtual doublereal dGetPrivData(unsigned int i) const override;
 
 	/* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const override;
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const override;
 };
 
 /* DeformableHingeJoint - end */

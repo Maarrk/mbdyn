@@ -89,10 +89,10 @@ void ThermalSource::GetConnectedNodes(std::vector<const Node *>& connectedNodes)
 //    /* ************************************************ */
 // };
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 ThermalSource::GetEquationDimension(integer index) const {
 	// DOF == 0
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 
 std::ostream&

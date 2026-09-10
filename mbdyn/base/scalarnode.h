@@ -106,7 +106,7 @@ public:
 	virtual void AfterPredict(VectorHandler& X, VectorHandler& XP);
 
 	 /* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 
 	/* describes the dimension of components of equation */
         virtual std::ostream& DescribeEq(std::ostream& out,
@@ -143,10 +143,10 @@ protected:
 	using ScalarNode::OutputPrepare_int;
 	virtual void OutputPrepare_int(OutputHandler& OH,
 		const std::string& var_name,
-		const OutputHandler::Dimensions var_dim,
+		const MBUnits::Dimensions var_dim,
 		const std::string& var_desc,
 		const std::string& varP_name,
-		const OutputHandler::Dimensions varP_dim,
+		const MBUnits::Dimensions varP_dim,
 		const std::string& varP_desc);
 
 public:
@@ -252,7 +252,7 @@ public:
 	virtual doublereal dGetPrivData(unsigned int i) const override;
 
 	 /* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const override;
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const override;
 
 	/* describes the dimension of components of equation */
         virtual std::ostream& DescribeEq(std::ostream& out,
@@ -296,7 +296,7 @@ protected:
 	using ScalarNode::OutputPrepare_int;
 	virtual void OutputPrepare_int(OutputHandler& OH,
 		const std::string& var_name,
-		const OutputHandler::Dimensions var_dim,
+		const MBUnits::Dimensions var_dim,
 		const std::string& var_desc);
 
 public:

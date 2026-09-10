@@ -123,21 +123,21 @@ DeformableJoint::OutputPrepare(OutputHandler &OH)
 		if (OH.UseNetCDF(OutputHandler::JOINTS)) {
 			OutputPrepare_int("Deformable joint", OH);
 			Var_tilde_d = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "d",
-				OutputHandler::Dimensions::Length,
+				MBUnits::Dimensions::Length,
 				"relative position in local frame (x, y, z)");
 			Var_tilde_dPrime = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "dPrime",
-				OutputHandler::Dimensions::Velocity,
+				MBUnits::Dimensions::Velocity,
 				"relative linear velocity in local frame (x, y, z)");
 			Var_d = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "D",
-				OutputHandler::Dimensions::Length,
+				MBUnits::Dimensions::Length,
 				"relative position in global frame (x, y, z)");
 			Var_dPrime = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "DPrime",
-				OutputHandler::Dimensions::Velocity,
+				MBUnits::Dimensions::Velocity,
 				"relative linear velocity in global frame (x, y, z)");
 			Var_Phi = OH.CreateRotationVar(m_sOutputNameBase, "", od, 
 				"relative orientation, in joint reference frame");
 			Var_Omega = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "Omega",
-				OutputHandler::Dimensions::AngularVelocity,
+				MBUnits::Dimensions::AngularVelocity,
 				"local relative angular velocity (x, y, z)");
 
 			pDC->OutputAppendPrepare(OH, m_sOutputNameBase + "." "constitutiveLaw");
@@ -809,10 +809,10 @@ DeformableJoint::InitialAssRes(SubVectorHandler& WorkVec,
 	return WorkVec;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 DeformableJoint::GetEquationDimension(integer index) const {
 	// DOF == 0
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 /* DeformableJoint - end */
 

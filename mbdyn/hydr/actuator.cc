@@ -493,18 +493,18 @@ void Actuator::SetValue(DataManager *pDM,
    XP.PutCoef(iIndex+2, dpP2);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Actuator::GetEquationDimension(integer index) const {
    // DOF == 2
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Pressure;
+			dimension = MBUnits::Dimensions::Pressure;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Pressure;
+			dimension = MBUnits::Dimensions::Pressure;
 			break;
 	}
 

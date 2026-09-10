@@ -71,22 +71,22 @@ ThermalNode::OutputPrepare(OutputHandler &OH)
 			ASSERT(OH.IsOpen(OutputHandler::NETCDF));
 
 			ScalarDifferentialNode::OutputPrepare_int(OH,
-				"T", OutputHandler::Dimensions::Temperature, "Temperature",
-				"TP", OutputHandler::Dimensions::TemperatureDerivative, "Temperature time derivative");
+				"T", MBUnits::Dimensions::Temperature, "Temperature",
+				"TP", MBUnits::Dimensions::TemperatureDerivative, "Temperature time derivative");
 		}
 #endif // USE_NETCDF
 	}
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 ThermalNode::GetEquationDimension(integer index) const {
 
-		OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+		MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 		switch (index)
 		{
 		case 1:
-			dimension = OutputHandler::Dimensions::Power;
+			dimension = MBUnits::Dimensions::Power;
 			break;
 		}
 

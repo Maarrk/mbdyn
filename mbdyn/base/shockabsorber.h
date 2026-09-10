@@ -631,13 +631,13 @@ public:
 		ASSERT(OH.IsOpen(OutputHandler::NETCDF));
 		if (OH.UseNetCDF(OutputHandler::NETCDF)) {
 			Var_dPressure = OH.CreateVar<doublereal>(name + ".p", 
-				OutputHandler::Dimensions::Pressure, "Gas pressure");
+				MBUnits::Dimensions::Pressure, "Gas pressure");
 			Var_dArea = OH.CreateVar<doublereal>(name + ".A", 
-				OutputHandler::Dimensions::Area, "Metering area");
+				MBUnits::Dimensions::Area, "Metering area");
 			Var_dFelastic = OH.CreateVar<doublereal>(name + ".Fe", 
-				OutputHandler::Dimensions::Force, "Elastic force");
+				MBUnits::Dimensions::Force, "Elastic force");
 			Var_dFviscous = OH.CreateVar<doublereal>(name + ".Fv", 
-				OutputHandler::Dimensions::Force, "Viscous force");
+				MBUnits::Dimensions::Force, "Viscous force");
 		}
 #endif /* USE_NETCDF */
 	}

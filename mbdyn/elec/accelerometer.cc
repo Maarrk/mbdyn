@@ -249,21 +249,21 @@ Accelerometer::SetValue(DataManager *pDM,
 	X.PutCoef(iGetFirstIndex() + 1, v);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Accelerometer::GetEquationDimension(integer index) const {
 	// DOF == 3
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Velocity;
+			dimension = MBUnits::Dimensions::Velocity;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Acceleration;
+			dimension = MBUnits::Dimensions::Acceleration;
 			break;
 		case 3:
-			dimension = OutputHandler::Dimensions::Jerk;
+			dimension = MBUnits::Dimensions::Jerk;
 			break;
 	}
 
@@ -437,15 +437,15 @@ TranslAccel::SetValue(DataManager *pDM,
 	XP.PutCoef(iGetFirstIndex() + 1, 0.);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 TranslAccel::GetEquationDimension(integer index) const {
 	// DOF == 1
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Velocity;
+			dimension = MBUnits::Dimensions::Velocity;
 			break;
 	}
 
@@ -600,15 +600,15 @@ RotAccel::SetValue(DataManager *pDM,
 	X.PutCoef(iGetFirstIndex() + 1, v);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 RotAccel::GetEquationDimension(integer index) const {
 	// DOF == 1
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::AngularVelocity;
+			dimension = MBUnits::Dimensions::AngularVelocity;
 			break;
 	}
 

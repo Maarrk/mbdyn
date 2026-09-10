@@ -392,18 +392,18 @@ Accumulator::SetValue(DataManager *pDM,
    XP.PutCoef(i+2, 0.);  
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Accumulator::GetEquationDimension(integer index) const {
    // DOF == 2
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Force;
+			dimension = MBUnits::Dimensions::Force;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Velocity;
+			dimension = MBUnits::Dimensions::Velocity;
 			break;
 	}
 
@@ -719,15 +719,15 @@ Tank::SetValue(DataManager *pDM,
    X.PutCoef(i+1, level);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Tank::GetEquationDimension(integer index) const {
    // DOF == 1
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Velocity;
+			dimension = MBUnits::Dimensions::Velocity;
 			break;
 	}
 

@@ -1035,8 +1035,8 @@ void SolidElemStatic<ElementType, CollocationType, SolidCSLType, StructNodeType>
           using namespace std::string_literals;
           const std::string strPrefix = "elem.solid."s + std::to_string(GetLabel());
 
-          Var_taun = OH.CreateVar<sp_grad::SpMatrix<doublereal, iNumNodes, 6>>(strPrefix + ".taun", OutputHandler::Dimensions::Pressure, "Cauchy stress at element nodes");
-          Var_epsilonn = OH.CreateVar<sp_grad::SpMatrix<doublereal, iNumNodes, 6>>(strPrefix + ".epsilonn", OutputHandler::Dimensions::Dimensionless, "Strain at element nodes");
+          Var_taun = OH.CreateVar<sp_grad::SpMatrix<doublereal, iNumNodes, 6>>(strPrefix + ".taun", MBUnits::Dimensions::Pressure, "Cauchy stress at element nodes");
+          Var_epsilonn = OH.CreateVar<sp_grad::SpMatrix<doublereal, iNumNodes, 6>>(strPrefix + ".epsilonn", MBUnits::Dimensions::Dimensionless, "Strain at element nodes");
      }
 #endif
 }

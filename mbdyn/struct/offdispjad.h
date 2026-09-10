@@ -98,7 +98,7 @@ public:
      SubVectorHandler&
      InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr) override;
 
-     virtual const OutputHandler::Dimensions
+     virtual const MBUnits::Dimensions
      GetEquationDimension(integer index) const override;
 
      virtual Type GetJointType() const override;

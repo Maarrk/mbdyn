@@ -109,6 +109,7 @@ typedef netCDF::NcType MBDynNcType;
 #include "solman.h"
 #include "filename.h"
 #include "sp_matrix_base.h"
+#include "units.h"
 
 class MBDynParser;
 
@@ -188,58 +189,6 @@ public:
                 EIGENANALYSIS,			// NOTE: ALWAYS LAST!
                 LASTFILE			// 35
         };
-        enum struct Dimensions {
-                Dimensionless,
-                Boolean,
-                Length,
-                Mass,
-                Time,
-                Current,
-                Temperature,
-                Angle,
-                Area,
-                Force,
-                Velocity,
-                Acceleration,
-                AngularVelocity,
-                AngularAcceleration,
-
-                Momentum,
-                MomentaMoment,
-                MomentumDerivative,
-                MomentaMomentDerivative,
-
-                StaticMoment,
-                MomentOfInertia,
-
-                LinearStrain,
-                AngularStrain,
-                LinearStrainRate,
-                AngularStrainRate,
-
-                ForceUnitSpan,
-
-                Work,
-                Power,
-                Pressure,
-                Moment,
-                Voltage,
-                Charge,
-                Resistance,
-                Capacitance,
-                Inductance,
-                Frequency,
-                deg,
-                rad,
-
-                /* added for GetEquationDimension method of DofOwnerOwner class */
-                MassFlow,
-                Jerk,
-                VoltageDerivative,
-                TemperatureDerivative,
-                UnknownDimension
-        };
-
 private:
         long currentStep;
 
@@ -379,7 +328,7 @@ public:
 
         void ReadOutputUnits(MBDynParser& HP);
 
-        inline std::string GetUnits(Dimensions phys_dim) {return Units[phys_dim];};
+        inline const std::string& GetUnits(MBUnits::Dimensions phys_dim) const {return Units.GetUnits(phys_dim);};
 
         /* Aggiungere qui le funzioni che aprono i singoli stream */
         void Open(const OutputHandler::OutFiles out);
@@ -536,7 +485,7 @@ public:
         template <class T, typename std::enable_if<MBDynNetCDF::is_NcVar<T>::value, bool>::type = true>
         MBDynNcVar
         CreateVar(const std::string& name,
-                const Dimensions phys_dim, const std::string& description);
+                const MBUnits::Dimensions phys_dim, const std::string& description);
 
         MBDynNcVar
         CreateRotationVar(const std::string& name_prefix,
@@ -546,20 +495,14 @@ public:
 #endif /* USE_NETCDF */
 /* Unit system related stuff */
 private:
-        std::unordered_map<Dimensions, std::string> Units;
-        void SetDerivedUnits();
-        void SetUnspecifiedUnits();
-        void SetMKSUnits();
-        void SetCGSUnits();
-        void SetMMTMSUnits();
-        void SetMMKGMSUnits();
+        MBUnits Units;
 }; /* End class OutputHandler */
 
 #ifdef USE_NETCDF
 template <class T, typename std::enable_if<MBDynNetCDF::is_NcVar<T>::value, bool>::type>
 MBDynNcVar
 OutputHandler::CreateVar(const std::string& name,
-        const Dimensions phys_dim, const std::string& description)
+        const MBUnits::Dimensions phys_dim, const std::string& description)
 {
         static_assert(MBDynNetCDF::is_NcVar<T>::value);
 
@@ -567,7 +510,7 @@ OutputHandler::CreateVar(const std::string& name,
         NcDimVec dims(1);
 
         //attrs[0] = AttrVal("units", units);
-        attrs[0] = AttrVal("units", Units[phys_dim]);
+        attrs[0] = AttrVal("units", Units.GetUnits(phys_dim));
         attrs[2] = AttrVal("description", description);
         dims[0] = DimTime();
 

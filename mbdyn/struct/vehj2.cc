@@ -340,16 +340,16 @@ DeformableDispJoint::OutputPrepare(OutputHandler& OH)
 			OutputPrepare_int("deformable displacement", OH);
 
 			Var_tilde_d = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "d",
-					OutputHandler::Dimensions::Length,
+					MBUnits::Dimensions::Length,
 					"relative position in local frame (x, y, z)");
 			Var_tilde_dPrime = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "dPrime",
-					OutputHandler::Dimensions::Velocity,
+					MBUnits::Dimensions::Velocity,
 					"relative linear velocity in local frame (x, y, z)");
 			Var_d = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "D",
-					OutputHandler::Dimensions::Length,
+					MBUnits::Dimensions::Length,
 					"relative position in global frame (x, y, z)");
 			Var_dPrime = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "DPrime",
-					OutputHandler::Dimensions::Velocity,
+					MBUnits::Dimensions::Velocity,
 					"relative linear velocity in global frame (x, y, z)");
 
 			pDC->OutputAppendPrepare(OH, m_sOutputNameBase + "." "constitutiveLaw");
@@ -581,10 +581,10 @@ DeformableDispJoint::dGetPrivData(unsigned int i) const
 	}
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 DeformableDispJoint::GetEquationDimension(integer index) const {
 	// DOF == 0
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 /* DeformableDispJoint - end */
 

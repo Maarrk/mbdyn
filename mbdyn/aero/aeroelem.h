@@ -269,7 +269,7 @@ public:
 	/* ************************************************ */
 
 	/* return s the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 };
 
 /* Aerodynamic2DElem - end */

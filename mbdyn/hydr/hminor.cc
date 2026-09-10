@@ -214,10 +214,10 @@ MinorLoss::Output(OutputHandler& OH) const
 	// TODO: NetCDF output...
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 MinorLoss::GetEquationDimension(integer index) const {
 	// DOF == 0
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 
 /* MinorLoss - end */
@@ -417,10 +417,10 @@ ThreeWayMinorLoss::Output(OutputHandler& OH) const
 	// TODO: NetCDF output...
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 ThreeWayMinorLoss::GetEquationDimension(integer index) const {
 	// DOF == 0
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 
 /* ThreeWayMinorLoss - end */
@@ -655,10 +655,10 @@ Orifice::Output(OutputHandler& OH) const
 	// TODO: NetCDF output...
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Orifice::GetEquationDimension(integer index) const {
 	// DOF == 0
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 
 /* Orifice - end */
