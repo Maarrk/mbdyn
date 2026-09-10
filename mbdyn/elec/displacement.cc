@@ -165,10 +165,10 @@ DispMeasure::SetValue(DataManager *pDM,
 	XP.PutCoef(iIndex, v);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 DispMeasure::GetEquationDimension(integer index) const {
 	// DOF is unknown
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 
 std::ostream&

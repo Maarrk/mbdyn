@@ -214,8 +214,8 @@ public:
 	};
 	// ************************************************
 	
-	virtual const OutputHandler::Dimensions GetEquationDimension(integer) const {
-		return OutputHandler::Dimensions::UnknownDimension; 
+	virtual const MBUnits::Dimensions GetEquationDimension(integer) const {
+		return MBUnits::Dimensions::UnknownDimension;
 	}
 };
 

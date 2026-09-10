@@ -149,15 +149,15 @@ ScalarNode::AfterPredict(VectorHandler& X, VectorHandler& XP)
 	Update(X, XP);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 ScalarNode::GetEquationDimension(integer index) const {
    // DOF == 2
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::UnknownDimension;
+			dimension = MBUnits::Dimensions::UnknownDimension;
 			break;
 	}
 
@@ -334,10 +334,10 @@ void ScalarDifferentialNode::Restart(RestartData& oData, RestartData::RestartAct
 void
 ScalarDifferentialNode::OutputPrepare_int(OutputHandler& OH,
 	const std::string& var_name,
-	const OutputHandler::Dimensions var_dim,
+	const MBUnits::Dimensions var_dim,
 	const std::string& var_desc,
 	const std::string& varP_name,
-	const OutputHandler::Dimensions varP_dim,
+	const MBUnits::Dimensions varP_dim,
 	const std::string& varP_desc)
 {
 	ScalarNode::OutputPrepare_int(OH, true);
@@ -361,8 +361,8 @@ ScalarDifferentialNode::OutputPrepare(OutputHandler& OH)
 {
 	if (fToBeOutput()) {
 		OutputPrepare_int(OH,
-			"X", OutputHandler::Dimensions::Dimensionless, "State",
-			"XP", OutputHandler::Dimensions::Frequency, "State time derivative");
+			"X", MBUnits::Dimensions::Dimensionless, "State",
+			"XP", MBUnits::Dimensions::Frequency, "State time derivative");
 	}
 }
 
@@ -429,15 +429,15 @@ ScalarDifferentialNode::dGetPrivData(unsigned int i) const
 	throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 ScalarDifferentialNode::GetEquationDimension(integer index) const {
    // DOF == 2
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::UnknownDimension;
+			dimension = MBUnits::Dimensions::UnknownDimension;
 			break;
 	}
 
@@ -606,7 +606,7 @@ void ScalarAlgebraicNode::Restart(RestartData& oData, RestartData::RestartAction
 void
 ScalarAlgebraicNode::OutputPrepare_int(OutputHandler& OH,
 	const std::string& var_name,
-	const OutputHandler::Dimensions var_dim,
+	const MBUnits::Dimensions var_dim,
 	const std::string& var_desc)
 {
 	ScalarNode::OutputPrepare_int(OH, false);
@@ -627,7 +627,7 @@ ScalarAlgebraicNode::OutputPrepare(OutputHandler& OH)
 {
 	if (fToBeOutput()) {
 		OutputPrepare_int(OH,
-			"X", OutputHandler::Dimensions::Dimensionless, "State");
+			"X", MBUnits::Dimensions::Dimensionless, "State");
 	}
 }
 

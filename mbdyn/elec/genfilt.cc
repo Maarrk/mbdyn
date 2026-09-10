@@ -409,11 +409,11 @@ GenelStateSpaceSISO::GetConnectedNodes(
 	}
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 GenelStateSpaceSISO::GetEquationDimension(integer index) const {
 	// DOF is unknown
 	
-	return OutputHandler::Dimensions::VoltageDerivative;
+	return MBUnits::Dimensions::VoltageDerivative;
 }
 
 std::ostream&
@@ -875,10 +875,10 @@ GenelStateSpaceMIMO::GetConnectedNodes(
 	}
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 GenelStateSpaceMIMO::GetEquationDimension(integer index) const {
 	// DOF is unknown
-	return OutputHandler::Dimensions::VoltageDerivative;
+	return MBUnits::Dimensions::VoltageDerivative;
 }
 
 std::ostream&

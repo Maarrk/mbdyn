@@ -475,15 +475,15 @@ void Pipe::SetValue(DataManager *pDM,
    X.PutCoef(i+1, q0);  /* portata iniziale nodo 2 */
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Pipe::GetEquationDimension(integer index) const {
    // DOF == 1
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Pressure;
+			dimension = MBUnits::Dimensions::Pressure;
 			break;
 	}
 
@@ -1041,21 +1041,21 @@ Dynamic_pipe::SetValue(DataManager *pDM,
    XP.PutCoef(i+3, 0.);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Dynamic_pipe::GetEquationDimension(integer index) const {
    // DOF == 3
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Pressure;
+			dimension = MBUnits::Dimensions::Pressure;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::MassFlow;
+			dimension = MBUnits::Dimensions::MassFlow;
 			break;
 		case 3:
-			dimension = OutputHandler::Dimensions::Force;
+			dimension = MBUnits::Dimensions::Force;
 			break;
 	}
 
@@ -1494,24 +1494,24 @@ DynamicPipe::SetValue(DataManager *pDM,
    XP.PutCoef(i+4, 0.);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 DynamicPipe::GetEquationDimension(integer index) const {
    // DOF == 4
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Force;
+			dimension = MBUnits::Dimensions::Force;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Force;
+			dimension = MBUnits::Dimensions::Force;
 			break;
 		case 3:
-			dimension = OutputHandler::Dimensions::Pressure;
+			dimension = MBUnits::Dimensions::Pressure;
 			break;
 		case 4:
-			dimension = OutputHandler::Dimensions::Pressure;
+			dimension = MBUnits::Dimensions::Pressure;
 			break;
 	}
 

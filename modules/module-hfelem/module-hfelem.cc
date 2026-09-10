@@ -49,6 +49,8 @@
 #include "privdrive.h"
 #include "drive_.h"
 
+#include "units.h"
+
 #include "module-hfelem.h"
 
 #define HFELEM_COMMENTS 0
@@ -826,7 +828,7 @@ HarmonicForcingElem::OutputPrepare(OutputHandler& OH)
 		std::string m_sOutputBaseName = os.str();
 
 		OutputHandler::AttrValVec attrs(3);
-		attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(OutputHandler::Dimensions::Time));
+		attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(MBUnits::Dimensions::Time));
 		attrs[1] = OutputHandler::AttrVal("type", "doublereal");
 		attrs[2] = OutputHandler::AttrVal("description", "Time of Convergence");
 		Var_dConvTime = OH.CreateVar(m_sOutputBaseName + "." "cTime",
@@ -834,7 +836,7 @@ HarmonicForcingElem::OutputPrepare(OutputHandler& OH)
 				attrs,
 				m_vDimHFElem);
 
-		attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(OutputHandler::Dimensions::AngularVelocity));
+		attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(MBUnits::Dimensions::AngularVelocity));
 		attrs[1] = OutputHandler::AttrVal("type", "doublereal");
 		attrs[2] = OutputHandler::AttrVal("description", "Angular Frequency");
 		Var_dOmegaOut = OH.CreateVar(m_sOutputBaseName + "." "Omega",
@@ -842,7 +844,7 @@ HarmonicForcingElem::OutputPrepare(OutputHandler& OH)
 				attrs,
 				m_vDimHFElem);
 
-		attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(OutputHandler::Dimensions::Dimensionless));
+		attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(MBUnits::Dimensions::Dimensionless));
 		attrs[1] = OutputHandler::AttrVal("type", "integer");
 		attrs[2] = OutputHandler::AttrVal("description", "Number of periods required for convergence");
 		Var_iNumPeriods = OH.CreateVar(m_sOutputBaseName + "." "NumPeriods",
@@ -861,7 +863,7 @@ HarmonicForcingElem::OutputPrepare(OutputHandler& OH)
 			switch (m_OutputFormat) {
 				case Out_COMPLEX:
 					// not true, but we ignore the real dimensions
-					attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(OutputHandler::Dimensions::Dimensionless));
+					attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(MBUnits::Dimensions::Dimensionless));
 					attrs[1] = OutputHandler::AttrVal("type", "doublereal");
 					attrs[2] = OutputHandler::AttrVal("description", "Sine part of input <" + m_sInputName.str() + ">");
 					m_vInputNcVars[2*i] =  OH.CreateVar(m_sOutputBaseName + "." + m_sInputName.str() + "Sin",
@@ -870,7 +872,7 @@ HarmonicForcingElem::OutputPrepare(OutputHandler& OH)
 						m_vDimHFElem);
 		
 					// not true, but we ignore the real dimensions
-					attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(OutputHandler::Dimensions::Dimensionless));
+					attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(MBUnits::Dimensions::Dimensionless));
 					attrs[1] = OutputHandler::AttrVal("type", "doublereal");
 					attrs[2] = OutputHandler::AttrVal("description", "Cosine part of input <" + m_sInputName.str() + ">");
 					m_vInputNcVars[2*i + 1] =  OH.CreateVar(m_sOutputBaseName + "." + m_sInputName.str() + "Cos",
@@ -880,7 +882,7 @@ HarmonicForcingElem::OutputPrepare(OutputHandler& OH)
 					break;
 				case Out_MAGNITUDE_PHASE:
 					// not true, but we ignore the real dimensions
-					attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(OutputHandler::Dimensions::Dimensionless));
+					attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(MBUnits::Dimensions::Dimensionless));
 					attrs[1] = OutputHandler::AttrVal("type", "doublereal");
 					attrs[2] = OutputHandler::AttrVal("description", "Amplitude of input <" + m_sInputName.str() + ">");
 					m_vInputNcVars[2*i] =  OH.CreateVar(m_sOutputBaseName + "." + m_sInputName.str() + "Amplitude",
@@ -889,7 +891,7 @@ HarmonicForcingElem::OutputPrepare(OutputHandler& OH)
 						m_vDimHFElem);
 			
 					// not true, but we ignore the real dimensions
-					attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(OutputHandler::Dimensions::Dimensionless));
+					attrs[0] = OutputHandler::AttrVal("units", OH.GetUnits(MBUnits::Dimensions::Dimensionless));
 					attrs[1] = OutputHandler::AttrVal("type", "doublereal");
 					attrs[2] = OutputHandler::AttrVal("description", "Phase of input <" + m_sInputName.str() + ">");
 					m_vInputNcVars[2*i + 1] =  OH.CreateVar(m_sOutputBaseName + "." + m_sInputName.str() + "Phase",

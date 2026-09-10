@@ -136,7 +136,7 @@ class DistanceJoint : public Joint, public DriveOwner {
    /* ************************************************ */
 
    /* returns the dimension of the component */
-        const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
+        const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 
    /* describes the dimension of components of equation */
    virtual std::ostream& DescribeDof(std::ostream& out,
@@ -257,7 +257,7 @@ public Joint, public DriveOwner {
    /* ************************************************ */
 
    /* returns the dimension of the component */
-        const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
+        const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 
    /* describes the dimension of components of equation */
    virtual std::ostream& DescribeDof(std::ostream& out,
@@ -410,7 +410,7 @@ class ClampJoint : public Joint {
    /* ************************************************ */
 
    /* returns the dimension of the component */
-   const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const override;
+   const virtual MBUnits::Dimensions GetEquationDimension(integer index) const override;
 };
 
 /* ClampJoint - end */

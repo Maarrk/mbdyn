@@ -151,7 +151,7 @@ class DofOwnerOwner {
    /* method to return the dimension of components
     * can be made pure virtual in future
    */
-   const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const=0;
+   const virtual MBUnits::Dimensions GetEquationDimension(integer index) const=0;
 
 };
 

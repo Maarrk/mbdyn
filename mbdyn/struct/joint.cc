@@ -109,19 +109,19 @@ Joint::OutputPrepare_int(const std::string& type, OutputHandler &OH)
 	m_sOutputNameBase = os.str();
 
 	Var_F_local = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "f",
-		OutputHandler::Dimensions::Force,
+		MBUnits::Dimensions::Force,
 		"local reaction force (fx, fy, fz)");
 
 	Var_M_local = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "m",
-		OutputHandler::Dimensions::Moment,
+		MBUnits::Dimensions::Moment,
 		"local reaction moment (mx, my, mz)");
 
 	Var_F_global = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "F",
-		OutputHandler::Dimensions::Force,
+		MBUnits::Dimensions::Force,
 		"global reaction force (FX, FY, FZ)");
 
 	Var_M_global = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "M",
-		OutputHandler::Dimensions::Moment,
+		MBUnits::Dimensions::Moment,
 		"global reaction moment (MX, MY, MZ)");
 
 	// elements can add further data

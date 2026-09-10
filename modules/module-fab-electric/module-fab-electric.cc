@@ -110,7 +110,7 @@ Resistor::OutputPrepare(OutputHandler& OH)
 			m_sOutputNameBase = os.str();
 
 			Var_di_curr = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "I",
-					OutputHandler::Dimensions::Current,
+					MBUnits::Dimensions::Current,
 					"Current on resistor");
 		}
 	}
@@ -379,7 +379,7 @@ Capacitor::OutputPrepare(OutputHandler& OH)
 			std::string m_sOutputNameBase_local = os.str();
 
 			Var_di_curr = OH.CreateVar<doublereal>(m_sOutputNameBase_local + "." "I",
-					OutputHandler::Dimensions::Current,
+					MBUnits::Dimensions::Current,
 					"Current on capacitor");
 		}
 	}
@@ -648,7 +648,7 @@ Inductor::OutputPrepare(OutputHandler& OH)
 			m_sOutputNameBase = os.str();
 
 			Var_di_curr = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "I",
-					OutputHandler::Dimensions::Current,
+					MBUnits::Dimensions::Current,
 					"Current on inductor");
 		}
 	}

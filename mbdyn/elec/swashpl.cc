@@ -259,10 +259,10 @@ SwashPlate::SetInitialValue(VectorHandler& /* X */ )
 	NO_OP;
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 SwashPlate::GetEquationDimension(integer index) const {
 	// DOF is unknown
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 
 std::ostream&

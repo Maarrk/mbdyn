@@ -68,21 +68,21 @@ PressureNode::OutputPrepare(OutputHandler &OH)
 			ASSERT(OH.IsOpen(OutputHandler::NETCDF));
 
 			ScalarAlgebraicNode::OutputPrepare_int(OH,
-				"p", OutputHandler::Dimensions::Pressure, "Pressure");
+				"p", MBUnits::Dimensions::Pressure, "Pressure");
 		}
 #endif // USE_NETCDF
 	}
 }
 
 /* returns the dimension of the component */
-const OutputHandler::Dimensions PressureNode::GetEquationDimension(integer index) const
+const MBUnits::Dimensions PressureNode::GetEquationDimension(integer index) const
 {
-     OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+     MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
      switch (index)
      {
      case 1:
-          dimension = OutputHandler::Dimensions::MassFlow;
+          dimension = MBUnits::Dimensions::MassFlow;
           break;
      }
 

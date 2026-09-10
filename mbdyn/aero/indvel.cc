@@ -410,10 +410,10 @@ InducedVelocityElem::GetAerodynamicElemType(void) const
 	return AerodynamicElemBase::INDUCEDVELOCITY;
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 InducedVelocityElem::GetEquationDimension(integer index) const {
 	// DOF == 0
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 /* InducedVelocity - end */
 

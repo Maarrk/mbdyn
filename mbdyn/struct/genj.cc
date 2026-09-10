@@ -274,11 +274,11 @@ DistanceJoint::OutputPrepare(OutputHandler& OH)
 			OutputPrepare_int("Distance", OH);
 			
 			Var_V = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "V",
-				OutputHandler::Dimensions::Dimensionless,
+				MBUnits::Dimensions::Dimensionless,
 				"constrained distance direction unit vector (x, y, z)");
 			
 			Var_d = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "d",
-				OutputHandler::Dimensions::Length,
+				MBUnits::Dimensions::Length,
 				"constrained distance magnitude");
 		}
 #endif // USE_NETCDF
@@ -632,24 +632,24 @@ DistanceJoint::SetValue(DataManager *pDM,
 	X.Put(iGetFirstIndex() + 1, v);
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 DistanceJoint::GetEquationDimension(integer index) const {
 	// DOF == 4
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 3:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 4:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 	}
 
@@ -1103,11 +1103,11 @@ DistanceJointWithOffset::OutputPrepare(OutputHandler& OH)
 			OutputPrepare_int("Distance with offset", OH);
 			
 			Var_V = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "V",
-				OutputHandler::Dimensions::Dimensionless,
+				MBUnits::Dimensions::Dimensionless,
 				"constrained distance direction unit vector (x, y, z)");
 			
 			Var_d = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "d",
-				OutputHandler::Dimensions::Length,
+				MBUnits::Dimensions::Length,
 				"constrained distance magnitude");
 		}
 #endif // USE_NETCDF
@@ -1469,24 +1469,24 @@ DistanceJointWithOffset::SetValue(DataManager *pDM,
 	X.Put(iGetFirstIndex() + 1, v);
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 DistanceJointWithOffset::GetEquationDimension(integer index) const {
 	// DOF == 4
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 3:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 4:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 	}
 
@@ -2221,30 +2221,30 @@ ClampJoint::dGetPrivData(unsigned int i) const
 	throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 ClampJoint::GetEquationDimension(integer index) const {
 	
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 3:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 4:
-			dimension = OutputHandler::Dimensions::rad;
+			dimension = MBUnits::Dimensions::rad;
 			break;
 		case 5:
-			dimension = OutputHandler::Dimensions::rad;
+			dimension = MBUnits::Dimensions::rad;
 			break;
 		case 6:
-			dimension = OutputHandler::Dimensions::rad;
+			dimension = MBUnits::Dimensions::rad;
 			break;
 	}
 

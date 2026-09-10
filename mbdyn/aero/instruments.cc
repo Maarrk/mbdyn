@@ -479,10 +479,10 @@ AircraftInstruments::GetConnectedNodes(std::vector<const Node *>& connectedNodes
 	connectedNodes[0] = pNode;
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 AircraftInstruments::GetEquationDimension(integer index) const {
 	// DOF is unknown
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 
 std::ostream&

@@ -874,34 +874,34 @@ SphericalHingeJoint::OutputPrepare(OutputHandler& OH)
 				"relative orientation, in joint reference frame");
 			if (fc) {
 				Var_MFR = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "MFR",
-						OutputHandler::Dimensions::Moment,
+						MBUnits::Dimensions::Moment,
 						"Overall fricton moment");
 
 				Var_n = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "n",
-						OutputHandler::Dimensions::Length,
+						MBUnits::Dimensions::Length,
 						"direction n ");
 				Var_t1 = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "t1",
-						OutputHandler::Dimensions::Length,
+						MBUnits::Dimensions::Length,
 						"direction t1 ");
 				Var_t2 = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "t2",
-						OutputHandler::Dimensions::Length,
+						MBUnits::Dimensions::Length,
 						"direction t2 ");
 
 				Var_fc1 = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "fc1",
-						OutputHandler::Dimensions::Dimensionless,
+						MBUnits::Dimensions::Dimensionless,
 						"friction model specific data: friction coefficient in direction t1");
 				Var_fc2 = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "fc2",
-						OutputHandler::Dimensions::Dimensionless,
+						MBUnits::Dimensions::Dimensionless,
 						"friction model specific data: friction coefficient in direction t2");
 
 				Var_Fn = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "Fn",
-						OutputHandler::Dimensions::Force,
+						MBUnits::Dimensions::Force,
 						"Frictionless reaction force in direction n");
 				Var_F1 = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "F1",
-						OutputHandler::Dimensions::Force,
+						MBUnits::Dimensions::Force,
 						"Friction force in direction t1");
 				Var_F2 = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "F2",
-						OutputHandler::Dimensions::Force,
+						MBUnits::Dimensions::Force,
 						"Friction force in direction t2");
 
 
@@ -1271,21 +1271,21 @@ SphericalHingeJoint::InitialAssRes(SubVectorHandler& WorkVec,
    return WorkVec;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 SphericalHingeJoint::GetEquationDimension(integer index) const {
 	// DOF == 3
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
       case 3:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 	  default:
 			if (fc) {
@@ -1297,7 +1297,7 @@ SphericalHingeJoint::GetEquationDimension(integer index) const {
 					dimension = fc->GetEquationDimension(index);
 				}
 			} else {
-				dimension = OutputHandler::Dimensions::UnknownDimension;
+				dimension = MBUnits::Dimensions::UnknownDimension;
 			}
 			break;
 	}
@@ -1715,21 +1715,21 @@ PinJoint::InitialAssRes(SubVectorHandler& WorkVec,
    return WorkVec;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 PinJoint::GetEquationDimension(integer index) const {
 	// DOF == 3
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
       case 3:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 	}
 

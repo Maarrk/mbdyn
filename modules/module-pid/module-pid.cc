@@ -198,28 +198,28 @@ void Pid::OutputPrepare(OutputHandler& OH)
             m_sOutputNameBase = os.str();
 
             Var_InputError = OH.CreateVar<doublereal>(m_sOutputNameBase + ".error",
-                    OutputHandler::Dimensions::Dimensionless,
+                    MBUnits::Dimensions::Dimensionless,
                     "Input error");
             Var_YOut = OH.CreateVar<doublereal>(m_sOutputNameBase + ".output",
-                    OutputHandler::Dimensions::Dimensionless,
+                    MBUnits::Dimensions::Dimensionless,
                     "Output after saturation");
             Var_YpOut = OH.CreateVar<doublereal>(m_sOutputNameBase + ".P",
-                    OutputHandler::Dimensions::Dimensionless,
+                    MBUnits::Dimensions::Dimensionless,
                     "Proportional output");
             Var_YiOut = OH.CreateVar<doublereal>(m_sOutputNameBase + ".I",
-                    OutputHandler::Dimensions::Dimensionless,
+                    MBUnits::Dimensions::Dimensionless,
                     "Integral output");
             Var_YdOut = OH.CreateVar<doublereal>(m_sOutputNameBase + ".D",
-                    OutputHandler::Dimensions::Dimensionless,
+                    MBUnits::Dimensions::Dimensionless,
                     "Derivative output");
             Var_YbOut = OH.CreateVar<doublereal>(m_sOutputNameBase + ".output_unsat",
-                    OutputHandler::Dimensions::Dimensionless,
+                    MBUnits::Dimensions::Dimensionless,
                     "Output before saturation");
             Var_Ii = OH.CreateVar<doublereal>(m_sOutputNameBase + ".I_integral",
-                    OutputHandler::Dimensions::Dimensionless,
+                    MBUnits::Dimensions::Dimensionless,
                     "Integrator integral");
             Var_Id = OH.CreateVar<doublereal>(m_sOutputNameBase + ".D_integral",
-                    OutputHandler::Dimensions::Dimensionless,
+                    MBUnits::Dimensions::Dimensionless,
                     "Derivative integral");
         }
     }

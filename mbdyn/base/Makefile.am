@@ -125,6 +125,8 @@ nr.cc \
 nr.h \
 output.cc \
 output.h \
+units.cc \
+units.h \
 posrel.h \
 precond.cc \
 precond.h \

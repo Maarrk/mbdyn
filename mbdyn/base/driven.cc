@@ -97,7 +97,7 @@ DrivenElem::OutputPrepare(OutputHandler& OH)
 	if (pElem->bToBeOutput() && OH.UseNetCDF(OutputHandler::NETCDF))
 	{
 		Var_status = OH.CreateVar<integer>(m_sOutputNameBase + ".activation", 
-		OutputHandler::Dimensions::Boolean, "activation flag (1: active, 0: inactive)");
+		MBUnits::Dimensions::Boolean, "activation flag (1: active, 0: inactive)");
 	}
 #endif // USE_NETCDF
 }

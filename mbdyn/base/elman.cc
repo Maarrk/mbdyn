@@ -631,7 +631,7 @@ DataManager::AssRes(VectorHandler& ResHdl, doublereal dCoef,
 }
 
 void
-DataManager::SetElemDimensionIndices(std::map<OutputHandler::Dimensions, std::set<integer>>* pDimMap) {
+DataManager::SetElemDimensionIndices(std::map<MBUnits::Dimensions, std::set<integer>>* pDimMap) {
 	Elem* pTmpEl = NULL;
 
 	if (ElemIter.bGetFirst(pTmpEl)){
@@ -655,7 +655,7 @@ DataManager::SetElemDimensionIndices(std::map<OutputHandler::Dimensions, std::se
 }
 
 void
-DataManager::SetNodeDimensionIndices(std::map<OutputHandler::Dimensions, std::set<integer>>* pDimMap) {
+DataManager::SetNodeDimensionIndices(std::map<MBUnits::Dimensions, std::set<integer>>* pDimMap) {
 	for (unsigned int i = 0; i < Nodes.size(); i++) {
 		integer first_index = Nodes[i]->iGetFirstIndex();
 

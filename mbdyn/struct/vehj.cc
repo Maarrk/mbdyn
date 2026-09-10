@@ -189,7 +189,7 @@ DeformableHingeJoint::OutputPrepare(OutputHandler& OH)
 				"relative orientation, in joint reference frame");
 
 			Var_Omega = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "Omega",
-				OutputHandler::Dimensions::AngularVelocity,
+				MBUnits::Dimensions::AngularVelocity,
 				"local relative angular velocity (x, y, z)");
 
 			pDC->OutputAppendPrepare(OH, m_sOutputNameBase + "." "constitutiveLaw");
@@ -576,10 +576,10 @@ DeformableHingeJoint::dGetPrivDataInv(unsigned int i) const
 	}
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 DeformableHingeJoint::GetEquationDimension(integer index) const {
 	// DOF == 0
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 
 /* DeformableHingeJoint - end */

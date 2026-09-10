@@ -166,20 +166,20 @@ ScrewJoint::OutputPrepare(OutputHandler& OH)
 			OutputPrepare_int("Screw Joint", OH);
 
 			Var_dTheta = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "dTheta",
-				OutputHandler::Dimensions::rad,
+				MBUnits::Dimensions::rad,
 				"screw angle magnitude [deg]");
 			Var_Theta = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "Theta",
-				OutputHandler::Dimensions::Length,
+				MBUnits::Dimensions::Length,
 				"screw axis (x, y, z)");
 			if (fc) {
 				Var_vrel = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "vRel",
-					OutputHandler::Dimensions::Velocity,
+					MBUnits::Dimensions::Velocity,
 					"contact point sliding velocity");
 				Var_fc = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "fc",
-					OutputHandler::Dimensions::Dimensionless,
+					MBUnits::Dimensions::Dimensionless,
 					"friction coefficient");
 				Var_MFR = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "MFR",
-					OutputHandler::Dimensions::Moment,
+					MBUnits::Dimensions::Moment,
 					"friction moment");
 
 			}
@@ -1028,7 +1028,7 @@ ScrewJoint::InitialAssRes(SubVectorHandler& WorkVec,
 	return WorkVec;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 ScrewJoint::GetEquationDimension(integer index) const {
 	// DOF is variable 
 	if (fc && fc->iGetNumDof() > 0) {
@@ -1037,7 +1037,7 @@ ScrewJoint::GetEquationDimension(integer index) const {
 			return fc->GetEquationDimension(index - 1);
 		}
 	}
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 
 /* ScrewJoint - end */

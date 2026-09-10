@@ -551,7 +551,7 @@ NestedElem::SetInitialValue(VectorHandler& X)
 	}
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 NestedElem::GetEquationDimension(integer index) const {
 	ASSERT(pElem != NULL);
 	DofOwnerOwner*  temp_pElem = dynamic_cast<DofOwnerOwner*> (pElem);
@@ -559,5 +559,5 @@ NestedElem::GetEquationDimension(integer index) const {
 	if (temp_pElem != 0) {
 		return temp_pElem->GetEquationDimension(index);
 	} 
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }

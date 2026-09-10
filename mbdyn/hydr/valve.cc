@@ -325,10 +325,10 @@ void Control_valve::Output(OutputHandler& OH) const
    // TODO: NetCDF output...
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Control_valve::GetEquationDimension(integer index) const {
    // DOF == 0
-   return OutputHandler::Dimensions::UnknownDimension;
+   return MBUnits::Dimensions::UnknownDimension;
 }
 
 std::ostream&
@@ -641,11 +641,11 @@ Control_valve2::SetValue(DataManager *pDM,
 	}
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Control_valve2::GetEquationDimension(integer index) const {
    // DOF == LAST_Q = 6
    
-   return OutputHandler::Dimensions::Force;
+   return MBUnits::Dimensions::Force;
 }
 
 std::ostream&
@@ -1106,18 +1106,18 @@ Dynamic_control_valve::SetValue(DataManager *pDM,
    XP.PutCoef(i+2, 0.);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Dynamic_control_valve::GetEquationDimension(integer index) const {
    // DOF == 2
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Force;
+			dimension = MBUnits::Dimensions::Force;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Velocity;
+			dimension = MBUnits::Dimensions::Velocity;
 			break;
 	}
 
@@ -1569,18 +1569,18 @@ Pressure_flow_control_valve::SetValue(DataManager *pDM,
    XP.PutCoef(i+2, 0.);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Pressure_flow_control_valve::GetEquationDimension(integer index) const {
    // DOF == 2
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Force;
+			dimension = MBUnits::Dimensions::Force;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Velocity;
+			dimension = MBUnits::Dimensions::Velocity;
 			break;
 	}
 
@@ -1958,18 +1958,18 @@ void Pressure_valve::SetValue(DataManager *pDM,
    XP.PutCoef(i+2, 0.);
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Pressure_valve::GetEquationDimension(integer index) const {
    // DOF == 2
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Force;
+			dimension = MBUnits::Dimensions::Force;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Velocity;
+			dimension = MBUnits::Dimensions::Velocity;
 			break;
 	}
 
@@ -2455,18 +2455,18 @@ void Flow_valve::SetValue(DataManager *pDM,
    XP.PutCoef(i+2, 0.);  
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Flow_valve::GetEquationDimension(integer index) const {
    // DOF == 2
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Force;
+			dimension = MBUnits::Dimensions::Force;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Velocity;
+			dimension = MBUnits::Dimensions::Velocity;
 			break;
 	}
 

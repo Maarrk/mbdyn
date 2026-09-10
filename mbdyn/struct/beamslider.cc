@@ -186,27 +186,27 @@ BeamSliderJoint::OutputPrepare(OutputHandler &OH)
 			OutputPrepare_int("Beam slider", OH);
 			
 			Var_Beam = OH.CreateVar<integer>(m_sOutputNameBase + "." "Beam",
-				OutputHandler::Dimensions::Dimensionless,
+				MBUnits::Dimensions::Dimensionless,
 				"current beam label");
 
 			Var_sRef = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "sRef",
-				OutputHandler::Dimensions::Dimensionless,
+				MBUnits::Dimensions::Dimensionless,
 				"current curvilinear abscissa");
 
 			Var_l = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "l",
-				OutputHandler::Dimensions::Dimensionless,
+				MBUnits::Dimensions::Dimensionless,
 				"local direction vector (x, y, z)");
 			if (fc) {
 				Var_FF = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "FF",
-						OutputHandler::Dimensions::Force,
+						MBUnits::Dimensions::Force,
 						"friction force (x, y, z)");
 
 				Var_fc = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "fc",
-						OutputHandler::Dimensions::Dimensionless,
+						MBUnits::Dimensions::Dimensionless,
 						"friction coefficient");
 
 				Var_v = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "v",
-						OutputHandler::Dimensions::Velocity,
+						MBUnits::Dimensions::Velocity,
 						"relative sliding velocity");
 			}
 		}
@@ -987,33 +987,33 @@ BeamSliderJoint::InitialAssRes(
 	return WorkVec;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 BeamSliderJoint::GetEquationDimension(integer index) const {
 	// DOF is unknown
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Force;
+			dimension = MBUnits::Dimensions::Force;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 3:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 4:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 5:
-			dimension = OutputHandler::Dimensions::rad;
+			dimension = MBUnits::Dimensions::rad;
 			break;
 		case 6:
-			dimension = OutputHandler::Dimensions::rad;
+			dimension = MBUnits::Dimensions::rad;
 			break;
 		case 7:
-			dimension = OutputHandler::Dimensions::rad;
+			dimension = MBUnits::Dimensions::rad;
 			break;
 		default:
 			if (fc) {
@@ -1025,7 +1025,7 @@ BeamSliderJoint::GetEquationDimension(integer index) const {
 					dimension = fc->GetEquationDimension(index);
 				}
 			} else {
-				dimension = OutputHandler::Dimensions::UnknownDimension;
+				dimension = MBUnits::Dimensions::UnknownDimension;
 			}
 			break;
 	}

@@ -485,10 +485,10 @@ GenericAerodynamicForce::InitialAssRes(SubVectorHandler& WorkVec,
 	return WorkVec;
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 GenericAerodynamicForce::GetEquationDimension(integer index) const {
 	// DOF is unknown
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 
 std::ostream&

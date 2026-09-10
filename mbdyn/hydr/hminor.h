@@ -96,7 +96,7 @@ class MinorLoss : public HydraulicElem {
    /* ************************************************ */
 
    /* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 };
 
 /* MinorLoss - end */
@@ -165,7 +165,7 @@ public:
 	/* ************************************************ */
 
 	/* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 };
 
 /* ThreeWayMinorLoss - end */
@@ -234,7 +234,7 @@ class Orifice : public HydraulicElem {
    /* ************************************************ */
 
    /* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 };
 
 /* Orifice - end */

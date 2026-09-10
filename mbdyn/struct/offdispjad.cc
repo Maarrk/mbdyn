@@ -396,20 +396,20 @@ void OffsetDispJointAd::SaveReactionForce(const sp_grad::SpColVector<doublereal,
      M1Tmp = M1;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 OffsetDispJointAd::GetEquationDimension(integer index) const {
      switch (index) {
      case 1:
      case 2:
      case 3:
-          return OutputHandler::Dimensions::Length;
+          return MBUnits::Dimensions::Length;
      case 4:
      case 5:
      case 6:
-          return OutputHandler::Dimensions::Velocity;
+          return MBUnits::Dimensions::Velocity;
      default:
           ASSERT(0);
-          return OutputHandler::Dimensions::UnknownDimension;
+          return MBUnits::Dimensions::UnknownDimension;
      }
 }
 
