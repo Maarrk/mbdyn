@@ -90,11 +90,11 @@ GimbalRotationJoint::OutputPrepare(OutputHandler& OH)
 			OutputPrepare_int("Gimbal rotation", OH);
 
 			Var_Theta = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "Theta",
-					OutputHandler::Dimensions::rad,
+					MBUnits::Dimensions::rad,
 					"relative angle Theta");
 
 			Var_Phi = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "Phi",
-					OutputHandler::Dimensions::rad,
+					MBUnits::Dimensions::rad,
 					"relative angle Phi");
 		}
 #endif // USE_NETCDF
@@ -504,27 +504,27 @@ GimbalRotationJoint::dGetPrivData(unsigned int i) const
 	throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 GimbalRotationJoint::GetEquationDimension(integer index) const {
 	// DOF == 5
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::rad;
+			dimension = MBUnits::Dimensions::rad;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::rad;
+			dimension = MBUnits::Dimensions::rad;
 			break;
 		case 3:
-			dimension = OutputHandler::Dimensions::rad;
+			dimension = MBUnits::Dimensions::rad;
 			break;
 		case 4:
-			dimension = OutputHandler::Dimensions::Moment;
+			dimension = MBUnits::Dimensions::Moment;
 			break;
 		case 5:
-			dimension = OutputHandler::Dimensions::Moment;
+			dimension = MBUnits::Dimensions::Moment;
 			break;
 	}
 

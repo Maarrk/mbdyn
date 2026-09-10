@@ -62,15 +62,15 @@ ElectricNode::GetNodeType(void) const
 	return Node::ELECTRIC;
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 ElectricNode::GetEquationDimension(integer index) const {
    // DOF == 1
-   OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+   MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Current;
+			dimension = MBUnits::Dimensions::Current;
 			break;
 	}
 
@@ -99,8 +99,8 @@ ElectricNode::OutputPrepare(OutputHandler &OH)
 			ASSERT(OH.IsOpen(OutputHandler::NETCDF));
 
 			ScalarDifferentialNode::OutputPrepare_int(OH,
-				"V", OutputHandler::Dimensions::Voltage, "Voltage",
-				"VP", OutputHandler::Dimensions::VoltageDerivative, "Voltage time derivative");
+				"V", MBUnits::Dimensions::Voltage, "Voltage",
+				"VP", MBUnits::Dimensions::VoltageDerivative, "Voltage time derivative");
 		}
 #endif // USE_NETCDF
 	}

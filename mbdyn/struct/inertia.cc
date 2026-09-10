@@ -327,45 +327,45 @@ Inertia::OutputPrepare(OutputHandler &OH)
                OutputPrepare_int(OH);
 
                Var_B = OH.CreateVar<Vec3>(m_sOutputNameBase + ".B",
-                                          OutputHandler::Dimensions::Momentum,
+                                          MBUnits::Dimensions::Momentum,
                                           "total momentum (x, y, z) w.r.t. global frame");
 
                Var_G_cm = OH.CreateVar<Vec3>(m_sOutputNameBase + ".G_cm",
-                                             OutputHandler::Dimensions::MomentaMoment,
+                                             MBUnits::Dimensions::MomentaMoment,
                                              "total momenta moment (x, y, z) at center of mass w.r.t. global frame");
 
                Var_dMass = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "M",
-                                                    OutputHandler::Dimensions::Mass,
+                                                    MBUnits::Dimensions::Mass,
                                                     "total mass");
                Var_X_cm = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "X_cm",
-                                             OutputHandler::Dimensions::Length,
+                                             MBUnits::Dimensions::Length,
                                              "position of center of mass (x, y, z) w.r.t. global frame");
                Var_V_cm = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "V_cm",
-                                             OutputHandler::Dimensions::Velocity,
+                                             MBUnits::Dimensions::Velocity,
                                              "velocity of center of mass (x, y, z) w.r.t. global frame");
                Var_Omega_cm = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "Omega_cm",
-                                                 OutputHandler::Dimensions::AngularVelocity,
+                                                 MBUnits::Dimensions::AngularVelocity,
                                                  "angular velocity around center of mass (x, y, z) w.r.t. global frame");
 
                Var_DX = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "DX",
-                                           OutputHandler::Dimensions::Length,
+                                           MBUnits::Dimensions::Length,
                                            "relative center of mass position, global frame (x, y, z)");
                Var_dx = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "dx",
-                                           OutputHandler::Dimensions::Length,
+                                           MBUnits::Dimensions::Length,
                                            "relative center of mass position, local frame (x, y, z)");
                Var_Jp = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "Jp",
-                                           OutputHandler::Dimensions::MomentOfInertia,
+                                           MBUnits::Dimensions::MomentOfInertia,
                                            "global inertia matrix, w.r.t. principal axes");
                Var_Phip = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "Phip",
-                                             OutputHandler::Dimensions::Dimensionless,
+                                             MBUnits::Dimensions::Dimensionless,
                                              "orientation vector of principal axes, global frame");
 
                Var_J_cm = OH.CreateVar<Mat3x3>(m_sOutputNameBase + ".J_cm",
-                                               OutputHandler::Dimensions::MomentOfInertia,
+                                               MBUnits::Dimensions::MomentOfInertia,
                                                "matrix of inertia at center of mass w.r.t. global frame");
 
                Var_J0 = OH.CreateVar<Mat3x3>(m_sOutputNameBase + ".J0",
-                                             OutputHandler::Dimensions::MomentOfInertia,
+                                             MBUnits::Dimensions::MomentOfInertia,
                                              "total inertia matrix with respect to reference position and reference orientation");
           }
 #endif // USE_NETCDF

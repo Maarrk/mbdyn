@@ -425,15 +425,15 @@ doublereal Motor::dGetPrivData(unsigned int iIndex) const
 	}
 }
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 Motor::GetEquationDimension(integer index) const {
 	// DOF == 1
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Voltage;
+			dimension = MBUnits::Dimensions::Voltage;
 			break;
 	}
 

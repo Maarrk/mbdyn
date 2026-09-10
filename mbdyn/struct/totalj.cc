@@ -1506,18 +1506,18 @@ TotalJoint::OutputPrepare(OutputHandler& OH)
                         OutputPrepare_int("Total joint", OH);
 
                         Var_X = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "X",
-                                OutputHandler::Dimensions::Length,
+                                MBUnits::Dimensions::Length,
                                 "local relative position (x, y, z)");
 
                         // NOTE: by now, force ORIENTATION_VECTOR
                         Var_Phi = OH.CreateRotationVar(m_sOutputNameBase, "", ORIENTATION_VECTOR, "local relative");
 
                         Var_V = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "V",
-                                OutputHandler::Dimensions::Velocity,
+                                MBUnits::Dimensions::Velocity,
                                 "local relative velocity (x, y, z)");
 
                         Var_Omega = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "Omega",
-                                OutputHandler::Dimensions::AngularVelocity,
+                                MBUnits::Dimensions::AngularVelocity,
                                 "local relative angular velocity (x, y, z)");
                 }
 #endif // USE_NETCDF
@@ -2142,27 +2142,27 @@ TotalJoint::dGetPrivData(unsigned int i) const
         return 0.;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 TotalJoint::GetEquationDimension(integer index) const {
         // DOF is variable
-        std::map<int, OutputHandler::Dimensions> index_map;
+        std::map<int, MBUnits::Dimensions> index_map;
 
         int i = 0;
                 for (unsigned iCnt = 0; iCnt < nPosConstraints; iCnt++) {
                         i++;
-                        index_map[i] = OutputHandler::Dimensions::Length;
+                        index_map[i] = MBUnits::Dimensions::Length;
                 }
                 for (unsigned iCnt = 0; iCnt < nRotConstraints; iCnt++) {
                         i++;
-                        index_map[i] = OutputHandler::Dimensions::rad;
+                        index_map[i] = MBUnits::Dimensions::rad;
                 }
                 for (unsigned iCnt = 0; iCnt < nVelConstraints; iCnt++) {
                         i++;
-                        index_map[i] = OutputHandler::Dimensions::Velocity;
+                        index_map[i] = MBUnits::Dimensions::Velocity;
                 }
                 for (unsigned iCnt = 0; iCnt < nVelConstraints; iCnt++) {
                         i++;
-                        index_map[i] = OutputHandler::Dimensions::AngularVelocity;
+                        index_map[i] = MBUnits::Dimensions::AngularVelocity;
                 }
 
         return index_map[index];
@@ -3439,18 +3439,18 @@ TotalPinJoint::OutputPrepare(OutputHandler& OH)
                         OutputPrepare_int("Total pin joint", OH);
 
                         Var_X = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "X",
-                                OutputHandler::Dimensions::Length,
+                                MBUnits::Dimensions::Length,
                                 "local relative position (x, y, z)");
 
                         // NOTE: by now, force ORIENTATION_VECTOR
                         Var_Phi = OH.CreateRotationVar(m_sOutputNameBase, "", ORIENTATION_VECTOR, "local relative");
 
                         Var_V = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "V",
-                                OutputHandler::Dimensions::Velocity,
+                                MBUnits::Dimensions::Velocity,
                                 "local relative velocity (x, y, z)");
 
                         Var_Omega = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "Omega",
-                                OutputHandler::Dimensions::AngularVelocity,
+                                MBUnits::Dimensions::AngularVelocity,
                                 "local relative angular velocity (x, y, z)");
                 }
 #endif // USE_NETCDF
@@ -3864,27 +3864,27 @@ TotalPinJoint::dGetPrivData(unsigned int i) const
         return 0.;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 TotalPinJoint::GetEquationDimension(integer index) const {
         // DOF is variable
-        std::map<int, OutputHandler::Dimensions> index_map;
+        std::map<int, MBUnits::Dimensions> index_map;
 
         int i = 0;
                 for (unsigned iCnt = 0; iCnt < nPosConstraints; iCnt++) {
                         i++;
-                        index_map[i] = OutputHandler::Dimensions::Length;
+                        index_map[i] = MBUnits::Dimensions::Length;
                 }
                 for (unsigned iCnt = 0; iCnt < nRotConstraints; iCnt++) {
                         i++;
-                        index_map[i] = OutputHandler::Dimensions::rad;
+                        index_map[i] = MBUnits::Dimensions::rad;
                 }
                 for (unsigned iCnt = 0; iCnt < nVelConstraints; iCnt++) {
                         i++;
-                        index_map[i] = OutputHandler::Dimensions::Velocity;
+                        index_map[i] = MBUnits::Dimensions::Velocity;
                 }
                 for (unsigned iCnt = 0; iCnt < nVelConstraints; iCnt++) {
                         i++;
-                        index_map[i] = OutputHandler::Dimensions::AngularVelocity;
+                        index_map[i] = MBUnits::Dimensions::AngularVelocity;
                 }
 
         return index_map[index];

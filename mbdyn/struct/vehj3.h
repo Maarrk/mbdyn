@@ -215,7 +215,7 @@ public:
 	InitialAssRes(SubVectorHandler& WorkVec, const VectorHandler& XCurr) override;
 
 	/* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const override;
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const override;
 };
 
 /* DeformableJoint - end */

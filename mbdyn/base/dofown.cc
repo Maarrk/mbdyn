@@ -58,11 +58,11 @@ DofOwnerOwner::SetInitialValue(VectorHandler& /* X */ )
 	NO_OP; 
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 DofOwnerOwner::GetEquationDimension(integer index) const {
 
 	silent_cout("entered GetEquationDimension of DofOwnerOwner");
 	throw("runtime error");
 	
-	return OutputHandler::Dimensions::Boolean;
+	return MBUnits::Dimensions::Boolean;
 }

@@ -1441,7 +1441,7 @@ namespace {
           virtual unsigned int iGetInitialNumDof(void) const=0;
           virtual DofOrder::Order GetDofType(unsigned int i) const=0;
           virtual DofOrder::Order GetEqType(unsigned int i) const=0;
-          virtual OutputHandler::Dimensions GetEquationDimension(integer index) const=0;
+          virtual MBUnits::Dimensions GetEquationDimension(integer index) const=0;
           virtual DofOrder::Equality GetEqualityType(unsigned int i) const;
           virtual SolverBase::StepIntegratorType GetStepIntegrator(unsigned int i) const;
           virtual std::ostream&
@@ -1519,7 +1519,7 @@ namespace {
 
           virtual std::ostream&
           DescribeEq(std::ostream& out, const char *prefix, bool bInitial) const override;
-          OutputHandler::Dimensions GetEquationDimension(integer index) const override;
+          MBUnits::Dimensions GetEquationDimension(integer index) const override;
      private:
           sp_grad::SpFunctionCall eCurrFunc;
           doublereal T, dT_dt, T_Y;
@@ -2108,7 +2108,7 @@ namespace {
 
           virtual std::ostream&
           DescribeEq(std::ostream& out, const char *prefix, bool bInitial) const override;
-          virtual OutputHandler::Dimensions GetEquationDimension(integer index) const override;
+          virtual MBUnits::Dimensions GetEquationDimension(integer index) const override;
      private:
           doublereal p, dp_dt, pY;
           const doublereal s;
@@ -2284,7 +2284,7 @@ namespace {
 
           virtual std::ostream&
           DescribeEq(std::ostream& out, const char *prefix, bool bInitial) const override;
-          virtual OutputHandler::Dimensions GetEquationDimension(integer index) const override;
+          virtual MBUnits::Dimensions GetEquationDimension(integer index) const override;
      private:
           inline void UpdateTheta(const VectorHandler& XCurr, const VectorHandler& XPrimeCurr);
           inline void UpdateCavitationState();
@@ -2380,7 +2380,7 @@ namespace {
 
           virtual std::ostream&
           DescribeEq(std::ostream& out, const char *prefix, bool bInitial) const override;
-          virtual OutputHandler::Dimensions GetEquationDimension(integer index) const override;
+          virtual MBUnits::Dimensions GetEquationDimension(integer index) const override;
      private:
           void UpdateCavitationState();
           inline void UpdateTheta(const VectorHandler& XCurr, const VectorHandler& XPrimeCurr);
@@ -5522,7 +5522,7 @@ namespace {
           virtual integer iGetNumColsWorkSpace(sp_grad::SpFunctionCall eFunc, index_type iNumNodes) const override;
           virtual DofOrder::Order GetDofType(unsigned int i) const override;
           virtual DofOrder::Order GetEqType(unsigned int i) const override;
-          virtual OutputHandler::Dimensions GetEquationDimension(integer index) const override;
+          virtual MBUnits::Dimensions GetEquationDimension(integer index) const override;
           virtual SolverBase::StepIntegratorType GetStepIntegrator(unsigned int i) const override;
 
           virtual std::ostream&
@@ -5678,7 +5678,7 @@ namespace {
           virtual std::ostream&
           DescribeEq(std::ostream& out, const char *prefix, bool bInitial) const override;
 
-          virtual OutputHandler::Dimensions GetEquationDimension(integer index) const override;
+          virtual MBUnits::Dimensions GetEquationDimension(integer index) const override;
 
           virtual void
           Update(const VectorHandler& XCurr,
@@ -5886,7 +5886,7 @@ namespace {
           virtual std::ostream&
           DescribeEq(std::ostream& out, const char *prefix, bool bInitial) const override;
 
-          virtual OutputHandler::Dimensions GetEquationDimension(integer index) const override;
+          virtual MBUnits::Dimensions GetEquationDimension(integer index) const override;
 
           virtual void
           Update(const VectorHandler& XCurr,
@@ -6052,7 +6052,7 @@ namespace {
           virtual SolverBase::StepIntegratorType GetStepIntegrator(unsigned int i) const override;
           virtual std::ostream& DescribeDof(std::ostream& out, const char *prefix, bool bInitial) const override;
           virtual std::ostream& DescribeEq(std::ostream& out, const char *prefix, bool bInitial) const override;
-          virtual const OutputHandler::Dimensions GetEquationDimension(integer index) const override;
+          virtual const MBUnits::Dimensions GetEquationDimension(integer index) const override;
           VariableSubMatrixHandler&
           AssJac(VariableSubMatrixHandler& WorkMat,
                  doublereal dCoef,
@@ -6942,7 +6942,7 @@ namespace {
           return out;
      }
 
-     const OutputHandler::Dimensions HydroRootElement::GetEquationDimension(integer index) const
+     const MBUnits::Dimensions HydroRootElement::GetEquationDimension(integer index) const
      {
           const HydroDofOwner* const pDO = pFindDofOwner(index, SpFunctionCall::REGULAR_RES);
           HYDRO_ASSERT(index >= pDO->iGetOffsetIndex(SpFunctionCall::REGULAR_RES));
@@ -9382,9 +9382,9 @@ namespace {
           return out;
      }
 
-     OutputHandler::Dimensions ThermalActiveNode::GetEquationDimension(integer index) const
+     MBUnits::Dimensions ThermalActiveNode::GetEquationDimension(integer index) const
      {
-          return OutputHandler::Dimensions::Dimensionless;
+          return MBUnits::Dimensions::Dimensionless;
      }
 
      ThermalCoupledNode::ThermalCoupledNode(integer iNodeNo_a,
@@ -11008,9 +11008,9 @@ namespace {
           return out;
      }
 
-     OutputHandler::Dimensions HydroActiveNode::GetEquationDimension(integer index) const
+     MBUnits::Dimensions HydroActiveNode::GetEquationDimension(integer index) const
      {
-          return OutputHandler::Dimensions::Dimensionless;
+          return MBUnits::Dimensions::Dimensionless;
      }
 
      HydroPassiveNode::HydroPassiveNode(integer iNodeNo_a,
@@ -11964,9 +11964,9 @@ namespace {
           return out;
      }
 
-     OutputHandler::Dimensions HydroActiveComprNode::GetEquationDimension(integer index) const
+     MBUnits::Dimensions HydroActiveComprNode::GetEquationDimension(integer index) const
      {
-          return OutputHandler::Dimensions::Dimensionless;
+          return MBUnits::Dimensions::Dimensionless;
      }
 
      HydroActiveComprNodeMCP::HydroActiveComprNodeMCP(integer iNodeNo_a,
@@ -12430,9 +12430,9 @@ namespace {
           return out;
      }
 
-     OutputHandler::Dimensions HydroActiveComprNodeMCP::GetEquationDimension(integer index) const
+     MBUnits::Dimensions HydroActiveComprNodeMCP::GetEquationDimension(integer index) const
      {
-          return OutputHandler::Dimensions::Dimensionless;
+          return MBUnits::Dimensions::Dimensionless;
      }
 
      HydroPassiveComprNode::HydroPassiveComprNode(integer iNodeNo_a,
@@ -13554,9 +13554,9 @@ namespace {
           return out;
      }
 
-     OutputHandler::Dimensions ComplianceModelNodal::GetEquationDimension(integer index) const
+     MBUnits::Dimensions ComplianceModelNodal::GetEquationDimension(integer index) const
      {
-          return OutputHandler::Dimensions::Dimensionless;
+          return MBUnits::Dimensions::Dimensionless;
      }
 
      void ComplianceModelNodal::Update(const VectorHandler& XCurr, const VectorHandler& XPrimeCurr, doublereal dCoef, SpFunctionCall func)
@@ -14141,9 +14141,9 @@ namespace {
           return out;
      }
 
-     OutputHandler::Dimensions ComplianceModelNodalDouble::GetEquationDimension(integer index) const
+     MBUnits::Dimensions ComplianceModelNodalDouble::GetEquationDimension(integer index) const
      {
-          return OutputHandler::Dimensions::Dimensionless;
+          return MBUnits::Dimensions::Dimensionless;
      }
 
      void
@@ -14924,9 +14924,9 @@ namespace {
           return out;
      }
 
-     OutputHandler::Dimensions ComplianceModelModal::GetEquationDimension(integer index) const
+     MBUnits::Dimensions ComplianceModelModal::GetEquationDimension(integer index) const
      {
-          return OutputHandler::Dimensions::Dimensionless;
+          return MBUnits::Dimensions::Dimensionless;
      }
 
 

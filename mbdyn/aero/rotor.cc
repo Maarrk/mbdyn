@@ -221,46 +221,46 @@ Rotor::OutputPrepare(OutputHandler& OH)
 			(void)OH.CreateVar(m_sOutputNameBase, rt);
 
 			Var_f = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "f",
-					OutputHandler::Dimensions::Force,
+					MBUnits::Dimensions::Force,
 					"rotor force in x, y and z directions (lon, lat, thrust, assuming x backwards and z upwards along the shaft)");
 
 			Var_m = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "m",
-					OutputHandler::Dimensions::Moment,
+					MBUnits::Dimensions::Moment,
 					"rotor moment about x, y and z directions (roll, pitch, torque, assuming x backwards and z upwards along the shaft)");
 			Var_dUMean = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "UMean",
-					OutputHandler::Dimensions::Velocity,
+					MBUnits::Dimensions::Velocity,
 					"mean inflow velocity");
 
 			Var_dVelocity = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "VRef",
-					OutputHandler::Dimensions::Velocity,
+					MBUnits::Dimensions::Velocity,
 					"reference velocity (craft_node + airstream)");
 
 			Var_dAlpha = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "Alpha",
-					OutputHandler::Dimensions::rad,
+					MBUnits::Dimensions::rad,
 					"rotor disk angle");
 
 			Var_dMu = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "Mu",
-					OutputHandler::Dimensions::Dimensionless,
+					MBUnits::Dimensions::Dimensionless,
 					"advance parameter");
 
 			Var_dLambda = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "Lambda",
-					OutputHandler::Dimensions::Dimensionless,
+					MBUnits::Dimensions::Dimensionless,
 					"inflow parameter");
 
 			Var_dChi = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "Chi",
-					OutputHandler::Dimensions::Dimensionless,
+					MBUnits::Dimensions::Dimensionless,
 					"advance/inflow parameter");
 
 			Var_dPsi0 = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "Psi0",
-					OutputHandler::Dimensions::rad,
+					MBUnits::Dimensions::rad,
 					"reference azimuthal direction");
 
 			Var_bUMeanRefConverged = OH.CreateVar<integer>(m_sOutputNameBase + "." "UMeanRefConverged",
-					OutputHandler::Dimensions::Boolean,
+					MBUnits::Dimensions::Boolean,
 					"boolean flag indicating reference induced velocity computation convergence");
 
 			Var_iCurrIter = OH.CreateVar<integer>(m_sOutputNameBase + "." "Iter",
-					OutputHandler::Dimensions::Dimensionless,
+					MBUnits::Dimensions::Dimensionless,
 					"number of iterations required for convergence");
 
 		}
@@ -1816,13 +1816,13 @@ DynamicInflowRotor::OutputPrepare(OutputHandler& OH)
 		Rotor::OutputPrepare(OH);
 
 		Var_dVConst = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "VConst",
-				OutputHandler::Dimensions::Velocity,
+				MBUnits::Dimensions::Velocity,
 				"constant inflow state");
 		Var_dVSine = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "VSine",
-				OutputHandler::Dimensions::Velocity,
+				MBUnits::Dimensions::Velocity,
 				"sine inflow state (lateral)");
 		Var_dVCosine= OH.CreateVar<doublereal>(m_sOutputNameBase + "." "VCosine",
-				OutputHandler::Dimensions::Velocity,
+				MBUnits::Dimensions::Velocity,
 				"cosine inflow state (longitudinal)");
 	     }
 #endif // USE_NETCDF
@@ -2417,13 +2417,13 @@ PetersHeRotor::OutputPrepare(OutputHandler& OH)
 		Rotor::OutputPrepare(OH);
 
 		Var_dVConst = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "VConst",
-				OutputHandler::Dimensions::Velocity,
+				MBUnits::Dimensions::Velocity,
 				"constant inflow state");
 		Var_dVSine = OH.CreateVar<doublereal>(m_sOutputNameBase + "." "VSine",
-				OutputHandler::Dimensions::Velocity,
+				MBUnits::Dimensions::Velocity,
 				"sine inflow state (lateral)");
 		Var_dVCosine= OH.CreateVar<doublereal>(m_sOutputNameBase + "." "VCosine",
-				OutputHandler::Dimensions::Velocity,
+				MBUnits::Dimensions::Velocity,
 				"cosine inflow state (longitudinal)");
 	     }
 #endif // USE_NETCDF

@@ -93,7 +93,7 @@ DriveDisplacementJoint::OutputPrepare(OutputHandler &OH)
 			OutputPrepare_int("Drive displacement", OH);
 
 			Var_d = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "d",
-				OutputHandler::Dimensions::Length,
+				MBUnits::Dimensions::Length,
 				"imposed relative displacement, global frame (x, y, z)");
 		}
 #endif // USE_NETCDF
@@ -692,21 +692,21 @@ DriveDisplacementJoint::InitialAssRes(SubVectorHandler& WorkVec,
 	return WorkVec;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 DriveDisplacementJoint::GetEquationDimension(integer index) const {
 	// DOF == 3
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 	case 1:
-		dimension = OutputHandler::Dimensions::Length;
+		dimension = MBUnits::Dimensions::Length;
 		break;
 	case 2:
-		dimension = OutputHandler::Dimensions::Length;
+		dimension = MBUnits::Dimensions::Length;
 		break;
 	case 3:
-		dimension = OutputHandler::Dimensions::Length;
+		dimension = MBUnits::Dimensions::Length;
 		break;
 	}
 
@@ -765,7 +765,7 @@ DriveDisplacementPinJoint::OutputPrepare(OutputHandler &OH)
 			OutputPrepare_int("Drive displacement pin", OH);
 
 			Var_d = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "d",
-				OutputHandler::Dimensions::Length,
+				MBUnits::Dimensions::Length,
 				"imposed relative displacement (x, y, z)");
 		}
 #endif // USE_NETCDF
@@ -1282,21 +1282,21 @@ DriveDisplacementPinJoint::InitialAssRes(SubVectorHandler& WorkVec,
 	return WorkVec;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 DriveDisplacementPinJoint::GetEquationDimension(integer index) const {
 	// DOF == 3
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 	case 1:
-		dimension = OutputHandler::Dimensions::Length;
+		dimension = MBUnits::Dimensions::Length;
 		break;
 	case 2:
-		dimension = OutputHandler::Dimensions::Length;
+		dimension = MBUnits::Dimensions::Length;
 		break;
 	case 3:
-		dimension = OutputHandler::Dimensions::Length;
+		dimension = MBUnits::Dimensions::Length;
 		break;
 	}
 

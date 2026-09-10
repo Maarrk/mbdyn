@@ -635,24 +635,24 @@ UniversalHingeJoint::InitialAssRes(SubVectorHandler& WorkVec,
 	return WorkVec;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 UniversalHingeJoint::GetEquationDimension(integer index) const {
 	// DOF == 4
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
      	case 3:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 4:
-			dimension = OutputHandler::Dimensions::rad;
+			dimension = MBUnits::Dimensions::rad;
 			break;
 	}
 
@@ -1185,15 +1185,15 @@ UniversalRotationJoint::InitialAssRes(SubVectorHandler& WorkVec,
 	return WorkVec;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 UniversalRotationJoint::GetEquationDimension(integer index) const {
 	// DOF == 1
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::rad;
+			dimension = MBUnits::Dimensions::rad;
 			break;
 	}
 
@@ -1660,24 +1660,24 @@ UniversalPinJoint::InitialAssRes(SubVectorHandler& WorkVec,
 	return WorkVec;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 UniversalPinJoint::GetEquationDimension(integer index) const {
 	// DOF == 4
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 2:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 3:
-			dimension = OutputHandler::Dimensions::Length;
+			dimension = MBUnits::Dimensions::Length;
 			break;
 		case 4:
-			dimension = OutputHandler::Dimensions::rad;
+			dimension = MBUnits::Dimensions::rad;
 			break;
 	}
 

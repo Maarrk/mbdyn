@@ -777,11 +777,11 @@ ReadAerodynamicModal(DataManager* pDM,
 	return pEl;
 } /* End of DataManager::ReadAerodynamicModal() */
 
-const OutputHandler::Dimensions 
+const MBUnits::Dimensions
 AerodynamicModal::GetEquationDimension(integer index) const {
 	// DOF is unknown
 	
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 
 std::ostream&

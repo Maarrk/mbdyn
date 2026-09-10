@@ -217,10 +217,10 @@ public:
 		ASSERT(OH.IsOpen(OutputHandler::NETCDF));
 
 		Var_dInitialEpsPrime = OH.CreateVar<doublereal>(name + ".xPi", 
-				OutputHandler::Dimensions::Velocity, 
+				MBUnits::Dimensions::Velocity,
 				"Velocity at contact");
 		Var_dDissCoef = OH.CreateVar<doublereal>(name + ".dc", 
-				OutputHandler::Dimensions::Dimensionless, 
+				MBUnits::Dimensions::Dimensionless,
 				"Dissipation coefficient");
 #endif // USE_NETCDF
 	};

@@ -102,11 +102,11 @@ ViscousBody::OutputPrepare(OutputHandler& OH)
 			OutputPrepare_int("viscous body", OH);
 
 			Var_v = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "V",
-				OutputHandler::Dimensions::Velocity,
+				MBUnits::Dimensions::Velocity,
 				"local relative linear velocity (x, y, z)");
 			
 			Var_omega = OH.CreateVar<Vec3>(m_sOutputNameBase + "." "Omega",
-				OutputHandler::Dimensions::AngularVelocity,
+				MBUnits::Dimensions::AngularVelocity,
 				"local relative angular velocity (x, y, z)");
 		}
 #endif // USE_NETCDF
@@ -537,10 +537,10 @@ ViscousBody::InitialAssJac(VariableSubMatrixHandler& WorkMat,
 	return WorkMat;
 }
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 ViscousBody::GetEquationDimension(integer index) const {
 	// DOF == 0
-	return OutputHandler::Dimensions::UnknownDimension;
+	return MBUnits::Dimensions::UnknownDimension;
 }
 /* ViscousBody - end */
 

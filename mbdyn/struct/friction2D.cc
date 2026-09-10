@@ -483,15 +483,15 @@ void ModLugreFriction2D::AssJac(
  */
 };
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 ModLugreFriction2D::GetEquationDimension(integer index) const {
 	// DOF == 1
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 		case 1:
-			dimension = OutputHandler::Dimensions::Velocity;
+			dimension = MBUnits::Dimensions::Velocity;
 			break;
 	}
 
@@ -834,16 +834,16 @@ void DiscreteCoulombFriction2D::AssJac(
 	}
 };
 
-const OutputHandler::Dimensions
+const MBUnits::Dimensions
 DiscreteCoulombFriction2D::GetEquationDimension(integer index) const {
 	// DOF == 1
 
-	OutputHandler::Dimensions dimension = OutputHandler::Dimensions::UnknownDimension;
+	MBUnits::Dimensions dimension = MBUnits::Dimensions::UnknownDimension;
 
 	switch (index)
 	{
 	case 1:
-		dimension = OutputHandler::Dimensions::UnknownDimension;
+		dimension = MBUnits::Dimensions::UnknownDimension;
 		break;
 	}
 

@@ -109,7 +109,7 @@ class Control_valve : public HydraulicElem, public DriveOwner {
    /* ************************************************ */ 	
 
    /* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 
   /* describes the dimension of components of equation */
     virtual std::ostream& DescribeEq(std::ostream& out,
@@ -226,7 +226,7 @@ public:
 	/* ************************************************ */ 
 
   /* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;	
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 
   /* describes the dimension of components of equation */
   virtual std::ostream& DescribeEq(std::ostream& out,
@@ -333,7 +333,7 @@ class Dynamic_control_valve : public HydraulicElem, public DriveOwner {
    /* ************************************************ */
 
    /* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 
   /* describes the dimension of components of equation */
   virtual std::ostream& DescribeEq(std::ostream& out,
@@ -447,7 +447,7 @@ class Pressure_flow_control_valve : public HydraulicElem, public DriveOwner {
    /* ************************************************ */
 
    /* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 
   /* describes the dimension of components of equation */
   virtual std::ostream& DescribeEq(std::ostream& out,
@@ -539,7 +539,7 @@ class Pressure_valve : public HydraulicElem {
    /* ************************************************ */
 
    /* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const;
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 
   /* describes the dimension of components of equation */
   virtual std::ostream& DescribeEq(std::ostream& out,
@@ -636,7 +636,7 @@ class  Flow_valve : public HydraulicElem {
   /* ************************************************ */ 	
 
   /* returns the dimension of the component */
-	const virtual OutputHandler::Dimensions GetEquationDimension(integer index) const; 
+	const virtual MBUnits::Dimensions GetEquationDimension(integer index) const;
 
   /* describes the dimension of components of equation */
   virtual std::ostream& DescribeEq(std::ostream& out,
