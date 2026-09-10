@@ -36,7 +36,7 @@
 
 variables:
   MBD_TESTSUITE_TIMING: "yes"
-  ## Error codes which should not cause the pipeline to fail (see simple_testsuite.sh):
+  ## Error codes which should not cause the pipeline to fail (see simple_testsuite.py):
   ## - no tests were executed     (0x001)
   ## - timeout                    (0x002)
   ## - module not found           (0x004)
@@ -107,12 +107,39 @@ mbdyn-tests-private-test-job:   # This job runs in the test stage.
       - mkdir -p "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" ## needed for realpath
       - log_file="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/${MBD_TESTS_PRIVATE_LOG_FILE}"
       - sp_gradient_test --gtest_output=xml:${MBD_TESTS_PRIVATE_OUTPUT_DIR}/junit_xml_report_sp_gradient_test.xml >& /dev/null
-      - chmod +x testsuite/simple_testsuite.sh
       ## FIXME: drives/string/distance will fail with status 139 if we are passing --pedantic --pedantic --pedantic
-      - echo "-------------- ORIGINAL TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PRIVATE_EXIT_STATUS_MASK}" --abort-after-step "${MBD_TESTS_PRIVATE_ABORT_AFTER_STEP}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" --prefix-output "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --tasks "${MBD_TESTS_PRIVATE_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
-      - echo "-------------- PATCHED TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite_patched.sh --initial-assembly-of-deformable-and-force-elements "${MBD_TESTS_PRIVATE_INITIAL_ASSEMBLY_DEFORMABLE}" --linear-solvers "${MBD_TESTS_PRIVATE_LINEAR_SOLVERS}" --matrix-handlers "${MBD_TESTS_PRIVATE_MATRIX_HANDLERS}" --scale-methods "${MBD_TESTS_PRIVATE_SCALE_METHODS}" --scale-when "${MBD_TESTS_PRIVATE_SCALE_WHEN}" --nonlinear-solvers "${MBD_TESTS_PRIVATE_NONLINEAR_SOLVERS}" --method "${MBD_TESTS_PRIVATE_METHODS}" --use-reference-test-status "${MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS}" --skip-expected-failures "yes" --exit-status-mask "${MBD_TESTS_PRIVATE_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" --prefix-output "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --tasks "${MBD_TESTS_PRIVATE_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} --suppressed-errors "solver" 2>&1 | tee -a "${log_file}"
+      - |
+        phase_dir="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/.phases"
+        original_output="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/original"
+        mkdir -p "${phase_dir}" "${original_output}"
+        export MBD_TESTSUITE_GLOBAL_SLOT_DIR="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/.global-slots"
+        export MBD_TESTSUITE_GLOBAL_SLOTS="${MBD_TESTS_PRIVATE_NUM_TASKS}"
+        export MBD_TESTSUITE_RESOURCE_LOCK_DIR="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/.resource-locks"
+        MBD_TESTSUITE_TIMING=no testsuite/simple_testsuite.py plain --prepare-only --prefix-output "${original_output}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" ${MBD_SIMPLE_TESTSUITE_FLAGS}
+        (
+          set +e
+          echo "-------------- ORIGINAL TESTS --------------------" | tee "${phase_dir}/original.log"
+          MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/mbdyn-testsuite-timing-original-abort-after-step.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.py plain --exec-gen no --use-reference-test-status "${MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PRIVATE_EXIT_STATUS_MASK}" --abort-after-step "${MBD_TESTS_PRIVATE_ABORT_AFTER_STEP}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" --prefix-output "${original_output}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --tasks "${MBD_TESTS_PRIVATE_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${phase_dir}/original.log" | awk -f testsuite/simple_testsuite_output_filter.awk
+          echo "${PIPESTATUS[0]}" > "${phase_dir}/original.status"
+          exit 0
+        ) &
+        original_pid=$!
+        (
+          set +e
+          echo "-------------- PATCHED TESTS --------------------" | tee "${phase_dir}/patched.log"
+          MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/mbdyn-testsuite-timing-patched-matrix.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.py patched --exec-gen no --initial-assembly-of-deformable-and-force-elements "${MBD_TESTS_PRIVATE_INITIAL_ASSEMBLY_DEFORMABLE}" --linear-solvers "${MBD_TESTS_PRIVATE_LINEAR_SOLVERS}" --matrix-handlers "${MBD_TESTS_PRIVATE_MATRIX_HANDLERS}" --scale-methods "${MBD_TESTS_PRIVATE_SCALE_METHODS}" --scale-when "${MBD_TESTS_PRIVATE_SCALE_WHEN}" --nonlinear-solvers "${MBD_TESTS_PRIVATE_NONLINEAR_SOLVERS}" --method "${MBD_TESTS_PRIVATE_METHODS}" --use-reference-test-status "${MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS}" --skip-expected-failures "yes" --exit-status-mask "${MBD_TESTS_PRIVATE_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" --prefix-output "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --tasks "${MBD_TESTS_PRIVATE_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} --suppressed-errors "solver" 2>&1 | tee -a "${phase_dir}/patched.log"
+          echo "${PIPESTATUS[0]}" > "${phase_dir}/patched.status"
+          exit 0
+        ) &
+        patched_pid=$!
+        wait "${original_pid}" "${patched_pid}"
+        cat "${phase_dir}/original.log" "${phase_dir}/patched.log" > "${log_file}"
+        read -r original_status < "${phase_dir}/original.status"
+        read -r patched_status < "${phase_dir}/patched.status"
+        combined_status=$((original_status | patched_status))
+        if ((combined_status != 0)); then
+          exit "${combined_status}"
+        fi
       - cd "${MBD_TESTS_PRIVATE_OUTPUT_DIR}"
       - find . -name 'junit_xml_report_*.xml' -print0 | xargs -0 "${CI_PROJECT_DIR}/testsuite/junit_xml_relative_path.py" -p "${CI_PROJECT_DIR}"
   artifacts:
@@ -120,7 +147,7 @@ mbdyn-tests-private-test-job:   # This job runs in the test stage.
     expire_in: 2 days
     paths:
       - $MBD_TESTS_PRIVATE_OUTPUT_DIR/$MBD_TESTS_PRIVATE_LOG_FILE
-      - $MBD_TESTS_PRIVATE_OUTPUT_DIR/mbdyn-testsuite-timing.tsv
+      - $MBD_TESTS_PRIVATE_OUTPUT_DIR/mbdyn-testsuite-timing-*.tsv
       - $MBD_TESTS_PRIVATE_OUTPUT_DIR/**/*.stdout
       - $MBD_TESTS_PRIVATE_OUTPUT_DIR/**/junit_xml_report_*.xml
     when: always
@@ -168,12 +195,11 @@ mbdyn-tests-private-test-job-gcov:   # This job runs in the test stage.
       - mkdir -p "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" ## needed for realpath
       - log_file="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/${MBD_TESTS_PRIVATE_LOG_FILE}"
       - sp_gradient_test --gtest_output=xml:${MBD_TESTS_PRIVATE_OUTPUT_DIR}/junit_xml_report_sp_gradient_test.xml >& /dev/null
-      - chmod +x testsuite/simple_testsuite.sh
       ## FIXME: drives/string/distance will fail with status 139 if we are passing --pedantic --pedantic --pedantic
       - echo "-------------- ORIGINAL TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PRIVATE_EXIT_STATUS_MASK}" --abort-after-step "${MBD_TESTS_PRIVATE_ABORT_AFTER_STEP}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" --prefix-output "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --tasks "${MBD_TESTS_PRIVATE_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/mbdyn-testsuite-timing-original-abort-after-step.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.py plain --use-reference-test-status "${MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PRIVATE_EXIT_STATUS_MASK}" --abort-after-step "${MBD_TESTS_PRIVATE_ABORT_AFTER_STEP}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" --prefix-output "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --tasks "${MBD_TESTS_PRIVATE_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
       - echo "-------------- PATCHED TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite_patched.sh --initial-assembly-of-deformable-and-force-elements "${MBD_TESTS_PRIVATE_INITIAL_ASSEMBLY_DEFORMABLE}" --linear-solvers "${MBD_TESTS_PRIVATE_LINEAR_SOLVERS}" --matrix-handlers "${MBD_TESTS_PRIVATE_MATRIX_HANDLERS}" --scale-methods "${MBD_TESTS_PRIVATE_SCALE_METHODS}" --scale-when "${MBD_TESTS_PRIVATE_SCALE_WHEN}" --nonlinear-solvers "${MBD_TESTS_PRIVATE_NONLINEAR_SOLVERS}" --method "${MBD_TESTS_PRIVATE_METHODS}" --use-reference-test-status "${MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS}" --skip-expected-failures "yes" --exit-status-mask "${MBD_TESTS_PRIVATE_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" --prefix-output "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --tasks "${MBD_TESTS_PRIVATE_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} --suppressed-errors "solver" 2>&1 | tee -a "${log_file}"
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/mbdyn-testsuite-timing-patched-matrix.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.py patched --initial-assembly-of-deformable-and-force-elements "${MBD_TESTS_PRIVATE_INITIAL_ASSEMBLY_DEFORMABLE}" --linear-solvers "${MBD_TESTS_PRIVATE_LINEAR_SOLVERS}" --matrix-handlers "${MBD_TESTS_PRIVATE_MATRIX_HANDLERS}" --scale-methods "${MBD_TESTS_PRIVATE_SCALE_METHODS}" --scale-when "${MBD_TESTS_PRIVATE_SCALE_WHEN}" --nonlinear-solvers "${MBD_TESTS_PRIVATE_NONLINEAR_SOLVERS}" --method "${MBD_TESTS_PRIVATE_METHODS}" --use-reference-test-status "${MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS}" --skip-expected-failures "yes" --exit-status-mask "${MBD_TESTS_PRIVATE_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" --prefix-output "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --tasks "${MBD_TESTS_PRIVATE_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} --suppressed-errors "solver" 2>&1 | tee -a "${log_file}"
       - cd "${MBD_TESTS_PRIVATE_OUTPUT_DIR}"
       - find . -name 'junit_xml_report_*.xml' -print0 | xargs -0 "${CI_PROJECT_DIR}/testsuite/junit_xml_relative_path.py" -p "${CI_PROJECT_DIR}"
 
@@ -182,7 +208,7 @@ mbdyn-tests-private-test-job-gcov:   # This job runs in the test stage.
     expire_in: 2 days
     paths:
       - $MBD_TESTS_PRIVATE_OUTPUT_DIR_GCOV/$MBD_TESTS_PRIVATE_LOG_FILE
-      - $MBD_TESTS_PRIVATE_OUTPUT_DIR_GCOV/mbdyn-testsuite-timing.tsv
+      - $MBD_TESTS_PRIVATE_OUTPUT_DIR_GCOV/mbdyn-testsuite-timing-*.tsv
       - $MBD_TESTS_PRIVATE_OUTPUT_DIR_GCOV/**/*.stdout
       - $MBD_TESTS_PRIVATE_OUTPUT_DIR_GCOV/**/junit_xml_report_*.xml
       - $MBD_BUILD_DIR_GCOV
@@ -229,12 +255,11 @@ mbdyn-tests-private-test-job-debug:   # This job runs in the test stage.
       - mkdir -p "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" ## needed for realpath
       - log_file="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/${MBD_TESTS_PRIVATE_LOG_FILE}"
       - sp_gradient_test --gtest_output=xml:${MBD_TESTS_PRIVATE_OUTPUT_DIR}/junit_xml_report_sp_gradient_test.xml >& /dev/null
-      - chmod +x testsuite/simple_testsuite.sh
       ## FIXME: drives/string/distance will fail with status 139 if we are passing --pedantic --pedantic --pedantic
       - echo "-------------- ORIGINAL TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.sh --use-reference-test-status "${MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PRIVATE_EXIT_STATUS_MASK}" --abort-after-step "${MBD_TESTS_PRIVATE_ABORT_AFTER_STEP}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" --prefix-output "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --tasks "${MBD_TESTS_PRIVATE_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/mbdyn-testsuite-timing-original-abort-after-step.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.py plain --use-reference-test-status "${MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS}" --exit-status-mask "${MBD_TESTS_PRIVATE_EXIT_STATUS_MASK}" --abort-after-step "${MBD_TESTS_PRIVATE_ABORT_AFTER_STEP}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" --prefix-output "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --tasks "${MBD_TESTS_PRIVATE_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} 2>&1 | tee -a "${log_file}" | awk -f testsuite/simple_testsuite_output_filter.awk
       - echo "-------------- PATCHED TESTS --------------------" | tee -a "${log_file}"
-      - ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite_patched.sh --initial-assembly-of-deformable-and-force-elements "${MBD_TESTS_PRIVATE_INITIAL_ASSEMBLY_DEFORMABLE}" --linear-solvers "${MBD_TESTS_PRIVATE_LINEAR_SOLVERS}" --matrix-handlers "${MBD_TESTS_PRIVATE_MATRIX_HANDLERS}" --scale-methods "${MBD_TESTS_PRIVATE_SCALE_METHODS}" --scale-when "${MBD_TESTS_PRIVATE_SCALE_WHEN}" --nonlinear-solvers "${MBD_TESTS_PRIVATE_NONLINEAR_SOLVERS}" --method "${MBD_TESTS_PRIVATE_METHODS}" --use-reference-test-status "${MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS}" --skip-expected-failures "yes" --exit-status-mask "${MBD_TESTS_PRIVATE_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" --prefix-output "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --tasks "${MBD_TESTS_PRIVATE_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} --suppressed-errors "solver" 2>&1 | tee -a "${log_file}"
+      - MBD_TESTSUITE_TIMING_FILE="${MBD_TESTS_PRIVATE_OUTPUT_DIR}/mbdyn-testsuite-timing-patched-matrix.tsv" ${TESTSUITE_TIME_CMD} testsuite/simple_testsuite.py patched --initial-assembly-of-deformable-and-force-elements "${MBD_TESTS_PRIVATE_INITIAL_ASSEMBLY_DEFORMABLE}" --linear-solvers "${MBD_TESTS_PRIVATE_LINEAR_SOLVERS}" --matrix-handlers "${MBD_TESTS_PRIVATE_MATRIX_HANDLERS}" --scale-methods "${MBD_TESTS_PRIVATE_SCALE_METHODS}" --scale-when "${MBD_TESTS_PRIVATE_SCALE_WHEN}" --nonlinear-solvers "${MBD_TESTS_PRIVATE_NONLINEAR_SOLVERS}" --method "${MBD_TESTS_PRIVATE_METHODS}" --use-reference-test-status "${MBD_TESTS_PRIVATE_USE_REFERENCE_TEST_STATUS}" --skip-expected-failures "yes" --exit-status-mask "${MBD_TESTS_PRIVATE_EXIT_STATUS_MASK}" --timeout "${MBD_TESTS_PRIVATE_TIMEOUT}" --prefix-output "${MBD_TESTS_PRIVATE_OUTPUT_DIR}" --prefix-input "${MBD_TESTS_PRIVATE_INPUT_DIR}" --tasks "${MBD_TESTS_PRIVATE_NUM_TASKS}" ${MBD_SIMPLE_TESTSUITE_FLAGS} --suppressed-errors "solver" 2>&1 | tee -a "${log_file}"
       - cd "${MBD_TESTS_PRIVATE_OUTPUT_DIR}"
       - find . -name 'junit_xml_report_*.xml' -print0 | xargs -0 "${CI_PROJECT_DIR}/testsuite/junit_xml_relative_path.py" -p "${CI_PROJECT_DIR}"
 
@@ -243,7 +268,7 @@ mbdyn-tests-private-test-job-debug:   # This job runs in the test stage.
     expire_in: 2 days
     paths:
       - $MBD_TESTS_PRIVATE_OUTPUT_DIR_DEBUG/$MBD_TESTS_PRIVATE_LOG_FILE
-      - $MBD_TESTS_PRIVATE_OUTPUT_DIR_DEBUG/mbdyn-testsuite-timing.tsv
+      - $MBD_TESTS_PRIVATE_OUTPUT_DIR_DEBUG/mbdyn-testsuite-timing-*.tsv
       - $MBD_TESTS_PRIVATE_OUTPUT_DIR_DEBUG/**/*.stdout
       - $MBD_TESTS_PRIVATE_OUTPUT_DIR_DEBUG/**/junit_xml_report_*.xml
     when: always
