@@ -115,6 +115,6 @@ siconos-build-job:       # This job runs in the build stage, which runs first.
     paths:
       - $SICONOS_INSTALL_PREFIX
   cache:
-   key: ${CI_JOB_NAME_SLUG}-${CI_COMMIT_REF_SLUG}
+   key: ${CI_JOB_NAME_SLUG}
    paths:
       - $SICONOS_BUILD_DIR
