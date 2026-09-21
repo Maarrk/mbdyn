@@ -1012,8 +1012,8 @@ AerodynamicBody::AssJac(VariableSubMatrixHandler& WorkMat,
 		// rotate force, couple and Jacobian matrix in absolute frame
 		Mat6x6 JFaR = MultRMRt(JFa, RRloc, cc);
 
-		Vec3 fTmp(RRloc*(Vec3(&Fa0[0])*dCoef));
-		Vec3 cTmp(RRloc*(Vec3(&Fa0[3])*dCoef) + Xb.Cross(fTmp));
+		Vec3 fTmp(RRloc*(Vec3(&Fa0[0])*(dCoef*cc)));
+		Vec3 cTmp(RRloc*(Vec3(&Fa0[3])*(dCoef*cc)) + Xb.Cross(fTmp));
 
 		// compute submatrices (see tecman.pdf)
 		Mat3x3 Mat21(Xb.Cross(JFaR.GetMat11()) + JFaR.GetMat21());
@@ -2049,8 +2049,8 @@ AerodynamicBeam::AssJac(VariableSubMatrixHandler& WorkMat,
 			Mat6x6 JFaR = MultRMRt(JFa, RRloc, cc);
 
 			// force and moment about the node
-			Vec3 fTmp(RRloc*(Vec3(&Fa0[0])*dCoef));
-			Vec3 cTmp(RRloc*(Vec3(&Fa0[3])*dCoef) + d.Cross(fTmp));
+			Vec3 fTmp(RRloc*(Vec3(&Fa0[0])*(dCoef*cc)));
+			Vec3 cTmp(RRloc*(Vec3(&Fa0[3])*(dCoef*cc)) + d.Cross(fTmp));
 
 			Mat3x3 WM_F2[6];
 
@@ -3083,8 +3083,8 @@ AerodynamicBeam2::AssJac(VariableSubMatrixHandler& WorkMat,
 			Mat6x6 JFaR = MultRMRt(JFa, RRloc, cc);
 
 			// force and moment about the node
-			Vec3 fTmp(RRloc*(Vec3(&Fa0[0])*dCoef));
-			Vec3 cTmp(RRloc*(Vec3(&Fa0[3])*dCoef) + d.Cross(fTmp));
+			Vec3 fTmp(RRloc*(Vec3(&Fa0[0])*(dCoef*cc)));
+			Vec3 cTmp(RRloc*(Vec3(&Fa0[3])*(dCoef*cc)) + d.Cross(fTmp));
 
 			Mat3x3 WM_F2[4];
 
