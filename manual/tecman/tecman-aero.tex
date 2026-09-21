@@ -140,20 +140,56 @@ are integrated into discrete contributions to the force and the moment
 applied to the appropriate node equilibrium.
 This is usually done by multiplying each force and moment per unit span
 contribution by an appropriate reference length coefficient.
-As a consequence, in the following force and moment contributions
-will be considered, namely
+At the $i$-th quadrature point, define this coefficient as
+\begin{align}
+	\alpha_i &= J_\ell\plbr{\xi_i} w_i
+	,
+\end{align}
+where $J_\ell$ is the Jacobian of the mapping from the quadrature
+coordinate to the physical spanwise coordinate, and $w_i$ is the
+quadrature weight.  In the implementation, this coefficient is
 \begin{subequations}
 \begin{align}
-	\tilde{\T{f}}_a
-	&=
-	\tilde{\T{f}}_a\plbr{\tilde{\T{v}}, \tilde{\T{\omega}}, \xi}
+	\alpha_i
+	&= \texttt{dHalfSpan}\,w_i
+	&& \text{for an aerodynamic body}
+	\,,
 	\\
-	\tilde{\T{c}}_a
+	\alpha_i
+	&= \texttt{dXds}\,\texttt{dsdCsi}\,w_i
+	&& \text{for an aerodynamic beam}
+	\,.
+\end{align}
+\end{subequations}
+As a consequence, the weighted force and moment contributions used in
+the following are
+\begin{subequations}
+\begin{align}
+	\tilde{\T{f}}_a^{(i)}
 	&=
-	\tilde{\T{c}}_a\plbr{\tilde{\T{v}}, \tilde{\T{\omega}}, \xi}
+	\alpha_i\,
+	\tilde{\T{f}}_{a/\xi}\plbr{
+		\tilde{\T{v}}, \tilde{\T{\omega}}, \xi_i
+	}
+	\\
+	\tilde{\T{c}}_a^{(i)}
+	&=
+	\alpha_i\,
+	\tilde{\T{c}}_{a/\xi}\plbr{
+		\tilde{\T{v}}, \tilde{\T{\omega}}, \xi_i
+	}
 	.
 \end{align}
 \end{subequations}
+The quadrature-point index is omitted in the remainder of this section.
+Since $\alpha_i$ does not depend on the state variables, the same factor
+must multiply every block of the sectional aerodynamic Jacobian, namely
+\begin{align}
+	\tilde{\TT{J}}_{Fa}^{(i)}
+	&=
+	\alpha_i\,\tilde{\TT{J}}_{Fa/\xi}^{(i)}
+	.
+\end{align}
 As already mentioned, each weighted sectional force and moment contribution
 is applied to the appropriate node after projection in the global reference
 frame.
