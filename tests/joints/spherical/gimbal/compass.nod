@@ -1,0 +1,15 @@
+# Do not modify 
+
+structural: CURR_BLADE + COMPASS_U, dynamic,
+    reference, CURR_BLADE + COMPASS_REVOLUTE, COMPASS_SPHERICAL_RADIAL_OFFSET, 0., 0.,
+    reference, CURR_BLADE + COMPASS_REVOLUTE, eye, # abs orient
+    reference, CURR_BLADE + COMPASS_REVOLUTE, null, # abs initial velo
+    reference, CURR_BLADE + COMPASS_REVOLUTE, null; # abs initial ang speed
+
+structural: CURR_BLADE + COMPASS_L, dynamic,
+    reference, CURR_BLADE + COMPASS_REVOLUTE, COMPASS_SPHERICAL_RADIAL_OFFSET, 0., 0.,
+    reference, CURR_BLADE + COMPASS_REVOLUTE, eye, # abs orient
+    reference, CURR_BLADE + COMPASS_REVOLUTE, null, # abs initial velo
+    reference, CURR_BLADE + COMPASS_REVOLUTE, null; # abs initial ang speed
+
+# vim:ft=mbd

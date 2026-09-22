@@ -1,0 +1,19 @@
+# Do not modify 
+
+reference: CURR_BLADE + COMPASS_MAIN,
+	reference, MAIN_FIX, null,
+	reference, MAIN_FIX,
+	1,  cos(CURR_PSI + DELTA_PSI/2), sin(CURR_PSI + DELTA_PSI/2), 0., 
+	2, -sin(CURR_PSI + DELTA_PSI/2), cos(CURR_PSI + DELTA_PSI/2), 0., 
+	reference, MAIN_ROTATING, null,
+	reference, MAIN_ROTATING, null;
+
+reference: CURR_BLADE + COMPASS_REVOLUTE,
+	reference, CURR_BLADE + COMPASS_MAIN, COMPASS_REVOLUTE_RADIAL_OFFSET, 0., 0.,
+	reference, CURR_BLADE + COMPASS_MAIN,
+		1, 1., 0., 0.,
+		2, 0., 0., 1.,
+	reference, CURR_BLADE + COMPASS_MAIN, null,
+	reference, CURR_BLADE + COMPASS_MAIN, null;
+
+# vim:ft=mbd
