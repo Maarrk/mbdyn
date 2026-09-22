@@ -1,0 +1,263 @@
+# Main input file for MBDyn
+
+begin: data; 
+	problem: initial value; 
+end: data; 
+
+# simulation parameters
+set: const real OMEGA = 60.; # rad/s; nominal angular velocity
+
+set: const real DT = 2*pi/OMEGA/256; # s; 256 steps per revolution
+set: const real T0 = 0.; # s
+set: const real TF = 2.; # s (or use 2*pi/OMEGA*number of periods)
+
+# azimuth of each blade (compasses are in between)
+set: const real PSI_1 = 0.*deg2rad;
+set: const real PSI_2 = 120.*deg2rad;
+set: const real PSI_3 = 240.*deg2rad;
+# azimuth interval between blades
+set: const real DELTA_PSI = PSI_2 - PSI_1;
+
+# compass geometry and regularization parameter
+set: const real COMPASS_REVOLUTE_RADIAL_OFFSET = 0.032; # m
+set: const real COMPASS_REVOLUTE_VERTICAL_OFFSET = 0.040; # m
+set: const real COMPASS_SPHERICAL_RADIAL_OFFSET = 0.032; # m
+
+set: const real REGULARIZATION_COMPLIANCE = 1.0e-11; # m/N
+
+# labels
+set: const integer MAIN_FIX = 1; # fixed reference frame
+set: const integer MAIN_ROTATING = 2; # rotating reference frame
+ 
+set: const integer GROUND_ROT = 1; # ground node, clamped
+set: const integer MAST = 7; # mast node, rotating
+set: const integer HUB = 8; # hub node, connected to the mast by the gimbal joint
+
+# blade labels
+set: const integer BLADE_1 = 100000;
+set: const integer BLADE_2 = 200000;
+set: const integer BLADE_3 = 300000;
+
+# label offsets for compasses
+set: const integer COMPASS_MAIN = 10;
+set: const integer COMPASS_REVOLUTE = 11;
+set: const integer COMPASS_U = 20;
+set: const integer COMPASS_L = 21;
+set: const integer MAST_C = 22;
+set: const integer HUB_C = 23;
+set: const integer COMPASS_SPH = 50;
+
+# temporary variables for compasses
+set: integer CURR_BLADE;
+set: real CURR_PSI;
+
+begin: initial value; 
+	time step: DT*0.1;
+	initial time: T0; 
+	final time: TF;
+	max iterations: 1000;
+	tolerance: 1e-6, test, relnorm;
+	derivatives tolerance: 1000; # 1e-5;
+	derivatives max iterations: 10;
+	derivatives coefficient: 1e-7;
+	linear solver: naive, colamd, pivot factor, 1e-6;
+	#linear solver: umfpack, cc;
+	method: ms, const, 0.58; 
+	output: counter;
+	#output:iterations;
+	#output: residual;
+end: initial value;
+
+
+begin: control data; 
+	#model counter cards 
+	structural nodes: 
+		+ 1		# ground
+		+ 1		# mast
+		+ 1		# rotor
+		+ 2*3		# compasses
+	;
+	rigid bodies: 
+		+ 1	# hub
+	;
+	joints: 
+		+ 1	# ground clamp
+		+ 1	# (prescribed) mast rotation
+		+ 1	# hub spherical hinge
+		+ 3*3	# compass_<i>_friction_coulomb
+		+ 1	# gimbal damping
+	;
+	joint regularizations: 
+		+ 3
+	;
+	forces: 
+		+ 1	# mast torque
+		+ 1	# hub torque
+		+ 1	# hub thrust
+	; 
+
+	output results: netcdf, sync, no text; # printing '.nc' file
+	#output results: netcdf, sync; # printing '.nc' file # anche txt
+	default beam output: all;
+	default orientation: orientation vector;
+ 	output frequency: 1;
+end: control data;
+
+# Rotor Reference Point 
+reference: MAIN_FIX, 
+	reference, global, null,
+	reference, global, 
+		1, 0., 0., 1., 
+		2, 0., 1., 0., 
+	reference, global, null, 
+	reference, global, null;
+	
+# rotor references 
+reference: MAIN_ROTATING, # gen ref
+	reference, MAIN_FIX, null,
+	reference, MAIN_FIX, eye,
+	reference, MAIN_FIX, null,
+	reference, MAIN_FIX, 0., 0., OMEGA; # initial angular velocity
+
+# compass references
+set: CURR_BLADE = BLADE_1;
+set: CURR_PSI = PSI_1;
+include: "compass.ref";
+set: CURR_BLADE = BLADE_2;
+set: CURR_PSI = PSI_2;
+include: "compass.ref";
+set: CURR_BLADE = BLADE_3;
+set: CURR_PSI = PSI_3;
+include: "compass.ref";
+
+begin: nodes; 
+	structural:  GROUND_ROT, static, at reference, MAIN_FIX;
+	structural:  MAST, static, at reference, MAIN_ROTATING;
+	structural:  HUB, dynamic, at reference, MAIN_ROTATING;
+
+	set: CURR_BLADE = BLADE_1;
+	include: "compass.nod";
+	set: CURR_BLADE = BLADE_2;
+	include: "compass.nod";
+	set: CURR_BLADE = BLADE_3;
+	include: "compass.nod";
+end: nodes; 
+
+begin: elements; 
+	# clamp
+	joint: 0, clamp, GROUND_ROT, node, node;
+
+	# freewheel mast rotation
+	joint: 1, total joint,
+		GROUND_ROT,
+			position, reference, node, null,
+			position orientation, reference, node, eye,
+			rotation orientation, reference, node, eye,
+		MAST,
+			position, reference, node, null,
+			position orientation, reference, node, eye,
+			rotation orientation, reference, node, eye,
+		position constraint, 1, 1, 1, null,
+		orientation constraint, 1, 1, 0, null;
+
+	# ball bearing between mast and hub, with friction
+	scalar function: "constfriction", const, 0.07;
+	joint: 2, spherical hinge,
+		MAST,
+			position, reference, node, null,
+			orientation, reference, node, eye,
+		HUB,
+			position, reference, node, null,
+			orientation, reference, node, eye
+
+		,
+		friction, 40.E-3,
+			#################################
+			### uncomment for LuGre model:
+			#/*
+			preload, 1.,
+			modlugre 2D, 2000000., 0., 0., 0.71, "constfriction",
+			#*/
+			### uncomment for Coulomb model:
+			/*
+			discrete coulomb 2D, "constfriction",
+				velocity tolerance, 1.E-4,
+			*/
+			#################################
+			simple 2D
+		;
+
+	# hub mass and inertia
+	body: HUB, HUB,
+		1.,
+		reference, node, null,
+		diag, 1., 1., 2.;
+
+	set: CURR_BLADE = BLADE_1;
+	include: "compass.elm"; # compass joints
+	set: CURR_BLADE = BLADE_2;
+	include: "compass.elm"; # compass joints
+	set: CURR_BLADE = BLADE_3;
+	include: "compass.elm"; # compass joints
+
+	# excitation and other loads
+	
+	# mast torque components
+	set: const real THRUST = 10000.; # N
+	set: const real TORQUE = 1000.; # N m
+
+	#################################
+	### with TORQUE_DISTURBANCE of order of magnitude close to TORQUE the reaction (and thus the normal) rotates by a few degrees; otherwise, the rotation is barely visible
+	#set: const real TORQUE_DISTURBANCE = TORQUE*0.001; # N m
+	#set: const real TORQUE_DISTURBANCE = TORQUE*0.01; # 10 N m in paper
+	#set: const real TORQUE_DISTURBANCE = TORQUE*0.04; # 40 N m in paper
+	set: const real TORQUE_DISTURBANCE = TORQUE*0.1; # 100 N m in paper
+	#################################
+	couple: MAST, follower,
+		MAST,
+			position, reference, node, null,
+		0., 0., 1.,
+			array, 2,
+			string, "-1e2*(model::element::joint(1, \"wz\") - OMEGA)", # governor that tries to keep rpm constant
+			step5, 0.01, 0., 0.02, TORQUE; # motor torque, equal and opposite to resisting torque (see HUB)
+
+	# hub torque components
+	couple: HUB, follower,
+		HUB,
+			position, reference, node, null,
+		component,
+			### component 1
+			const, 0.,
+			### component 2
+			# const, 0.,
+			string, "TORQUE_DISTURBANCE*sin(3*model::element::joint(1, \"rz\"))", # use azimuth to make it truly periodic, instead of speculating based on Time
+			# string, "TORQUE_DISTURBANCE*sin(3*model::element::joint(1, \"rz\")) + TORQUE_DISTURBANCE*0.2*cos(6*model::element::joint(1, \"rz\"))", 
+			### component 3
+			step5, 0.01, 0., 0.02, -TORQUE; # resisting torque; grows as smoothed step in 0.01 s starting at t = 0.01
+
+	# rotor thrust
+	force: HUB + 1, follower,
+		HUB,
+			position, reference, node, null,
+		0., 0., 1.,
+			step5, 0., 0., 0.01, THRUST;
+
+	# gimbal damping, to dampen oscillations a little bit
+	set: const real GIMBAL_DAMPING = 1e1; # N m s/rad
+	joint: 3, deformable hinge,
+		MAST,
+			position, reference, node, null,
+			orientation, reference, node, eye,
+		HUB,
+			position, reference, node, null,
+			orientation, reference, node, eye,
+		linear viscous generic,
+			diag, GIMBAL_DAMPING, GIMBAL_DAMPING, 0.;
+
+	# outputs inertia info
+	inertia: 1, 
+		position, reference, global, null,
+		body, all, output, log;
+end: elements; 
+
+# vim:ft=mbd
