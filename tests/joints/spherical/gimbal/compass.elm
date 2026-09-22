@@ -8,7 +8,6 @@ joint: CURR_BLADE + MAST_C, revolute hinge,
         position, reference, other node,  -COMPASS_SPHERICAL_RADIAL_OFFSET, -COMPASS_REVOLUTE_VERTICAL_OFFSET, 0.0,
         orientation, reference,other node, eye;
 
-
 joint: CURR_BLADE + HUB_C, revolute hinge,
     CURR_BLADE + COMPASS_U,
         position, reference, node, -COMPASS_SPHERICAL_RADIAL_OFFSET, COMPASS_REVOLUTE_VERTICAL_OFFSET, 0.0,

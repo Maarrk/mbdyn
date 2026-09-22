@@ -96,8 +96,7 @@ begin: control data;
 		+ 1	# hub thrust
 	; 
 
-	output results: netcdf, sync, no text; # printing '.nc' file
-	#output results: netcdf, sync; # printing '.nc' file # anche txt
+	output results: netcdf, sync, no text; # printing '.nc' file only
 	default beam output: all;
 	default orientation: orientation vector;
  	output frequency: 1;
@@ -169,7 +168,8 @@ begin: elements;
 		HUB,
 			position, reference, node, null,
 			orientation, reference, node, eye
-
+		#################################
+		### comment all for no friction
 		,
 		friction, 40.E-3,
 			#################################
@@ -185,6 +185,7 @@ begin: elements;
 			*/
 			#################################
 			simple 2D
+		#################################
 		;
 
 	# hub mass and inertia
