@@ -3720,8 +3720,8 @@ The one dimensional \kw{friction model} input format is:
         \bnt{friction_arglist}
 \end{Verbatim}
 %\end{verbatim}
-where \nt{friction\_function} gives the static friction
-as a function of sliding velocity.
+In the following, \nt{friction\_function} gives the static friction coefficient
+as a function of the sliding velocity.
 
 Currently implemented friction models are:
 \begin{enumerate}
@@ -3745,7 +3745,8 @@ The input format is:
 
     \item \kw{discrete coulomb}\\
     This is a Coulomb model with viscous friction and
-    internal states to resolve stick/slip conditions.\\
+    internal states to resolve stick/slip conditions.
+
     This model, not making use of a cone complementary problem solver,
     is \emph{experimental} and may lead to spurious convergence issue. Its use is \emph{discouraged}.
 %\begin{verbatim}
@@ -3760,7 +3761,8 @@ The input format is:
 %\end{verbatim}
     where \nt{sigma2} gives the viscous friction;
     \nt{vel\_ratio} defaults to 0.8, and is used
-    to discriminate stick/slip conditions.
+    to discriminate between stick and slip conditions.
+
     Note that \kw{discrete coulomb}
     cannot handle stick conditions when the reaction force
     in the constraint goes to zero (resulting in a singular Jacobian matrix).
@@ -3777,14 +3779,13 @@ Two dimensional friction models, \kw{friction model 2D} are required whenever th
         \bnt{friction_arglist_2D}
 \end{Verbatim}
 %\end{verbatim}
-where \nt{friction\_function} gives the static friction
-as a function of sliding velocity.
+In the following, \nt{friction\_function} gives the static friction coefficient
+as a function of the sliding velocity.
 
 Currently implemented friction models are:
 \begin{enumerate}
     \item \kw{modlugre 2D}\\
-
-    The \kw{modlugre 2D} model is based on \cite{Waltersson_Karayiannidis_2024}, but
+    This model is based on \cite{Waltersson_Karayiannidis_2024}, but
     does not model the moment related to the rotation around the contact point normal.
     In other words,it assumes pure sliding, without relative rotations, at the point of contact.
     It is recommended to set \nt{sigma2} to a zero.
@@ -3806,7 +3807,8 @@ where arguments have the same meaning those defined for the \kw{modlugre} one di
 
     \item \kw{discrete coulomb 2D}\\
     This is a Coulomb model with viscous friction and
-    internal states to resolve stick/slip conditions.\\
+    internal states to resolve stick/slip conditions.
+
     Just like the 1D Coulomb model, this model does not use a cone complementary problem solver (while it should),
     thus is \emph{experimental} and may lead to spurious convergence issue. Its use is \emph{strongly discouraged}.
 %\begin{verbatim}
@@ -3823,15 +3825,17 @@ where arguments have the same meaning those defined for the \kw{modlugre} one di
     where \nt{sigma2} gives the viscous friction;
     \nt{vel\_ratio} defaults to 0.8, and is used
     to discriminate stick/slip conditions.
+
     Note that \kw{discrete coulomb 2D}
     cannot handle stick conditions when the reaction force
     in the constraint goes to zero (resulting in a singular Jacobian matrix).
     The \kw{preload} parameter needs to be used to make sure
     the joint is preloaded as appropriate
     (see the documentation of the specific joint for details).
+
     The optional parameter \nt{vel\_tolerance} set the threshold below which, when sliding without any internal state transition, the friction direction is taken
     equal to the direction of the previous friction coefficient. It defaults to 1.E-6 
-    (whatever the measurement units of the model are), anc can influence the convergence of the model.
+    (whatever the measurement units of the model are), and can influence the convergence of the model.
 \end{enumerate}
 
 \subsection{Shape functions}
