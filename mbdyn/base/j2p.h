@@ -138,14 +138,16 @@ StrainGageParam::dGetDofValue(int iDof, int iOrder) const
  * se differenziale, iOrder puo' essere = 1 per la derivata */
 inline const doublereal&
 StrainGageParam::dGetX(void) const
-{  
-	unsigned int i = iNum - 1;
+{
+  if (pElem != 0) {
+  	/* element could be undefined (yet) */
+    unsigned int i = iNum - 1;
 
-	dX = pElem->dGetPrivData(i + 1)
-		+ dZ*pElem->dGetPrivData(i + 5)
-		- dY*pElem->dGetPrivData(i + 6);
-
-	return dX;
+    dX = pElem->dGetPrivData(i + 1)
+         + dZ * pElem->dGetPrivData(i + 5)
+         - dY * pElem->dGetPrivData(i + 6);
+  }
+  return dX;
 }
 
 /* StrainGageParam - end */
