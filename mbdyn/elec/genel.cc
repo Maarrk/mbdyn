@@ -1150,7 +1150,6 @@ ReadGenel(DataManager* pDM,
 					"while in descriptor form "
 					"at line " << HP.GetLineData()
 					<< std::endl);
-				SAFEDELETEARR(pvSD_y);
 			}
 			SAFENEWARR(pdD, doublereal, iNumOutputs*iNumInputs);
 			pd = pdD;
@@ -1167,9 +1166,11 @@ ReadGenel(DataManager* pDM,
 				*pd++ *= dGain;
 			}
 
-			pd = pdD;
-			for (int i = 0; i < iNumOutputs*iNumInputs; i++) {
-				*pd++ *= dGain;
+			if (pdD != 0) { /* D is optional */
+				pd = pdD;
+				for (int i = 0; i < iNumOutputs*iNumInputs; i++) {
+					*pd++ *= dGain;
+				}
 			}
 		}
 
