@@ -181,10 +181,11 @@ ExtFileHandlerEDGE::CheckFlag(int& cnt)
 	int cmd;
 	unsigned lineno = 0;
 
+  bool bQuitIfFileIsMissing = (cnt < 0);    // destructor passes -1
 	cnt++;
 
 	infile.open(fflagname.c_str());
-	if (!infile && cnt == -1) {
+	if (!infile && bQuitIfFileIsMissing) {
 		return EDGE_QUIT;
 	}
 
@@ -787,3 +788,4 @@ ReadExtFileHandlerEDGE(DataManager* pDM,
 
 	return pEFH;
 }
+	
