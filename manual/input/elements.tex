@@ -422,7 +422,7 @@ The syntax of the \kw{force} element is:
 
     \bnt{force_type} ::=
         \{ \kw{abstract} [ \kw{internal} ]                                 # \kw{force}
-            | \{ \kw{absolute} | \kw{follower} | \kw{internal} ]      # \kw{force}, \kw{couple}
+            | \{ \kw{absolute} | \kw{follower} \} [ \kw{internal} ]      # \kw{force}, \kw{couple}
             | \kw{total internal}                                     # \kw{force}
             | \kw{modal}                                             # \kw{force}
             | \kw{external} \{ \kw{structural} | \kw{modal} \} [ \kw{mapping} ] \}     # \kw{force}
@@ -550,7 +550,7 @@ The force and the moment applied to node \nt{node\_label} are thus
 \end{itemize}
 $\TT{R}$ is the orientation matrix of the node \nt{node\_label}.
 
-A single-node \kw{total} force in not implemented. Use a
+A single-node \kw{total} force is not implemented. Use a
 \kw{total internal} force (Section~\ref{sec:EL:FORCE:STRUCTURAL:INTERNAL_FORCE}),
 or a \kw{follower} force together with a \kw{follower} couple
 (Section~\ref{sec:EL:FORCE:STRUCTURAL:COUPLE}).
@@ -645,44 +645,44 @@ The format is:
 \end{Verbatim}
 %\end{verbatim}
 
-+For \kw{absolute internal} and \kw{follower internal},
-+the format is identical to that of the structural force
-+(Section~\ref{sec:EL:FORCE:STRUCTURAL:FORCE}),
-+except for the definition of the second node;
-+the force applied to the second node is opposite
-+to that applied to the first node.
-+
-+The \kw{total internal} force is intrinsically follower:
-+the force and the moment are oriented according to node 1.
-+Both are applied at the point defined by \nt{relative\_arm\_2}
-+on node 2, so the two nodes exchange an equal and opposite pair.
-+The force and the moment applied to each node are
-+\begin{subequations}
-+\begin{align}
-+	\T{f}_1 & = \TT{R}_1 \ \nt{force\_orientation\_1} \cdot \nt{force\_value} \\
-+	\T{m}_1 & = \TT{R}_1 \ \nt{moment\_orientation\_1} \cdot \nt{moment\_value}
-+		+ \T{b}_1 \times \T{f}_1 \\
-+	\T{f}_2 & = - \T{f}_1 \\
-+	\T{m}_2 & = - \TT{R}_1 \ \nt{moment\_orientation\_1} \cdot \nt{moment\_value}
-+		- \T{b}_2 \times \T{f}_1
-+\end{align}
-+\end{subequations}
-+with
-+\begin{subequations}
-+\begin{align}
-+	\T{b}_2 & = \TT{R}_2 \ \nt{relative\_arm\_2} \\
-+	\T{b}_1 & = \T{x}_2 + \T{b}_2 - \T{x}_1 ,
-+\end{align}
-+\end{subequations}
-+where $\T{x}_i$ and $\TT{R}_i$ are the position and the orientation matrix
-+of node $i$.
-+Missing orientations default to the identity,
-+missing arms and values to zero.
-+\nt{relative\_arm\_1}, \nt{force\_orientation\_2}
-+and \nt{moment\_orientation\_2} are accepted,
-+but currently they are not used.
-+See also the
-+\hyperref{\kw{total joint}}{\kw{total joint} (Section~}{)}{sec:EL:STRUCT:JOINT:TOTAL_JOINT}.
+For \kw{absolute internal} and \kw{follower internal},
+the format is identical to that of the structural force
+(Section~\ref{sec:EL:FORCE:STRUCTURAL:FORCE}),
+except for the definition of the second node;
+the force applied to the second node is opposite
+to that applied to the first node.
+
+The \kw{total internal} force is intrinsically follower:
+the force and the moment are oriented according to node 1.
+Both are applied at the point defined by \nt{relative\_arm\_2}
+on node 2, so the two nodes exchange an equal and opposite pair.
+The force and the moment applied to each node are
+\begin{subequations}
+\begin{align}
+	\T{f}_1 & = \TT{R}_1 \ \nt{force\_orientation\_1} \cdot \nt{force\_value} \\
+	\T{m}_1 & = \TT{R}_1 \ \nt{moment\_orientation\_1} \cdot \nt{moment\_value}
+		+ \T{b}_1 \times \T{f}_1 \\
+	\T{f}_2 & = - \T{f}_1 \\
+	\T{m}_2 & = - \TT{R}_1 \ \nt{moment\_orientation\_1} \cdot \nt{moment\_value}
+		- \T{b}_2 \times \T{f}_1
+\end{align}
+\end{subequations}
+with
+\begin{subequations}
+\begin{align}
+	\T{b}_2 & = \TT{R}_2 \ \nt{relative\_arm\_2} \\
+	\T{b}_1 & = \T{x}_2 + \T{b}_2 - \T{x}_1 ,
+\end{align}
+\end{subequations}
+where $\T{x}_i$ and $\TT{R}_i$ are the position and the orientation matrix
+of node $i$.
+Missing orientations default to the identity,
+missing arms and values to zero.
+\nt{relative\_arm\_1}, \nt{force\_orientation\_2}
+and \nt{moment\_orientation\_2} are accepted,
+but currently they are not used.
+See also the
+\hyperref{\kw{total joint}}{\kw{total joint} (Section~}{)}{sec:EL:STRUCT:JOINT:TOTAL_JOINT}.
 
 \subsubsection{Output}
 For \kw{absolute internal} and \kw{follower internal}
@@ -730,10 +730,10 @@ the frames defined by \nt{force\_orientation\_1} and
         10,
             force orientation, eye,
             moment orientation, eye,
-        10,
+        20,
             position, .5, 0., 0.,
         force, component,
-            const 0.,
+            const, 0.,
             ramp, 10., 0., 1., 0.,
             file, 5, 2,
         moment, single, 0., 0., 1.,
