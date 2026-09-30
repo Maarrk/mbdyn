@@ -69,11 +69,12 @@ reference: 1,
 	reference, global, eye,
 	reference, global, null,
 	reference, global, null;
+
 reference: 2,
 	reference, 1, null,
 	reference, 1, eye,
 	reference, 1, null,
-	reference, 1, null,
+	reference, 1, null;
 
 begin: nodes;
 	structural: 1, static,
@@ -118,7 +119,7 @@ begin: elements;
 			rotation orientation, reference, global, eye,
 		position constraint, inactive, active, inactive,
 				0., 1., 0.,	
-					string, "(Time <= Tstart) * (0)
+					string, "(Time <= Tstart) * (0) +
 						(Time>Tstart) * (Time <= Tstart + Tlift) *
 							(126*((Time-Tstart)/Tlift)^5+
 							  -420*((Time-Tstart)/Tlift)^6+
@@ -170,5 +171,5 @@ end: elements;
 ##############################################################################################################
 ## Variables to be updated by simple_testsuite.sh --update-reference-test-status
 ## Warning, do not edit!!!
-## @MBDYN_SIMPLE_TESTSUITE_EXIT_STATUS@ = 1
+## @MBDYN_SIMPLE_TESTSUITE_EXIT_STATUS@ = 0
 ##############################################################################################################
