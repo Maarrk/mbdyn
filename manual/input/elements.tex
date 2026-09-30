@@ -422,14 +422,15 @@ The syntax of the \kw{force} element is:
 
     \bnt{force_type} ::=
         \{ \kw{abstract} [ \kw{internal} ]                                 # \kw{force}
-            | \{ \kw{absolute} | \kw{follower} | \kw{total} \} [ \kw{internal} ]      # \kw{force}, \kw{couple}
+            | \{ \kw{absolute} | \kw{follower} | \kw{internal} ]      # \kw{force}, \kw{couple}
+            | \kw{total internal}                                     # \kw{force}
             | \kw{modal}                                             # \kw{force}
             | \kw{external} \{ \kw{structural} | \kw{modal} \} [ \kw{mapping} ] \}     # \kw{force}
 \end{Verbatim}
 %\end{verbatim}
 The \kw{abstract} \nt{force\_type} applies to generic equations;
 
-The structural force types (\kw{absolute}, \kw{follower}, \kw{total})
+The structural force types (\kw{absolute}, \kw{follower}, \kw{total internal})
 only apply to equilibrium equations
 related to \kw{structural} nodes.
 The \kw{couple} element can only be structural.
@@ -521,25 +522,12 @@ The format is:
         \bnt{node_label} , 
         \kw{position} , (\hty{Vec3}) \bnt{relative_arm} ,
         (\htybty{TplDriveCaller}{Vec3}) \bnt{force_value}
-
-    \bnt{force_type} ::= \kw{total}
-
-    \bnt{force_arglist} ::=
-        \bnt{node_label}
-        [ , \kw{position} , (\hty{Vec3}) \bnt{relative_arm} ]
-        [ , \kw{force orientation} , (\hty{Mat3x3}) \bnt{force_orientation} ]
-        [ , \kw{moment orientation} , (\hty{Mat3x3}) \bnt{moment_orientation} ]
-        [ , \kw{force} , (\htybty{TplDriveCaller}{Vec3}) \bnt{force_value} ]
-        [ , \kw{moment} , (\htybty{TplDriveCaller}{Vec3}) \bnt{moment_value} ]
 \end{Verbatim}
 %\end{verbatim}
 The vector \nt{relative\_arm} defines the offset with respect
 to the node of the point where the force is applied.
 The drive \nt{force\_value} defines the value of the force
 as a function of time.
-The \kw{total} force is intrinsically follower.
-See also the 
-\hyperref{\kw{total joint}}{\kw{total joint} (Section~}{)}{sec:EL:STRUCT:JOINT:TOTAL_JOINT}.
 
 The force and the moment applied to node \nt{node\_label} are thus
 \begin{itemize}
@@ -559,21 +547,13 @@ The force and the moment applied to node \nt{node\_label} are thus
 \end{align}
 \end{subequations}
 
-\item \kw{total} force element:
-\begin{subequations}
-\begin{align}
-	\T{f} & = \TT{R} \ \nt{force\_orientation} \cdot \nt{force\_value} \\
-	\T{m} & = \TT{R} \lplbr{
-		\nt{relative\_arm} \times \plbr{ \nt{force\_orientation} \cdot \nt{force\_value}}
-	} \nonumber \\
-	& \rplbr{\hphantom{= } \mbox{} +
-		\nt{moment\_orientation} \nt{moment\_value}
-	};
-\end{align}
-\end{subequations}
-
 \end{itemize}
 $\TT{R}$ is the orientation matrix of the node \nt{node\_label}.
+
+A single-node \kw{total} force in not implemented. Use a
+\kw{total internal} force (Section~\ref{sec:EL:FORCE:STRUCTURAL:INTERNAL_FORCE}),
+or a \kw{follower} force together with a \kw{follower} couple
+(Section~\ref{sec:EL:FORCE:STRUCTURAL:COUPLE}).
 
 \paragraph{Example.} \
 \begin{verbatim}
@@ -585,17 +565,6 @@ $\TT{R}$ is the orientation matrix of the node \nt{node\_label}.
     force: 20, follower,
         2000,
             position, null,
-        component,
-            const, 0.,
-            ramp, 10., 0., 1., 0.,
-            file, 5, 2;
-    force: 30, total,
-        2000,
-            position, .5, 0., 0.,
-            force orientation, eye,
-            moment orientation, eye,
-        1., 0., 0.,
-            const, 25.,
         component,
             const, 0.,
             ramp, 10., 0., 1., 0.,
@@ -675,11 +644,49 @@ The format is:
         [ , \kw{moment} , (\htybty{TplDriveCaller}{Vec3}) \bnt{moment_value} ]
 \end{Verbatim}
 %\end{verbatim}
-The format is basically identical to the previous case,
-except for the definition of the second node.
+
++For \kw{absolute internal} and \kw{follower internal},
++the format is identical to that of the structural force
++(Section~\ref{sec:EL:FORCE:STRUCTURAL:FORCE}),
++except for the definition of the second node;
++the force applied to the second node is opposite
++to that applied to the first node.
++
++The \kw{total internal} force is intrinsically follower:
++the force and the moment are oriented according to node 1.
++Both are applied at the point defined by \nt{relative\_arm\_2}
++on node 2, so the two nodes exchange an equal and opposite pair.
++The force and the moment applied to each node are
++\begin{subequations}
++\begin{align}
++	\T{f}_1 & = \TT{R}_1 \ \nt{force\_orientation\_1} \cdot \nt{force\_value} \\
++	\T{m}_1 & = \TT{R}_1 \ \nt{moment\_orientation\_1} \cdot \nt{moment\_value}
++		+ \T{b}_1 \times \T{f}_1 \\
++	\T{f}_2 & = - \T{f}_1 \\
++	\T{m}_2 & = - \TT{R}_1 \ \nt{moment\_orientation\_1} \cdot \nt{moment\_value}
++		- \T{b}_2 \times \T{f}_1
++\end{align}
++\end{subequations}
++with
++\begin{subequations}
++\begin{align}
++	\T{b}_2 & = \TT{R}_2 \ \nt{relative\_arm\_2} \\
++	\T{b}_1 & = \T{x}_2 + \T{b}_2 - \T{x}_1 ,
++\end{align}
++\end{subequations}
++where $\T{x}_i$ and $\TT{R}_i$ are the position and the orientation matrix
++of node $i$.
++Missing orientations default to the identity,
++missing arms and values to zero.
++\nt{relative\_arm\_1}, \nt{force\_orientation\_2}
++and \nt{moment\_orientation\_2} are accepted,
++but currently they are not used.
++See also the
++\hyperref{\kw{total joint}}{\kw{total joint} (Section~}{)}{sec:EL:STRUCT:JOINT:TOTAL_JOINT}.
 
 \subsubsection{Output}
-The format is:
+For \kw{absolute internal} and \kw{follower internal}
+the format is:
 \begin{itemize}
     \item the label of the element;
     \item the label of the first node the force is applied to;
@@ -694,7 +701,15 @@ The format is:
 	  in the global frame (i.e.\ referred to point $ \cubr{0,0,0} $
 	  and oriented as the global frame).
 \end{itemize}
-
+For \kw{total internal} the format is:
+\begin{itemize}
+    \item the label of the element;
+    \item the three components of \nt{force\_value};
+    \item the three components of \nt{moment\_value}.
+\end{itemize}
+Both are the values of the drives, i.e.\ they are expressed in
+the frames defined by \nt{force\_orientation\_1} and
+\nt{moment\_orientation\_1} relative to node 1.
 \paragraph{Example.} \
 \begin{verbatim}
     # constant structural force
@@ -709,6 +724,20 @@ The format is:
         20, position, null,
         0.,0.,1.,
             const, 100.;
+
+    # total internal force and moment
+    force: 2, total internal,
+        10,
+            force orientation, eye,
+            moment orientation, eye,
+        10,
+            position, .5, 0., 0.,
+        force, component,
+            const 0.,
+            ramp, 10., 0., 1., 0.,
+            file, 5, 2,
+        moment, single, 0., 0., 1.,
+            const, 25.;
 \end{verbatim}
 
 
