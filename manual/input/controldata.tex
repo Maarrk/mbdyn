@@ -132,15 +132,18 @@ but the previous behavior can be recovered back with this flag.
             | \kw{gravity}
             | \kw{forces}
             | \kw{beams}
+            | \kw{plates}
             | \kw{solids}
             | \kw{surface loads}
+            | \kw{inertia}
             | \kw{aerodynamic elements}
             | \kw{loadable elements} \} 
 \end{Verbatim}
 %\end{verbatim}
 \kw{joints} are used by default, and cannot be added to the list.
 \kw{beams} are used by default, too, but can be added to the list
-essentially for backward compatibility.
+essentially for backward compatibility. \kw{gravity} is accepted
+but not supported yet: a warning is printed.
 
 \subsection{Initial Stiffness}\label{sec:CONTROLDATA:INITIALSTIFFNESS}
 %\begin{verbatim}
