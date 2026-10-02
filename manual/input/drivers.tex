@@ -182,7 +182,7 @@ Time values must grow monotonically.
 \end{Verbatim}
 %\end{verbatim}
 The driver binds to a socket listening on port \nt{port\_number} 
-(defaults to 9011) or on the named pipe \nt{file\_name}; at the
+(defaults to 5555) or on the named pipe \nt{file\_name}; at the
 beginning of each time step, in case of connection, the driver expects some
 input data in text format, consisting in an authentication token 
 (if required).
@@ -365,7 +365,7 @@ if \kw{create} is set to \kw{yes}, \nt{host\_name} indicates
 the host that is allowed to connect to the socket; it defaults 
 to any host (0.0.0.0); if \kw{create} is set to \kw{no},
 \nt{host\_name} indicates what host to connect to; the default 
-is localhost (127.0.0.1); the default port is 9011;
+is localhost (127.0.0.1); the default port is 9012;
 
 \item \kw{socket type} defaults to \kw{tcp};
 
