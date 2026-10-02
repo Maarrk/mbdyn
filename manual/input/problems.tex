@@ -737,7 +737,12 @@ Indeed \verb;NOX; is a huge library with many parameters and options. Within thi
         | \kw{modified} , (\ty{integer}) \bnt{outer_iter_before_ass}
             [ , \kw{keep jacobian matrix} ]
             [ , \kw{honor element requests} ] \} ]
-        [ , \kw{linear solver}, \{ \kw{gmres} | \kw{cg} | \kw{cgs} | \kw{tfqmr} | \kw{bicgstab} \} ]
+        [ , \kw{linear solver}, \{ \kw{Block GMRES} | \kw{Pseudo Block GMRES}
+            | \kw{Block CG} | \kw{Pseudo Block CG} | \kw{Pseudo Block Stochastic CG}
+            | \kw{GCRODR} | \kw{RCG} | \kw{MINRES} | \kw{TFQMR} | \kw{BiCGStab}
+            | \kw{Fixed Point} | \kw{TPETRA GMRES} | \kw{TPETRA GMRES PIPELINE}
+            | \kw{TPETRA GMRES SINGLE REDUCE} | \kw{TPETRA GMRES S STEP}
+            | \kw{gmres} | \kw{cg} | \kw{cgs} \} ]
         [ , \kw{linear solver tolerance}, (\ty{real}) \bnt{linsol_tol} ]
         [ , \kw{linear solver max iterations}, (\ty{integer}) \bnt{linsol_max_iter} ]
         [ , \kw{krylov subspace size}, (\ty{integer}) \bnt{krylov_subspace} ]
@@ -775,6 +780,8 @@ If the option \kw{direction} is set to \kw{newton}, an inexact Newton method is 
 \begin{description}
 \item[\kw{Block GMRES}] Block restarted generalized minimal residual
 \item[\kw{Pseudo Block GMRES}] 
+\item[\kw{Block CG}]
+\item[\kw{Pseudo Block CG}]
 \item[\kw{Pseudo Block Stochastic CG}]
 \item[\kw{GCRODR}] 
 \item[\kw{RCG}] 
@@ -785,8 +792,11 @@ If the option \kw{direction} is set to \kw{newton}, an inexact Newton method is 
 \item[\kw{TPETRA GMRES}] 
 \item[\kw{TPETRA GMRES PIPELINE}] 
 \item[\kw{TPETRA GMRES SINGLE REDUCE}] 
-\item[\kw{TPETRA GMRES S-STEP}] 
+\item[\kw{TPETRA GMRES S STEP}] 
 \end{description}
+For compatibility, \kw{gmres}, \kw{cg} and \kw{cgs} are accepted
+as aliases of \kw{Block GMRES}, \kw{Block CG}
+and \kw{Pseudo Block Stochastic CG}, respectively.
 The \kw{gmres} solver is accepting also the parameter \bnt{krylov\_subspace} which defines the number of inner iterations before a restart.
 \subparagraph{Preconditioner}
 All linear solvers from the previous paragraph require proper preconditioning. For that purpose \verb;NOX; uses MBDyn's direct linear solvers defined in section~\ref{sec:LINEAR-SOLVER}. Since an update of the preconditioner might be expensive, it can be updated only after a fixed number of outer iterations defined by the parameter \bnt{outer\_iter\_before\_ass}, after the number of inner iterations exceeded \bnt{inner\_iter\_before\_ass} or on request by elements if \kw{honor element requests} is set. At the moment only the \kw{newton krylov} Jacobian operator and the \kw{broyden} direction are considering the parameter \bnt{outer\_iter\_before\_ass}. If the maximum number of inner iterations (\bnt{linsol\_max\_iter}) is exceeded, an update of the preconditioner is also enforced. If the flag \kw{use preconditioner as solver} is set, \verb;NOX; does not use any iterative solver. Instead MBDyn's own linear solvers from section~\ref{sec:LINEAR-SOLVER} are applied directly.
