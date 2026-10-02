@@ -374,16 +374,17 @@ where
 
 %\begin{verbatim}
 \begin{Verbatim}[commandchars=\\\{\}]
-    \bnt{method_data} ::= \{ \{ \{ \kw{ms} | \kw{ms2} \} | \kw{ms3} | \kw{ms4} | \kw{hope} 
+    \bnt{method_data} ::= \{ \{ \{ \kw{ms} | \kw{ms2} \} | \kw{ms3} | \kw{ms4} | \kw{hope} |
     \kw{ss2} | \kw{ss3} | \kw{ss4} | \kw{Bathe} | \kw{msstc3} | 
     \kw{mssth3} | \kw{msstc4} | \kw{mssth4} | \kw{msstc5} | \kw{mssth5} |
-        \{\kw{hybrid}, \bnt{defaul_hybrid_method} \} 
+        \{\kw{hybrid}, \bnt{default_hybrid_method} \} 
         (\hty{DriveCaller}) \bnt{differential_radius}
         [ , (\hty{DriveCaller}) \bnt{algebraic_radius} ] \} | 
     \{ \kw{DIRK33} | \kw{DIRK43} | \kw{DIRK54} \} |
     \kw{crank nicolson} | 
     \kw{implicit euler} | 
-    \kw{bdf} [ , \kw{order} , \bnt{order} ]\end{Verbatim}
+    \kw{bdf} [ , \kw{order} , \bnt{order} ] \}
+\end{Verbatim}
 %\end{verbatim}
 
 The first implemented method is Crank-Nicolson:
@@ -524,8 +525,8 @@ This nonlinear solver is well tested.
                                  \kw{bfgs} |
                                  \kw{mcp newton fb} |
                                  \kw{mcp newton min fb} |
-                                 \kw{siconos newton fb} |
-                                 \kw{siconos newton min fb}\}
+                                 \kw{siconos mcp newton fb} |
+                                 \kw{siconos mcp newton min fb}\}
 
     \bnt{nonlinear_solver_data} ::= 
         [ \{ \kw{true}
@@ -761,8 +762,8 @@ Indeed \verb;NOX; is a huge library with many parameters and options. Within thi
         [ , \kw{line search method}, \{ \kw{backtrack} |
                                   \kw{polynomial} |
                                   \kw{more thuente} \} ]
-        [ , \kw{sufficient decrease condition} \{ \kw{armijo goldstein} | \kw{ared pred} \}]
-        [ , \kw{line search max iterations} (\ty{integer}) \bnt{line_search_max_iter} ]
+        [ , \kw{sufficient decrease condition} , \{ \kw{armijo goldstein} | \kw{ared pred} \} ]
+        [ , \kw{line search max iterations} , (\ty{integer}) \bnt{line_search_max_iter} ]
         [ , \kw{minimum step}, (\ty{real}) \bnt{minimum_step} ]
         [ , \kw{recovery step}, (\ty{real}) \bnt{recovery_step} ]
         [ , \kw{recovery step type}, \{ \kw{constant} | \kw{last computed step} \} ]
