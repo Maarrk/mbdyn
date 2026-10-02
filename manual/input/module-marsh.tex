@@ -66,8 +66,8 @@ messages from the Manager are tracked.
         [ , \bnt{output_flag} ]
 
     \bnt{message_clause} ::=
-        { \kw{send} , (\ty{string}) " \bnt{outbound_message} " \bnt{outbound_data}
-        | \kw{subscribe} , (\ty{string}) " \bnt{inbound_message} " }
+        \{ \kw{send} , (\ty{string}) " \bnt{outbound_message} " , \bnt{outbound_data}
+        | \kw{subscribe} , (\ty{string}) " \bnt{inbound_message} " \}
 \end{Verbatim}
 
 \paragraph{Element Ordering}
@@ -108,7 +108,7 @@ the messages of any further ones are ignored.
 \subsubsection{Outbound Messages}
 
 \begin{Verbatim}[commandchars=\\\{\}]
-    \bnt{outbound_message} ::= { \kw{SIM_STATE} | \kw{MOTION_CUE_EXTRA} }
+    \bnt{outbound_message} ::= \{ \kw{SIM_STATE} | \kw{MOTION_CUE_EXTRA} \}
 
     \bnt{outbound_data} ::=
         [ , \bnt{message_source} ]
@@ -116,10 +116,10 @@ the messages of any further ones are ignored.
             (\hty{ScalarValue}) \bnt{field_value} [ , ... ] ]
 
     \bnt{message_source} ::=
-        { \kw{aircraft instruments} , \bnt{aircraft_instruments_label}
+        \{ \kw{aircraft instruments} , \bnt{aircraft_instruments_label}
         | \kw{node} , \bnt{node_label}
             [ , \kw{position} , (\hty{Vec3}) \bnt{offset} ]
-            [ , \kw{orientation} , (\hty{OrientationMatrix}) \bnt{orientation} ] }
+            [ , \kw{orientation} , (\hty{OrientationMatrix}) \bnt{orientation} ] \}
 \end{Verbatim}
 
 MAVLink expresses the motion in body axes, with $x$ pointing forward, $y$ to
