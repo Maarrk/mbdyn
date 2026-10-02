@@ -638,23 +638,33 @@ see Section~\ref{sec:NetCDF:Elem:Beam}.
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{card} ::= \kw{default scale} : \bnt{scale_list} ;
 
-    \bnt{scale_list} ::= \bnt{scale_pair} [ , \bnt{output_list} ]
+    \bnt{scale_list} ::= \bnt{scale_pair} [ , ... ]
 
-    \bnt{scale_pair} ::= \{ \kw{all} | \kw{none} | \bnt{scale_item} \} , \bnt{scale_factor}
+    \bnt{scale_pair} ::= \{ \kw{all} | \bnt{scale_item} \} , \bnt{scale_factor}
 
     \bnt{scale_item} ::=
         \{ \kw{abstract nodes}
             | \kw{electric nodes}
             | \kw{hydraulic nodes}
             | \kw{structural nodes}
-            | \kw{thermal nodes} \}
+            | \kw{thermal nodes}
+            | \kw{joints}
+            | \{ \kw{rotors} | \kw{induced velocity elements} \}
+            | \kw{aeromodals}
+            | \kw{genels}
+            | \kw{electric bulk elements}
+            | \kw{electric elements}
+            | \kw{thermal elements}
+            | \kw{hydraulic elements}
+            | \kw{loadable elements} \}
 \end{Verbatim}
 %\end{verbatim}
 Define the residual scaling factor for all dof owners, or for specific
 types of dof owners.
 In principle, all dof owners should allow to define a scale factor,
 since they define a set of equations.
-In practice, only the above listed types support this option.
+In practice, only the above listed types support this option. Notice that
+\kw{rotors} and \kw{induced velocity elements} are the same item.
 
 Residual scaling is only active when specifically requested
 by the related option for the \kw{tolerance} keyword
