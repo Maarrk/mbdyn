@@ -384,7 +384,7 @@ At present only the \kw{spring support} type is available.
 The equation related to the desired dof of the linked node is added a
 contribution based on the value of the desired degree of freedom
 multiplied by the stiffness.
-The \nt{dof} is read without the order field: niether \kw{algebraic} nor
+The \nt{dof} is read without the order field: neither \kw{algebraic} nor
 \kw{differential} may be given, and the value of the degree of freedom,
 not its derivative, is always used.
 
@@ -867,9 +867,14 @@ If the \kw{modal} joint element is connected to a modal node
 instead of being clamped to the ground, the optional keyword \kw{resultant}
 is allowed for each mode drive caller.
 
-The keyword \kw{resultant} is followed by six real numbers: 
-the three components of the resultant force and the three components 
-of the resultant moment associated with the related mode.
+The keyword \kw{resultant} is followed by two $3\times 1$ vectors,
+the resultant force and the resultant moment
+associated with a unit value of the related mode's force,
+in the reference frame of the modal node;
+they are multiplied by the mode's drive caller
+and applied to the modal node.
+Using \kw{resultant} when the \kw{modal} joint is clamped is an error.
+
 
 If the keyword \kw{list} was given, the mode numbers must be
 the actual mode numbers defined in the FEM model.
