@@ -14,9 +14,11 @@ please do not count too much on backward compatibility.
 The syntax is:
 %\begin{verbatim}
 \begin{Verbatim}[commandchars=\\\{\}]
-    \bnt{elem_type} ::= \kw{stream output}
+    \bnt{elem_type} ::= \kw{output element}
 
-    \bnt{arglist} ::=
+    \bnt{arglist} ::= \{ \kw{socket stream} , \bnt{socket_stream_arglist}
+            | \kw{buffer stream} , \bnt{buffer_stream_arglist} \}
+        \bnt{socket_stream_arglist} ::=
         \kw{stream name} , " \bnt{stream_name} " ,
             [ \kw{send after} , \{ \kw{convergence} | \kw{predict} \} , ]
         \kw{create} , \{ \kw{yes} | \kw{no} \} ,
@@ -33,8 +35,19 @@ The syntax is:
             [ , \kw{precision} , \bnt{precision} ]
             [ , \kw{shift} , \bnt{shift} ] , ]
         \bnt{content}
+
+        \bnt{buffer_stream_arglist} ::=
+            [ \kw{type} , \{ \kw{stl}
+                | \kw{raw} [ , \kw{owns memory} , \{ \kw{yes} | \kw{no} \} ] \} , ]
+            [ \kw{output every} , \bnt{steps} , ]
+            [ \kw{echo} , \bnt{file_name}
+                [ , \kw{precision} , \bnt{precision} ]
+                [ , \kw{shift} , \bnt{shift} ] , ]
+            \bnt{content}
 \end{Verbatim}
 %\end{verbatim}
+The older form \kw{stram output} is equivalent to \kw{output element}
+followed by \kw{socket stream}.
 The stream output allows MBDyn to send streamed outputs 
 to remote processes during both batch and real-time simulations,
 using sockets either in the \texttt{local} or in the \texttt{inet} namespace.
@@ -116,7 +129,7 @@ in a subset of the kinematics of a set of structural nodes:
 \begin{Verbatim}[commandchars=\\\{\}]
     \bnt{content} ::= \{ \bnt{values} | \bnt{motion} | \bnt{user_defined} \}
 
-    \bnt{values} ::= [ \kw{values} , ]
+    \bnt{values} ::= \kw{values} ,
         \bnt{channel_number} ,
             \bnt{value}
             [ , ... ]
@@ -141,7 +154,7 @@ in a subset of the kinematics of a set of structural nodes:
 %\end{verbatim}
 where
 \begin{itemize}
-\item the (optional) keyword \kw{values} indicates that a set
+\item the keyword \kw{values} indicates that a set
 of independent scalar channels is output by the element;
 
 \item the number of channels \nt{channel\_number} that are written
