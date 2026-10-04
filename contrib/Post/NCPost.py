@@ -4,6 +4,7 @@ import sys
 import os
 import json
 import re
+import keyword
 import pandas as pd
 import numpy as np
 from netCDF4 import Dataset, chartostring
@@ -19,7 +20,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolb
 from matplotlib.figure import Figure
 
 class ExportDialog(QDialog):
-    def __init__(self, signals, parent=None):
+    def __init__(self, signal_manager, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Export Signals to CSV")
         self.resize(300, 400)
@@ -27,7 +28,10 @@ class ExportDialog(QDialog):
         layout.addWidget(QLabel("Select signals to include in CSV:"))
         self.list_widget = QListWidget()
         self.list_widget.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
-        self.list_widget.addItems(sorted(signals.keys()))
+        for name in sorted(signal_manager.signals.keys()):
+            item = QListWidgetItem(signal_manager.display_name(name))
+            item.setData(Qt.ItemDataRole.UserRole, name)
+            self.list_widget.addItem(item)
         layout.addWidget(self.list_widget)
         btns = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         btns.accepted.connect(self.accept)
@@ -35,7 +39,8 @@ class ExportDialog(QDialog):
         layout.addWidget(btns)
 
     def get_selected(self):
-        return [item.text() for item in self.list_widget.selectedItems()]
+        return [item.data(Qt.ItemDataRole.UserRole)
+                for item in self.list_widget.selectedItems()]
 
 class FormulaDialog(QDialog):
     def __init__(self, signal_manager, current_expr="", parent=None):
@@ -88,10 +93,32 @@ class SignalManager(QObject):
             self.source_map.pop(name, None)
             self.data_changed.emit()
 
+    @staticmethod
+    def valid_signal_name(name):
+        """Convert an arbitrary MBDyn label to a valid Python identifier."""
+        name = re.sub(r'[^a-zA-Z0-9_]', '_', name)
+        if not name or name[0].isdigit():
+            name = f"signal_{name}"
+        if keyword.iskeyword(name):
+            name += "_"
+        return name
+
+    @staticmethod
+    def _replace_signal_reference(expression, old_name, new_name):
+        """Replace one complete signal reference, including non-identifiers."""
+        pattern = re.escape(old_name)
+        if old_name and re.match(r'[a-zA-Z0-9_]', old_name[0]):
+            pattern = rf'(?<![a-zA-Z0-9_]){pattern}'
+        if old_name and re.match(r'[a-zA-Z0-9_]', old_name[-1]):
+            pattern = rf'{pattern}(?![a-zA-Z0-9_])'
+        return re.sub(pattern, new_name, expression)
+
     def rename_signal(self, old_name, new_name):
-        if old_name == new_name or not new_name:
+        if not new_name:
             return
-        new_name = re.sub(r'[^a-zA-Z0-9_]', '_', new_name)
+        new_name = self.valid_signal_name(new_name)
+        if old_name == new_name:
+            return
         if new_name in self.signals:
             raise ValueError(f"Name '{new_name}' already exists.")
         
@@ -103,13 +130,14 @@ class SignalManager(QObject):
         
         # Update other formulas that might use this signal
         for name, expr in self.expressions.items():
-            self.expressions[name] = re.sub(rf'\b{old_name}\b', new_name, expr)
+            self.expressions[name] = self._replace_signal_reference(
+                expr, old_name, new_name)
         self.data_changed.emit()
 
     def evaluate_expression(self, name, expr):
         try:
             context = {**np.__dict__, **self.signals}
-            result = eval(expr, {"__builtins__": None}, context)
+            result = eval(expr, {"__builtins__": {}}, context)
             self.add_expression_signal(name, result, expr)
             return True
         except Exception as e:
@@ -877,10 +905,12 @@ class PostProcessor(QMainWindow):
         
         if packed:
             source_label = item_data.get("name", item.text(0))
-            name = f"{source_label.replace('.', '_').replace('[', '_').replace(']', '')}_{len(self.mgr.signals)}"
+            name = self.mgr.valid_signal_name(
+                f"{source_label}_{len(self.mgr.signals)}")
             display_label = f"{source_label} — {item_data.get('description', '')}"
         else:
-            name = f"{vn.replace('.', '_')}_{item.text(0)}_{len(self.mgr.signals)}"
+            name = self.mgr.valid_signal_name(
+                f"{vn}_{item.text(0)}_{len(self.mgr.signals)}")
             display_label = item.text(0)
         source_idx = indices if packed and len(indices) > 1 else idx
         self.mgr.add_imported_signal(name, data, fn, vn, source_idx, display_label,
@@ -896,7 +926,7 @@ class PostProcessor(QMainWindow):
                 QMessageBox.critical(self, "Error", res)
 
     def export_to_csv(self):
-        dlg = ExportDialog(self.mgr.signals, self)
+        dlg = ExportDialog(self.mgr, self)
         if dlg.exec():
             sel = dlg.get_selected()
             if not sel:
