@@ -2251,8 +2251,7 @@ DataManager::ReadNodes(MBDynParser& HP)
 						Elem2Param,
 						Elem2Param(uLabel, &DummyDofOwner, fOut));
 
-				} else if (HP.IsKeyWord("sample" "and" "hold") ||
-					HP.IsKeyWord("sample'n'hold"))
+				} else if (HP.IsKeyWord("sample" "and" "hold"))
 				{
 
 					DEBUGLCOUT(MYDEBUG_INPUT,

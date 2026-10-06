@@ -2533,7 +2533,7 @@ BipolarTransistor::BipolarTransistor(
 	// Read ideal maximum reverse beta from .mbd file:
 	Br = HP.GetReal();
 
-	if (HP.IsKeyWord("thermal voltage")) {
+	if (HP.IsKeyWord("thermal" "voltage")) {
 		Vt = HP.GetReal();
 		DEBUGCOUT("Thermal voltage " << Vt << " is supplied" << std::endl);
 	} else {

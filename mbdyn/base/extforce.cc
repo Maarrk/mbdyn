@@ -218,7 +218,7 @@ ExtFileHandler::Send_post(SendWhen when)
 {
 	outf.close();
 	if (rename(tmpout.c_str(), fout.c_str()) != 0) {
-		int save_errno = WSAGetLastError();
+		int save_errno = errno;
 		silent_cerr("ExtFileHandler: unable to rename output file "
 			"\"" << tmpout.c_str() << "\" "
 			"into \"" << fout.c_str() << "\" "
@@ -647,8 +647,9 @@ ReadExtFileHandler(DataManager* pDM,
 
 	} else if (HP.IsKeyWord("socket")) {
 		return ReadExtSocketHandler(pDM, HP, uLabel);
-	} else {
-	    silent_cerr("ExtForce(" << uLabel << "): "
+	} else if (!HP.IsStringWithDelims()) {
+		/* The default (file) form starts with a quoted file name */
+		silent_cerr("ExtForce(" << uLabel << "): "
 			"unrecognised communicator type "
 			"at line " << HP.GetLineData() << std::endl);
 		throw ErrGeneric(MBDYN_EXCEPT_ARGS);

@@ -220,14 +220,20 @@ ReadModalForce(DataManager* pDM,
 			throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 		}
 
-		if (pNode && HP.IsKeyWord("resultant")) {
-			for (unsigned r = 1; r <= 3; r++) {
-				(*Mt)(r, i + 1) = HP.GetReal();
+		if (HP.IsKeyWord("resultant")) {
+			if (!pNode) {
+				silent_cerr("ModalForce(" << uLabel << "): "
+					"\"resultant\" requires Modal(" << pModal->GetLabel() << ") "
+					"to have a modal node "
+					"at line " << HP.GetLineData() << std::endl);
+				throw ErrGeneric(MBDYN_EXCEPT_ARGS);
 			}
 
-			for (unsigned r = 1; r <= 3; r++) {
-				(*Mr)(r, i + 1) = HP.GetReal();
-			}
+			// resultant force and moment per unit modal force,
+			// in the reference frame of the modal node
+			ReferenceFrame RF(pNode);
+			Mt->PutVec(i + 1, HP.GetVecRel(RF));
+			Mr->PutVec(i + 1, HP.GetVecRel(RF));
 		}
 	}
 

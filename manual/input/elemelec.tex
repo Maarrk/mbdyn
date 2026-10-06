@@ -29,11 +29,13 @@ The syntax is described in the following.
         \bnt{struct_node_label} ,
         \bnt{abstract_node_label} ,
         ((\ty{Unit})\hty{Vec3}) \bnt{measure_direction}
-        [ , \kw{position} , (\hty{Vec3}) \bnt{position} ]
+        [ , [ \kw{position} , ] (\hty{Vec3}) \bnt{position} ]
 \end{Verbatim}
 %\end{verbatim}
-The \kw{position} is optional; it is meaningless for \kw{rotational}
-accelerometers.
+For \kw{translational} accelerometers \nt{position} is required;
+only the keyword \kw{position} (or \kw{offset}) may be omitted.
+For \kw{rotational} accelerometers the whole clause is optional,
+it requires the keyword and the value is ignored.
 The measure is taken along or about direction \nt{measure\_direction};
 the vector is internally normalized to unity.
 
@@ -208,6 +210,9 @@ The \nt{control\_data} syntax is:
             | \kw{adaptive control} , \bnt{adaptive_control_data} \}
 \end{Verbatim}
 %\end{verbatim}
+The \kw{adaptive control} form is only available when MBDyn is built
+with GPC/deadbeat control support; otherwise it is rejected with an
+error.
 
 \subsubsection{Control}
 The file \nt{control\_matrices\_file} must contain the matrices
@@ -421,13 +426,17 @@ of the \kw{abstract} node.
     \bnt{electric_arglist} ::=
         \bnt{struct_node_1_label} ,
         \bnt{struct_node_2_label} ,
-        ((\ty{Unit})\hty{Vec3}) \bnt{direction_relative_to_node_1} ,
-        \bnt{abstract_node_1_label} ,
-        \bnt{abstract_node_2_label} ,
+        \{ ((\ty{Unit})\hty{Vec3}) \bnt{direction_relative_to_node_1}
+            | \kw{orientation} , (\hty{OrientationMatrix}) \bnt{orientation_relative_to_node_1} \} ,
+        \bnt{electric_node_1_label} ,
+        \bnt{electric_node_2_label} ,
         (\ty{real}) \bnt{dG},
         (\ty{real}) \bnt{dL},
-        (\ty{real}) \bnt{dR}
+        (\hty{DriveCaller}) \bnt{dR}
         [ , \kw{initial current} , \bnt{i_0} ]
+        [ , \kw{M0} , (\hty{DriveCaller}) \bnt{M0} ]
+        [ , \kw{M1} , (\hty{DriveCaller}) \bnt{M1} ]
+        [ , \kw{terminal pairs} , \bnt{p} ]       
 \end{Verbatim}
 %\end{verbatim}
 This element implements a simple DC motor, whose equations are
@@ -435,14 +444,33 @@ This element implements a simple DC motor, whose equations are
 \begin{align}
 	\omega &= \T{e}^T \plbr{\T{\omega}_2 - \T{\omega}_1} \\
 	V &= V_2 - V_1 \\
-	V &= \nt{dL} \frac{\mathrm{d}i}{\mathrm{d}t} + \nt{dR} \, i + \nt{dG} \, \omega \\
-	\T{c}_1 &= - \T{e} \, \nt{dG} \, i \\
-	\T{c}_2 &= \T{e} \, \nt{dG} \, i \\
+    V &= \nt{dL} \frac{\mathrm{d}i}{\mathrm{d}t} + \nt{dR}\plbr{\left| i \right|} \, i + \nt{dG} \, \omega \\
+	M &= \nt{M0}\plbr{\varphi_e} + \plbr{\nt{dG} + \nt{M1}\plbr{\varphi_e}} \, i \\
+	\T{c}_1 &= - \T{e} \, M \\
+	\T{c}_2 &= \T{e} \, M \\
 	i_1 &= -i \\
 	i_2 &= i
 \end{align}
 \end{subequations}
 where \nt{dL} is the inductance, \nt{dR} is the resistance, and \nt{dG} is the motor torque/back-EMF constant.
+The resistance \nt{dR} is a drive caller, evaluated as a function
+of the absolute value of the current, $\left| i \right|$.
+The two nodes \nt{electric\_node\_1\_label} and \nt{electric\_node\_2\_label}
+are \kw{electric} nodes; their values are the voltages $V_1$ and $V_2$.
+
+The optional drive callers \nt{M0} and \nt{M1} model the cogging
+(or ripple) torque: \nt{M0} is the part of the torque that does not
+depend on the current, \nt{M1} the part proportional to it.
+Both are functions of the electric angle $\varphi_e = p \, \varphi_m$,
+reduced to $\sqbr{0, 2\pi}$, where $\varphi_m$ is the rotation of axis 1
+of node 2 about axis 3 of the frame \nt{orientation\_relative\_to\_node\_1},
+and $p$ is the number of \kw{terminal pairs}.
+When either \nt{M0} or \nt{M1} is given, the \kw{orientation} form
+must be used instead of \nt{direction\_relative\_to\_node\_1},
+and \kw{terminal pairs} is required ($p \ge 1$).
+When \nt{direction\_relative\_to\_node\_1} is given,
+$\T{e}$ is that direction; otherwise it is axis 3 of
+\nt{orientation\_relative\_to\_node\_1}.
 
 The motor applies an internal torque, $C = \nt{dG} \, i$, about direction
 $\T{e}=\nt{direction\_relative\_to\_node\_1}$, with opposite sign

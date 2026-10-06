@@ -73,7 +73,7 @@ This module implements an asynchronous electric motor.
 This module implements inflow models for cycloidal rotors.
 
 \begin{Verbatim}[commandchars=\\\{\}]
-    \bnt{name} ::= \kw{cycloidal no inflow}
+    \bnt{name} ::= \kw{cyclocopter no inflow}
 
     \bnt{module_data} ::=
         \bnt{aircraft_node_label} ,
@@ -82,7 +82,7 @@ This module implements inflow models for cycloidal rotors.
 \end{Verbatim}
 
 \begin{Verbatim}[commandchars=\\\{\}]
-    \bnt{name} ::= \kw{cycloidal} \{ \kw{uniform 1D} | \kw{uniform 2D} | \kw{Polimi} \}
+    \bnt{name} ::= \kw{cyclocopter} \{ \kw{uniform 1D} | \kw{uniform 2D} | \kw{Polimi} \}
 
     \bnt{module_data} ::=
         \bnt{aircraft_node_label} ,
@@ -93,6 +93,7 @@ This module implements inflow models for cycloidal rotors.
         \bnt{blade_span}
         [ , \kw{delay} , (\hty{DriveCaller}) \bnt{delay} ]
         [ , \kw{omegacut} , \bnt{cut_frequency} ]
+        [ , \kw{kappa} , \bnt{hover_correction_coefficient} ]
         [ , \kw{timestep} , \bnt{time_step} ]
 \end{Verbatim}
 
@@ -1161,17 +1162,17 @@ To use the shared library in execution process, here {\texttt{\$LIBPATH}} is add
 			[, \kw{offset}, (\ty{Vec3}) \bnt{offset_coupling_point}],
 		\bnt{coupling_constraints} ::= 
 			[, \kw{position constraint}, (\ty{int}) \bnt{bool_x}, (\ty{int}) \bnt{bool_y}, (\ty{int}) \bnt{bool_z}],
-			[, \kw{rotation constraint}, (\ty{int}) \bnt{bool_x}, (\ty{int}) \bnt{bool_y}, (\ty{int}) \bnt{bool_z}],
+			[, \kw{orientation constraint}, (\ty{int}) \bnt{bool_x}, (\ty{int}) \bnt{bool_y}, (\ty{int}) \bnt{bool_z}],
 		\bnt{chbody_output} ::= 
-			[, \kw{output chbody}, {\kw{yes} | \kw{no}}],
+			[, \kw{output chbody}, \{\kw{yes} | \kw{no}\}],
 		\bnt{chrono_ground} ::= 
 			\kw{ground}, (\ty{int}) \bnt{chbody_label}, 
-			[, \kw{position}, (\kw{Vec3} \bnt{absolute_position})],
-			[, \kw{orientation}, (\kw{Mat3x3} \bnt{absolute_rotation})],
+			[, \kw{position}, (\hty{Vec3}) \bnt{absolute_position}],
+			[, \kw{orientation}, (\hty{Mat3x3}) \bnt{absolute_rotation}],
 			[\bnt{chbody_output}],
 	\bnt{other_settings} ::= 
 		[\kw{output all chbodies}], 
-		[\kw{coupling forces filename, (\ty{filename}) \bnt{filename}}], 
+		[\kw{coupling forces filename}, (\ty{filename}) \bnt{filename}], 
 		[\kw{verbose}];
 \end{Verbatim}
 
@@ -1425,11 +1426,19 @@ The syntax of a template drive caller is the same like the scalar drive caller. 
 Octave constitutive laws are full featured user defined constitutive laws.
 Additional constitutive law specific data in \bnt{const\_law\_data} may be accessed from within the constructor of the Octave class.
 \begin{Verbatim}[commandchars=\\\{\}]
-    \bnt{specific_const_law} ::= \kw{octave} , " \bnt{class\_name} " \\
-        [ , \bnt{octave\_flags} ] \\
-        \kw{dimension} , \bnt{dimension} \\
+    \bnt{specific_const_law} ::= \kw{octave} , " \bnt{class\_name} "
+        [ , \bnt{octave\_flags} ]
         [ , \bnt{const\_law\_data} ]
 \end{Verbatim}
+The content of \bnt{const\_law\_data} is defined by the Octave class,
+which reads it in its constructor; MBDyn itself does not read it.
+For instance, the demo class \texttt{MyConstLaw1} expects
+\kw{dimension}, followed by the size of the law,
+and then, optionally, \kw{stiffness} and \kw{damping},
+each followed by its matrix:
+\begin{verbatim}
+    octave, "MyConstLaw1", dimension, 6, stiffness, ...
+\end{verbatim}
 
 \paragraph{Octave constitutive law member functions}
 At the moment the following member functions are supported:
