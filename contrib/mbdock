@@ -1,0 +1,16 @@
+#!/bin/sh
+# Docker launcher for MBDyn
+#
+# 1. Install a Linux container runtime like docker or podman
+# 2. Place this somewhere on PATH (like ~/.local/bin) and make sure it has the execute permission bit
+#
+# Used like mbdock yourfile.mbd creates all outputs in "out" folder in current working directory
+
+if [ "$#" -eq 0 ]; then
+  INPUT="./input.mbd" # Default filename when no arguments are used
+else
+  INPUT="$1"
+fi
+mkdir -p ./out
+cp $INPUT ./out/$(basename $INPUT)
+docker run --rm -v ./out:/home/mbdynuser/out:rw git.lukasiewicz.tech/daer/mbdyn:latest -f /home/mbdynuser/out/$(basename $INPUT)
